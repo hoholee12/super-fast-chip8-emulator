@@ -16,15 +16,15 @@ private:
 	uint8 mem[FULL_MEM_SIZE];
 	uint16 programCounter;
 	uint8 stackPointer;
-	uint16 indexRegister;
+	uint16 indexRegister;	//I register
 	uint16 stack[STACK_SIZE];
 	uint8 v[V_REGISTER_SIZE];
 	
 	uint16 currentOpcode;
 
 	uint8 key[16]; //16 keys
-	uint8 delay; //delay timer
-	uint8 sound; //sound timer
+	uint8 delayTimer; //delay timer
+	uint8 soundTimer; //sound timer
 	uint8 videoBuffer[32 * 64]; //video buffer
 
 	//SDL stuff

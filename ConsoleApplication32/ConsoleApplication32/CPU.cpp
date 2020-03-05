@@ -32,7 +32,7 @@ void CPU::decode(uint16 input){
 
 	/*
 	00E0 -cls
-	00EE -return from subroutine
+	00EE -return from subroutine. read pc from stack. stackpointer -= 1
 	
 	1nnn -jump to nnn
 	2nnn -call subroutine from nnn
@@ -52,9 +52,9 @@ void CPU::decode(uint16 input){
 	8xy4 -Vx += Vy	ADD, VF is = carry		(if add value is greater than 255)
 	8xy5 -Vx -= Vy	SUB, VF is = not borrow	(set 1 if result is positive. if 0 or less, set 0)
 	
-	8xy6 -Vx >>= 1		SHR 1, if least significant bit is 1 then VF = 1, otherwise 0 and Vx is divided by 2
+	8xy6 -Vx >>= 1		SHR 1, if least significant bit is 1 then VF = 1, otherwise 0 and Vx is shift right 1
 	8xy7 -Vx = Vy - Vx	SUBN, VF is = not borrow
-	8xyE -Vx <<= 1		SHL 1, if least significant bit is 1 then VF = 1, otherwise 0 and Vx is multiplied by 2
+	8xyE -Vx <<= 1		SHL 1, if least significant bit is 1 then VF = 1, otherwise 0 and Vx is shift left 1
 
 	9xy0 -skip to next instruction if Vx != Vy
 
@@ -64,7 +64,7 @@ void CPU::decode(uint16 input){
 
 	Cxkk -Vx = rand & kk
 
-	Dxyn -display n bytes of sprite starting in the address L, to the monitor location (Vx, Vy)
+	Dxyn -display n bytes of sprite starting in the address L, to the monitor location (Vx, Vy). VF = collision(if pixel overlaps)
 
 	Ex9E -skip to next instruction if value in Vx is keypressed
 	ExA1 -skip to next instruction if value in Vx is Not keypressed
@@ -76,17 +76,125 @@ void CPU::decode(uint16 input){
 
 	Fx18 -sound_timer_value = Vx
 
+	Fx1E -L += Vx
+
+	Fx29 -L = location of sprite for Vx?
+
+	Fx33 -store BCD code of Vx in memory locations of L, L+1, L+2
+
+	Fx55 -copy V0~Vx to memory location starting at L
+
+	Fx65 -store V0~Vx from memory location starting at L
 
 	*/
 
-	//current v? register data for xkk format
-	uint8 vx = v[input & 0x0f00 >> 8];
-	uint8 *vxptr = &v[input & 0x0f00 >> 8];
+	//?x??
+	uint8 *vx = &v[input & 0x0f00 >> 8];
 
-	//current v? register data for xy0 format
+	//??y?
+	uint8 *vy = &v[input & 0x00f0 >> 4];
 
+	//??kk
+	uint8 kk = input & 0x00ff;
+
+	uint16 nnn = input & 0x0fff;
+
+	//first nibble
+	switch (input & 0xf000 >> 12){
+	case 0x0:
+		switch (input & 0x00ff){
+		case 0xe0:	clearScreen(); //clearscreen
+			break;
+		case 0xee:	programCounter = stack[--stackPointer]; //return from subroutine
+			break;
+		}
+		break;
+	case 0x1:	programCounter = nnn; //jump to nnn
+		break;
+	case 0x2:	stack[stackPointer++] = programCounter; programCounter = input & 0x0fff; //call subroutine from nnn
+		break;
+	case 0x3:	if (*vx == kk) programCounter++; //skip if ==
+		break;
+	case 0x4:	if (*vx != kk) programCounter++; //skip if !=
+		break;
+	case 0x5:	if (*vx == *vy) programCounter++; //skip if vx == vy
+		break;
+	case 0x6:	*vx = kk; //into
+		break;
+	case 0x7:	*vx += *vx + kk;
+		break;
+	case 0x8:	
+		switch (input & 0x000f){
+		case 0x0:	*vx = *vy;
+			break;
+		case 0x1:	*vx |= *vy;
+			break;
+		case 0x2:	*vx &= *vy;
+			break;
+		case 0x3:	*vx ^= *vy;
+			break;
+		case 0x4:	v[V_REGISTER_SIZE] = (*vx + *vy > 0xff) ? 0x1 : 0x0; *vx += *vy;
+			break;
+		case 0x5:	v[V_REGISTER_SIZE] = (*vx > *vy) ? 0x1 : 0x0; *vx -= *vy;
+			break;
+		case 0x6:	v[V_REGISTER_SIZE] = (*vx & 0x000f == 0x1) ? 0x1 : 0x0; *vx >>= 1;
+			break;
+		case 0x7:	v[V_REGISTER_SIZE] = (*vx < *vy) ? 0x1 : 0x0; *vx = *vy - *vx;
+			break;
+		case 0xe:	v[V_REGISTER_SIZE] = (*vx & 0xf000 >> 12 == 0x1) ? 0x1 : 0x0; *vx <<= 1;
+			break;
+		}
+		break;
+	case 0x9:	if (*vx != *vy) programCounter++; //skip if vx != vy
+		break;
+	case 0xa:	indexRegister = nnn;
+		break;
+	case 0xb:	programCounter = nnn + v[0];
+		break;
+	case 0xc:	*vx = 128 & kk; //TODO: 128 is placeholder for random
+		break;
+	case 0xd:	//TODO: DISPLAY OUTPUT
+		break;
+	case 0xe:	
+		switch (input & 0x00ff){
+		case 0x9e:
+			programCounter++; //TODO: KEYINPUT HOLD
+			break;
+		case 0xa1:
+			programCounter++; //TODO: KEYINPUT HOLD
+			break;
+		}
+		break;
+	case 0xf:
+		switch (input & 0x00ff){
+		case 0x07:	*vx = delayTimer;
+			break;
+		case 0x0a:	//TODO: WAIT FOR KEYPRESS AND STORE TO VX
+			break;
+		case 0x15:	delayTimer = *vx;
+			break;
+		case 0x18:	soundTimer = *vx;
+			break;
+		case 0x1e:	indexRegister += *vx;
+			break;
+		case 0x29:	//TODO: SPRITE LOCATION FOR VX TO indexRegister
+			break;
+		case 0x33:	//bcd code
+			mem[indexRegister] = *vx % 1000 / 100;
+			mem[indexRegister + 1] = *vx % 100 / 10;
+			mem[indexRegister + 2] = *vx % 10;
+			break;
+		case 0x55:	for (int i = 0; i < 16; i++) mem[indexRegister + i] = v[i];
+			break;
+		case 0x65:	for (int i = 0; i < 16; i++) v[i] = mem[indexRegister + i];
+			break;
+		}
+		break;
+	}
 
 }
+
+
 void CPU::clearScreen(){
 	//as in clear the lower part of memory where screen buffer resides
 	for (int i = 0; i < (32 * 64); i++){
