@@ -25,10 +25,11 @@ void CPU::decode(uint16 input){
 	//TODO
 	bool throwError = false; //if illegal instruction
 
+	//program counter increments by 2. 16bit addr
 	//kk -byte(2 nibbles)
 	//nnn -addr(3 nibbles)
-	//x, y -Vx, Vy instructions
-	//theres also 16bit L register controlled by Annn instruction.
+	//x, y -Vx, Vy registers
+	//index register
 
 	/*
 	00E0 -cls
@@ -97,7 +98,10 @@ void CPU::decode(uint16 input){
 	//??kk
 	uint8 kk = input & 0x00ff;
 
+	//nnn
 	uint16 nnn = input & 0x0fff;
+
+	uint8 n = input & 0x000f;
 
 	//first nibble
 	switch (input & 0xf000 >> 12){
@@ -113,11 +117,11 @@ void CPU::decode(uint16 input){
 		break;
 	case 0x2:	stack[stackPointer++] = programCounter; programCounter = input & 0x0fff; //call subroutine from nnn
 		break;
-	case 0x3:	if (*vx == kk) programCounter++; //skip if ==
+	case 0x3:	if (*vx == kk) programCounter += 2; //skip if ==
 		break;
-	case 0x4:	if (*vx != kk) programCounter++; //skip if !=
+	case 0x4:	if (*vx != kk) programCounter += 2; //skip if !=
 		break;
-	case 0x5:	if (*vx == *vy) programCounter++; //skip if vx == vy
+	case 0x5:	if (*vx == *vy) programCounter += 2; //skip if vx == vy
 		break;
 	case 0x6:	*vx = kk; //into
 		break;
@@ -151,17 +155,17 @@ void CPU::decode(uint16 input){
 		break;
 	case 0xb:	programCounter = nnn + v[0];
 		break;
-	case 0xc:	*vx = 128 & kk; //TODO: 128 is placeholder for random
+	case 0xc:	*vx = (rand() % 0xff) & kk;	//random
 		break;
-	case 0xd:	//TODO: DISPLAY OUTPUT
+	case 0xd:	for (int i = 0; i < n; i++) videoBuffer[*vx * *vy + i] = mem[indexRegister + i];	//draw screen
 		break;
 	case 0xe:	
 		switch (input & 0x00ff){
 		case 0x9e:
-			programCounter++; //TODO: KEYINPUT HOLD
+			if (checkKeyInput(vx) == 1) programCounter += 2;
 			break;
 		case 0xa1:
-			programCounter++; //TODO: KEYINPUT HOLD
+			if (checkKeyInput(vx) != 1) programCounter += 2;
 			break;
 		}
 		break;
@@ -169,7 +173,7 @@ void CPU::decode(uint16 input){
 		switch (input & 0x00ff){
 		case 0x07:	*vx = delayTimer;
 			break;
-		case 0x0a:	//TODO: WAIT FOR KEYPRESS AND STORE TO VX
+		case 0x0a:	checkKeyInput(vx, 1);
 			break;
 		case 0x15:	delayTimer = *vx;
 			break;
@@ -177,7 +181,7 @@ void CPU::decode(uint16 input){
 			break;
 		case 0x1e:	indexRegister += *vx;
 			break;
-		case 0x29:	//TODO: SPRITE LOCATION FOR VX TO indexRegister
+		case 0x29:	indexRegister = *vx * 5;	//TODO: ???
 			break;
 		case 0x33:	//bcd code
 			mem[indexRegister] = *vx % 1000 / 100;
@@ -195,17 +199,72 @@ void CPU::decode(uint16 input){
 }
 
 
+/*
+*flag = 0 : check if match
+*flag = 1 : vx new input
+*/
+int CPU::checkKeyInput(uint8* vx, int flag){
+	int match = 0;
+	uint8 temp;
+	SDL_Event e;
+	while (SDL_PollEvent(&e)){
+		switch (e.type){
+		case SDLK_0: temp = 0x0;
+			break;
+		case SDLK_1: temp = 0x1;
+			break;
+		case SDLK_2: temp = 0x2;
+			break;
+		case SDLK_3: temp = 0x3;
+			break;
+		case SDLK_4: temp = 0x4;
+			break;
+		case SDLK_5: temp = 0x5;
+			break;
+		case SDLK_6: temp = 0x6;
+			break;
+		case SDLK_7: temp = 0x7;
+			break;
+		case SDLK_8: temp = 0x8;
+			break;
+		case SDLK_9: temp = 0x9;
+			break;
+		case SDLK_a: temp = 0xa;
+			break;
+		case SDLK_b: temp = 0xb;
+			break;
+		case SDLK_c: temp = 0xc;
+			break;
+		case SDLK_d: temp = 0xd;
+			break;
+		case SDLK_e: temp = 0xe;
+			break;
+		case SDLK_f: temp = 0xf;
+			break;
+		}
+	}
+
+	if (temp == *vx) match = 1;
+	if (flag == 1) *vx = temp;
+
+	return match;
+}
+
 void CPU::clearScreen(){
-	//as in clear the lower part of memory where screen buffer resides
-	for (int i = 0; i < (32 * 64); i++){
-		mem[i] = 0;
+	for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++){
+		videoBuffer[i] = 0;
 	}
 }
 
 void CPU::init(){
+	srand(time(NULL));
+
 	programCounter = 0x200; //start at 0x200
 	stackPointer = 0;
 	indexRegister = 0;
+
+	delayTimer = 0;
+	soundTimer = 0;
 
 	clearScreen();
 	load();
@@ -216,7 +275,7 @@ void CPU::init(){
 	}
 
 	SDL_Init(SDL_INIT_VIDEO);
-	window = SDL_CreateWindow("chip8 emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 320, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("chip8 emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 10, SCREEN_HEIGHT * 10, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 
@@ -241,37 +300,60 @@ void CPU::update(){
 	while (SDL_PollEvent(&e)){
 		if (e.type == SDL_QUIT) running = false;
 	}
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer); //clear to blackscreen
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	SDL_Rect rect;
-	rect.x = 50;
-	rect.y = 50;
-	rect.h = 50;
-	rect.w = 50;
-	SDL_Rect rect2;
-	rect2.x = 150;
-	rect2.y = 150;
-	rect2.h = 50;
-	rect2.w = 50;
-	SDL_Rect rects[2];
-	rects[0] = rect;
-	rects[1] = rect2;
-	SDL_RenderFillRects(renderer, rects, 2); //draw white rectangles on screen
-	SDL_RenderPresent(renderer); //update
+	SDL_Delay(1000 / 60); //60fps
+
+	//delay timer
+	if (delayTimer > 0x0){
+		delayTimer--;
+	}
+
+	//beep until down to 0
+	if (soundTimer > 0x1){
+		printf("\a");
+		soundTimer--;
+	}
+	
+
+
+	//draw
+	draw();
 
 
 }
 
-void CPU::start(){
+void CPU::draw(){
+
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer); //clear to blackscreen
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	SDL_Rect rect;
+	for (int i = 0; i < SCREEN_WIDTH; i++){
+		for (int j = 0; j < SCREEN_HEIGHT; j++){
+			if (videoBuffer[SCREEN_HEIGHT * i + j] > 0){
+				rect.x = i * 10;
+				rect.y = j * 10;
+				rect.w = 10;
+				rect.h = 10;
+				SDL_RenderFillRect(renderer, &rect);
+			}
+		}
+	
+	}
+	
+	SDL_RenderPresent(renderer); //update
+
+}
+
+void CPU::start(char* str){
+	filestr = str;
 	init();
 	run();
 }
 void CPU::load(){
 	//load file
-	FILE *file = fopen("test", "rb");
+	FILE *file = fopen(filestr, "rb");
 	if (file == NULL){
-		printf("WHERES THE FILE?!");
+		fprintf(stderr, "WHERES THE FILE?!");
 		exit(1);
 	}
 

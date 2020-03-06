@@ -1,5 +1,7 @@
 #pragma once
 #include<SDL/SDL.h>
+#include<time.h>
+#include<stdlib.h>
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -9,10 +11,11 @@ typedef unsigned short uint16;
 #define START_MEM_SIZE 0x200
 #define STACK_SIZE 16
 #define V_REGISTER_SIZE 0xf
+#define SCREEN_WIDTH 64
+#define SCREEN_HEIGHT 32
 
 class CPU{
 private:
-
 	uint8 mem[FULL_MEM_SIZE];
 	uint16 programCounter;
 	uint8 stackPointer;
@@ -25,7 +28,9 @@ private:
 	uint8 key[16]; //16 keys
 	uint8 delayTimer; //delay timer
 	uint8 soundTimer; //sound timer
-	uint8 videoBuffer[32 * 64]; //video buffer
+	uint8 videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
+
+	char* filestr;
 
 	//SDL stuff
 	SDL_Renderer* renderer;
@@ -35,14 +40,16 @@ private:
 
 	void decode(uint16 input); //current opcode decoder
 	void clearScreen(); //clearscreen
+	int checkKeyInput(uint8* vx, int flag = 0);
 
 public:
 
 	void load(); //load file
 	void init(); //init sdl and registers
 	void run();	//loop
-	void update(); //fetch and decode and draw
+	void update(); //fetch and decode
+	void draw();
 	
-	void start(); //start of emulation
+	void start(char* str); //start of emulation
 	
 };
