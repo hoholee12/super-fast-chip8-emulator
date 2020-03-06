@@ -90,10 +90,10 @@ void CPU::decode(uint16 input){
 	*/
 
 	//?x??
-	uint8 *vx = &v[input & 0x0f00 >> 8];
+	uint8 *vx = &v[(input & 0x0f00) >> 8];
 
 	//??y?
-	uint8 *vy = &v[input & 0x00f0 >> 4];
+	uint8 *vy = &v[(input & 0x00f0) >> 4];
 
 	//??kk
 	uint8 kk = input & 0x00ff;
@@ -103,19 +103,22 @@ void CPU::decode(uint16 input){
 
 	uint8 n = input & 0x000f;
 
+	//1 = is a jump; dont increment pc
+	int flag = 0;
+
 	//first nibble
-	switch (input & 0xf000 >> 12){
+	switch ((input & 0xf000) >> 12){
 	case 0x0:
 		switch (input & 0x00ff){
 		case 0xe0:	clearScreen(); //clearscreen
 			break;
-		case 0xee:	programCounter = stack[--stackPointer]; //return from subroutine
+		case 0xee:	programCounter = stack[--stackPointer]; flag = 1;//return from subroutine
 			break;
 		}
 		break;
-	case 0x1:	programCounter = nnn; //jump to nnn
+	case 0x1:	programCounter = nnn; flag = 1;//jump to nnn
 		break;
-	case 0x2:	stack[stackPointer++] = programCounter; programCounter = input & 0x0fff; //call subroutine from nnn
+	case 0x2:	stack[stackPointer++] = programCounter; programCounter = input & 0x0fff; flag = 1;//call subroutine from nnn
 		break;
 	case 0x3:	if (*vx == kk) programCounter += 2; //skip if ==
 		break;
@@ -145,15 +148,15 @@ void CPU::decode(uint16 input){
 			break;
 		case 0x7:	v[V_REGISTER_SIZE] = (*vx < *vy) ? 0x1 : 0x0; *vx = *vy - *vx;
 			break;
-		case 0xe:	v[V_REGISTER_SIZE] = (*vx & 0xf000 >> 12 == 0x1) ? 0x1 : 0x0; *vx <<= 1;
+		case 0xe:	v[V_REGISTER_SIZE] = ((*vx & 0xf000) >> 12 == 0x1) ? 0x1 : 0x0; *vx <<= 1;
 			break;
 		}
 		break;
-	case 0x9:	if (*vx != *vy) programCounter++; //skip if vx != vy
+	case 0x9:	if (*vx != *vy) programCounter += 2; //skip if vx != vy
 		break;
 	case 0xa:	indexRegister = nnn;
 		break;
-	case 0xb:	programCounter = nnn + v[0];
+	case 0xb:	programCounter = nnn + v[0]; flag = 1;
 		break;
 	case 0xc:	*vx = (rand() % 0xff) & kk;	//random
 		break;
@@ -195,6 +198,9 @@ void CPU::decode(uint16 input){
 		}
 		break;
 	}
+
+	if (flag != 1)	//only if its not jump
+	programCounter += 2; //increment after fetch
 
 }
 
@@ -240,6 +246,8 @@ int CPU::checkKeyInput(uint8* vx, int flag){
 		case SDLK_e: temp = 0xe;
 			break;
 		case SDLK_f: temp = 0xf;
+			break;
+		default:	temp = 0x0;
 			break;
 		}
 	}
@@ -291,7 +299,7 @@ void CPU::update(){
 	//fetch - mem is 8bit, opcode is 16bit, big endian
 	//mem[pc] as top 8bit + mem[pc+1] as bottom 8bit = 16bit
 	currentOpcode = mem[programCounter] << 8 | mem[programCounter + 1];
-	programCounter += 2; //increment after fetch
+	
 
 	//decode
 	decode(currentOpcode);
@@ -312,7 +320,6 @@ void CPU::update(){
 		printf("\a");
 		soundTimer--;
 	}
-	
 
 
 	//draw
