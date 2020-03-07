@@ -26,7 +26,7 @@ void CPU::decode(uint16 input){
 	bool throwError = false; //if illegal instruction
 
 	//program counter increments by 2. 16bit addr
-	//kk -byte(2 nibbles)
+	//nn -byte(2 nibbles)
 	//nnn -addr(3 nibbles)
 	//x, y -Vx, Vy registers
 	//index register
@@ -38,13 +38,13 @@ void CPU::decode(uint16 input){
 	1nnn -jump to nnn
 	2nnn -call subroutine from nnn
 
-	3xkk -skip to next instruction if Vx == kk
-	4xkk -skip to next instruction if Vx != kk
+	3xnn -skip to next instruction if Vx == nn
+	4xnn -skip to next instruction if Vx != nn
 
 	5xy0 -skip to next instruction if Vx == Vy
 
-	6xkk -Vx = kk
-	7xkk -Vx += kk
+	6xnn -Vx = nn
+	7xnn -Vx += nn
 
 	8xy0 -Vx = Vy
 	8xy1 -Vx |= Vy	OR
@@ -63,7 +63,7 @@ void CPU::decode(uint16 input){
 
 	Bnnn -jump to nnn + V0
 
-	Cxkk -Vx = rand & kk
+	Cxnn -Vx = rand & nn
 
 	Dxyn -display n bytes of sprite starting in the address L, to the monitor location (Vx, Vy). VF = collision(if pixel overlaps)
 
@@ -98,40 +98,45 @@ void CPU::decode(uint16 input){
 	//vf
 	uint8 *vf = &v[0xf];
 
-	//??kk
-	uint8 kk = input & 0x00ff;
+	//??nn
+	uint8 nn = input & 0x00ff;
 
 	//nnn
 	uint16 nnn = input & 0x0fff;
 
-	uint8 n = input & 0x000f;
+	uint16 n = input & 0x000f;
 
 	//1 = is a jump; dont increment pc
 	int flag = 0;
+
+	//for DXYN
+	int pixel_flag = 0;	//if any pixel unset then vf = 1
 
 	//first nibble
 	switch ((input & 0xf000) >> 12){
 	case 0x0:
 		switch (input & 0x00ff){
-		case 0xe0:	clearScreen(); //clearscreen
+		case 0xe0:	for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) videoBuffer[i] = 0;
 			break;
 		case 0xee:	programCounter = stack[--stackPointer]; flag = 1;//return from subroutine
+			break;
+		default:	stack[stackPointer++] = programCounter; programCounter = nnn; flag = 1;//call subroutine from nnn
 			break;
 		}
 		break;
 	case 0x1:	programCounter = nnn; flag = 1;//jump to nnn
 		break;
-	case 0x2:	stack[stackPointer++] = programCounter; programCounter = input & 0x0fff; flag = 1;//call subroutine from nnn
+	case 0x2:	stack[stackPointer++] = programCounter; programCounter = nnn; flag = 1;//call subroutine from nnn
 		break;
-	case 0x3:	if (*vx == kk) programCounter += 2; //skip if ==
+	case 0x3:	if (*vx == nn) programCounter += 2; //skip if ==
 		break;
-	case 0x4:	if (*vx != kk) programCounter += 2; //skip if !=
+	case 0x4:	if (*vx != nn) programCounter += 2; //skip if !=
 		break;
 	case 0x5:	if (*vx == *vy) programCounter += 2; //skip if vx == vy
 		break;
-	case 0x6:	*vx = kk; //into
+	case 0x6:	*vx = nn; //into
 		break;
-	case 0x7:	*vx += *vx + kk;
+	case 0x7:	*vx += nn;
 		break;
 	case 0x8:	
 		switch (input & 0x000f){
@@ -145,13 +150,13 @@ void CPU::decode(uint16 input){
 			break;
 		case 0x4:	*vf = (*vx + *vy > 0xff) ? 0x1 : 0x0; *vx += *vy;
 			break;
-		case 0x5:	*vf = (*vx > *vy) ? 0x1 : 0x0; *vx -= *vy;
+		case 0x5:	*vf = (*vx < *vy) ? 0x0 : 0x1; *vx -= *vy;
 			break;
-		case 0x6:	*vf = (*vx & 0x000f == 0x1) ? 0x1 : 0x0; *vx >>= 1;
+		case 0x6:	*vf = *vx & 0x000f; *vx >>= 1;
 			break;
-		case 0x7:	*vf = (*vx < *vy) ? 0x1 : 0x0; *vx = *vy - *vx;
+		case 0x7:	*vf = (*vy < *vx) ? 0x0 : 0x1; *vx = *vy - *vx;
 			break;
-		case 0xe:	*vf = ((*vx & 0xf000) >> 12 == 0x1) ? 0x1 : 0x0; *vx <<= 1;
+		case 0xe:	*vf = *vx & 0xf000; *vx <<= 1;
 			break;
 		}
 		break;
@@ -161,9 +166,14 @@ void CPU::decode(uint16 input){
 		break;
 	case 0xb:	programCounter = nnn + v[0]; flag = 1;
 		break;
-	case 0xc:	*vx = (rand() % 0xff) & kk;	//random
+	case 0xc:	*vx = (rand() % 0xff) & nn;	//random
 		break;
-	case 0xd:	for (int i = 0; i < n; i++) videoBuffer[*vx * *vy + i] = mem[indexRegister + i];	//draw screen
+	case 0xd:	
+		for (int i = 0; i < n; i++){
+			if (mem[indexRegister + i] == 0) pixel_flag = 1;
+			videoBuffer[SCREEN_WIDTH * *vy + *vx + i] = mem[indexRegister + i];	//draw screen
+		}
+		*vf = (pixel_flag == 1) ? 0x1 : 0x0;
 		break;
 	case 0xe:	
 		switch (input & 0x00ff){
@@ -187,16 +197,16 @@ void CPU::decode(uint16 input){
 			break;
 		case 0x1e:	indexRegister += *vx;
 			break;
-		case 0x29:	indexRegister = *vx * 5;	//TODO: ???
+		case 0x29:	indexRegister = *vx * 5;	//font is stored at mem[0 ~ FONT_COUNT * 5]
 			break;
 		case 0x33:	//bcd code
-			mem[indexRegister] = *vx % 1000 / 100;
-			mem[indexRegister + 1] = *vx % 100 / 10;
-			mem[indexRegister + 2] = *vx % 10;
+			mem[indexRegister + 2] = *vx % 10; *vx /= 10;
+			mem[indexRegister + 1] = *vx % 10; *vx /= 10;
+			mem[indexRegister] = *vx;
 			break;
-		case 0x55:	for (int i = 0; i < 16; i++) mem[indexRegister + i] = v[i];
+		case 0x55:	for (int i = 0; i <= (input & 0x0f00) >> 8; i++) mem[indexRegister++] = v[i];
 			break;
-		case 0x65:	for (int i = 0; i < 16; i++) v[i] = mem[indexRegister + i];
+		case 0x65:	for (int i = 0; i <= (input & 0x0f00) >> 8; i++) v[i] = mem[indexRegister++];
 			break;
 		}
 		break;
@@ -261,12 +271,6 @@ int CPU::checkKeyInput(uint8* vx, int flag){
 	return match;
 }
 
-void CPU::clearScreen(){
-	for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++){
-		videoBuffer[i] = 0;
-	}
-}
-
 void CPU::init(){
 	srand(time(NULL));
 
@@ -277,8 +281,10 @@ void CPU::init(){
 	delayTimer = 0;
 	soundTimer = 0;
 
-	clearScreen();
 	load();
+
+	//clear videobuffer
+	for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) videoBuffer[i] = 0;
 
 	//load fontset from beginning of memory
 	for (int i = 0; i < FONT_COUNT * 5; i++){
@@ -289,7 +295,17 @@ void CPU::init(){
 	window = SDL_CreateWindow("chip8 emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 10, SCREEN_HEIGHT * 10, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
+	int scan = 0;
+	for (int y = 0; y < SCREEN_HEIGHT; y++){
+		for (int x = 0; x < SCREEN_WIDTH; x++){
+			scan = SCREEN_WIDTH * y + x;
+			pixelRect[scan].x = x * 10;
+			pixelRect[scan].y = y * 10;
+			pixelRect[scan].w = 10;
+			pixelRect[scan].h = 10;
+		}
 
+	}
 }
 void CPU::run(){
 	running = true;
@@ -338,17 +354,13 @@ void CPU::draw(){
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer); //clear to blackscreen
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	SDL_Rect rect;
-	for (int i = 0; i < SCREEN_WIDTH; i++){
-		for (int j = 0; j < SCREEN_HEIGHT; j++){
-			scan = SCREEN_HEIGHT * i + j;
-			if (videoBuffer[scan] > 0){
-				rect.x = i * 10;
-				rect.y = j * 10;
-				rect.w = 10;
-				rect.h = 10;
-				SDL_RenderFillRect(renderer, &rect);
-			}
+	for (int y = 0; y < SCREEN_HEIGHT; y++){
+		for (int x = 0; x < SCREEN_WIDTH; x++){
+			scan = SCREEN_WIDTH * y + x;
+			if (videoBuffer[scan] > 0) SDL_SetRenderDrawColor(renderer, x * 4, y * 4, x * y * 16, 255);
+			else SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+			SDL_RenderFillRect(renderer, &pixelRect[scan]);
 		}
 	
 	}

@@ -30,6 +30,7 @@ private:
 	uint8 delayTimer; //delay timer
 	uint8 soundTimer; //sound timer
 	uint8 videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
+	SDL_Rect pixelRect[SCREEN_WIDTH * SCREEN_HEIGHT];
 
 	char* filestr;
 
@@ -40,7 +41,6 @@ private:
 	bool running;
 
 	void decode(uint16 input); //current opcode decoder
-	void clearScreen(); //clearscreen
 	int checkKeyInput(uint8* vx, int flag = 0);
 
 public:
