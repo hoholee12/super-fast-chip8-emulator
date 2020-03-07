@@ -137,7 +137,7 @@ void CPU::decode(uint16 input){
 		switch (input & 0x00ff){
 		case 0x07:	*vx = delayTimer;
 			break;
-		case 0x0a:	if (pressedKey != -1) *vx = pressedKey; else flag = 1; //wait again
+		case 0x0a:	if (pressedKey != 0x10) *vx = pressedKey; else flag = 1; //wait again
 			break;
 		case 0x15:	delayTimer = *vx;
 			break;
@@ -175,8 +175,6 @@ void CPU::decode(uint16 input){
 
 void CPU::checkKeyInput(){
 	
-	//init key
-	pressedKey = -1;
 	SDL_Event e;
 	while (SDL_PollEvent(&e)){
 		if (e.type == SDL_QUIT) running = false;
@@ -216,7 +214,9 @@ void CPU::checkKeyInput(){
 				break;
 			}
 		}
+		if (e.type == SDL_KEYUP) pressedKey = 0x10;
 	}
+	printf("pressed key : %x\n", pressedKey);
 
 }
 
@@ -230,7 +230,7 @@ void CPU::init(){
 	delayTimer = 0;
 	soundTimer = 0;
 
-	pressedKey = -1;
+	pressedKey = 0x10;
 
 	load();
 
