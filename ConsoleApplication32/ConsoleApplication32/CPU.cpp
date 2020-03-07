@@ -91,11 +91,11 @@ void CPU::decode(uint16 input){
 			break;
 		case 0x5:	*vf = (*vx < *vy) ? 0x0 : 0x1; *vx -= *vy;
 			break;
-		case 0x6:	*vf = *vx & 0x000f; *vx >>= 1;
+		case 0x6:	*vf = *vx << 7; *vf >>= 7; *vx >>= 1;
 			break;
 		case 0x7:	*vf = (*vy < *vx) ? 0x0 : 0x1; *vx = *vy - *vx;
 			break;
-		case 0xe:	*vf = *vx & 0xf000; *vx <<= 1;
+		case 0xe:	*vf = *vx >> 7; *vx <<= 1;
 			break;
 		default: throwError = true;
 			break;
@@ -154,9 +154,9 @@ void CPU::decode(uint16 input){
 			mem[indexRegister + 1] = (*vx / 10) % 10;
 			mem[indexRegister + 2] = *vx % 10;
 			break;
-		case 0x55:	for (int i = 0; i <= (input & 0x0f00) >> 8; i++) mem[indexRegister++] = v[i];
+		case 0x55:	for (int i = 0; i <= (input & 0x0f00) >> 8; i++) mem[indexRegister + i] = v[i];
 			break;
-		case 0x65:	for (int i = 0; i <= (input & 0x0f00) >> 8; i++) v[i] = mem[indexRegister++];
+		case 0x65:	for (int i = 0; i <= (input & 0x0f00) >> 8; i++) v[i] = mem[indexRegister + i];
 			break;
 		default: throwError = true;
 			break;
