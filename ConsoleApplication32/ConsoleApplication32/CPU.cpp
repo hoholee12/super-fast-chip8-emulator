@@ -31,64 +31,6 @@ void CPU::decode(uint16 input){
 	//x, y -Vx, Vy registers
 	//index register
 
-	/*
-	00E0 -cls
-	00EE -return from subroutine. read pc from stack. stackpointer -= 1
-	
-	1nnn -jump to nnn
-	2nnn -call subroutine from nnn
-
-	3xnn -skip to next instruction if Vx == nn
-	4xnn -skip to next instruction if Vx != nn
-
-	5xy0 -skip to next instruction if Vx == Vy
-
-	6xnn -Vx = nn
-	7xnn -Vx += nn
-
-	8xy0 -Vx = Vy
-	8xy1 -Vx |= Vy	OR
-	8xy2 -Vx &= Vy	AND
-	8xy3 -Vx ^= Vy	XOR
-	8xy4 -Vx += Vy	ADD, VF is = carry		(if add value is greater than 255)
-	8xy5 -Vx -= Vy	SUB, VF is = not borrow	(set 1 if result is positive. if 0 or less, set 0)
-	
-	8xy6 -Vx >>= 1		SHR 1, if least significant bit is 1 then VF = 1, otherwise 0 and Vx is shift right 1
-	8xy7 -Vx = Vy - Vx	SUBN, VF is = not borrow
-	8xyE -Vx <<= 1		SHL 1, if least significant bit is 1 then VF = 1, otherwise 0 and Vx is shift left 1
-
-	9xy0 -skip to next instruction if Vx != Vy
-
-	Annn -L = nnn
-
-	Bnnn -jump to nnn + V0
-
-	Cxnn -Vx = rand & nn
-
-	Dxyn -display n bytes of sprite starting in the address L, to the monitor location (Vx, Vy). VF = collision(if pixel overlaps)
-
-	Ex9E -skip to next instruction if value in Vx is keypressed
-	ExA1 -skip to next instruction if value in Vx is Not keypressed
-
-	Fx07 -Vx = delay_timer_value
-	Fx0A -wait for keypress, store the value of the key to Vx
-
-	Fx15 -delay_timer_value = Vx
-
-	Fx18 -sound_timer_value = Vx
-
-	Fx1E -L += Vx
-
-	Fx29 -L = location of sprite for Vx?
-
-	Fx33 -store BCD code of Vx in memory locations of L, L+1, L+2
-
-	Fx55 -copy V0~Vx to memory location starting at L
-
-	Fx65 -store V0~Vx from memory location starting at L
-
-	*/
-
 	//?x??
 	uint8 *vx = &v[(input & 0x0f00) >> 8];
 
@@ -155,6 +97,8 @@ void CPU::decode(uint16 input){
 			break;
 		case 0xe:	*vf = *vx & 0xf000; *vx <<= 1;
 			break;
+		default: throwError = true;
+			break;
 		}
 		break;
 	case 0x9:	if (*vx != *vy) programCounter += 2; //skip if vx != vy
@@ -180,10 +124,12 @@ void CPU::decode(uint16 input){
 	case 0xe:	
 		switch (input & 0x00ff){
 		case 0x9e:
-			if (checkKeyInput(vx) == 1) programCounter += 2;
+			if (pressedKey == *vx) programCounter += 2;
 			break;
 		case 0xa1:
-			if (checkKeyInput(vx) != 1) programCounter += 2;
+			if (pressedKey != *vx) programCounter += 2;
+			break;
+		default: throwError = true;
 			break;
 		}
 		break;
@@ -191,7 +137,7 @@ void CPU::decode(uint16 input){
 		switch (input & 0x00ff){
 		case 0x07:	*vx = delayTimer;
 			break;
-		case 0x0a:	checkKeyInput(vx, 1);
+		case 0x0a:	if (pressedKey != -1) *vx = pressedKey; else flag = 1; //wait again
 			break;
 		case 0x15:	delayTimer = *vx;
 			break;
@@ -210,9 +156,16 @@ void CPU::decode(uint16 input){
 			break;
 		case 0x65:	for (int i = 0; i <= (input & 0x0f00) >> 8; i++) v[i] = mem[indexRegister++];
 			break;
+		default: throwError = true;
+			break;
 		}
 		break;
+	default: throwError = true;
+		break;
 	}
+
+	if (throwError == true)
+		fprintf(stderr, "unsupported opcode!: %x\n", input);
 
 	if (flag != 1)	//only if its not jump
 	programCounter += 2; //increment after fetch
@@ -220,59 +173,51 @@ void CPU::decode(uint16 input){
 }
 
 
-/*
-*flag = 0 : check if match
-*flag = 1 : vx new input
-*/
-int CPU::checkKeyInput(uint8* vx, int flag){
-	int match = 0;
-	uint8 temp = 0x0;
+void CPU::checkKeyInput(){
+	
+	//init key
+	pressedKey = -1;
 	SDL_Event e;
 	while (SDL_PollEvent(&e)){
+		if (e.type == SDL_QUIT) running = false;
 		if (e.type == SDL_KEYDOWN) {
 			switch (e.key.keysym.sym){
-			case SDLK_0: temp = 0x0;
+			case SDLK_x: pressedKey = 0x0;
 				break;
-			case SDLK_1: temp = 0x1;
+			case SDLK_1: pressedKey = 0x1;
 				break;
-			case SDLK_2: temp = 0x2;
+			case SDLK_2: pressedKey = 0x2;
 				break;
-			case SDLK_3: temp = 0x3;
+			case SDLK_3: pressedKey = 0x3;
 				break;
-			case SDLK_4: temp = 0x4;
+			case SDLK_q: pressedKey = 0x4;
 				break;
-			case SDLK_5: temp = 0x5;
+			case SDLK_w: pressedKey = 0x5;
 				break;
-			case SDLK_6: temp = 0x6;
+			case SDLK_e: pressedKey = 0x6;
 				break;
-			case SDLK_7: temp = 0x7;
+			case SDLK_a: pressedKey = 0x7;
 				break;
-			case SDLK_8: temp = 0x8;
+			case SDLK_s: pressedKey = 0x8;
 				break;
-			case SDLK_9: temp = 0x9;
+			case SDLK_d: pressedKey = 0x9;
 				break;
-			case SDLK_a: temp = 0xa;
+			case SDLK_z: pressedKey = 0xa;
 				break;
-			case SDLK_b: temp = 0xb;
+			case SDLK_c: pressedKey = 0xb;
 				break;
-			case SDLK_c: temp = 0xc;
+			case SDLK_4: pressedKey = 0xc;
 				break;
-			case SDLK_d: temp = 0xd;
+			case SDLK_r: pressedKey = 0xd;
 				break;
-			case SDLK_e: temp = 0xe;
+			case SDLK_f: pressedKey = 0xe;
 				break;
-			case SDLK_f: temp = 0xf;
-				break;
-			default:	temp = 0x0;
+			case SDLK_v: pressedKey = 0xf;
 				break;
 			}
 		}
 	}
 
-	if (temp == *vx) match = 1;
-	if (flag == 1) *vx = temp;
-
-	return match;
 }
 
 void CPU::init(){
@@ -285,6 +230,8 @@ void CPU::init(){
 	delayTimer = 0;
 	soundTimer = 0;
 
+	pressedKey = -1;
+
 	load();
 
 	//clear videobuffer
@@ -296,7 +243,7 @@ void CPU::init(){
 	}
 
 	SDL_Init(SDL_INIT_VIDEO);
-	window = SDL_CreateWindow("chip8 emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow(filestr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 	int scan = 0;
@@ -310,6 +257,8 @@ void CPU::init(){
 		}
 
 	}
+
+	draw();
 }
 void CPU::run(){
 	running = true;
@@ -322,15 +271,14 @@ void CPU::update(){
 	//fetch - mem is 8bit, opcode is 16bit, big endian
 	//mem[pc] as top 8bit + mem[pc+1] as bottom 8bit = 16bit
 	currentOpcode = mem[programCounter] << 8 | mem[programCounter + 1];
-	
+
+	//keyInput
+	checkKeyInput();
 
 	//decode
 	decode(currentOpcode);
 
-	SDL_Event e;
-	while (SDL_PollEvent(&e)){
-		if (e.type == SDL_QUIT) running = false;
-	}
+	
 	SDL_Delay(1000 / 60); //60fps
 
 	//delay timer
@@ -346,7 +294,7 @@ void CPU::update(){
 
 
 	//draw
-	if ((currentOpcode & 0xf000) >> 12 == 0xd)	//only when draw called
+	if ((currentOpcode & 0xf000) >> 12 == 0xd || (currentOpcode & 0x00ff) == 0xe0)	//only when draw called
 		draw();
 
 

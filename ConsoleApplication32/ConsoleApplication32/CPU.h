@@ -27,7 +27,7 @@ private:
 	
 	uint16 currentOpcode;
 
-	uint8 key[16]; //16 keys
+	int pressedKey;
 	uint8 delayTimer; //delay timer
 	uint8 soundTimer; //sound timer
 	uint8 videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
@@ -42,7 +42,7 @@ private:
 	bool running;
 
 	void decode(uint16 input); //current opcode decoder
-	int checkKeyInput(uint8* vx, int flag = 0);
+	void checkKeyInput();
 
 public:
 
