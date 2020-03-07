@@ -114,11 +114,13 @@ void CPU::decode(uint16 input){
 		for (int y = 0; y < n; y++){
 			for (int x = 0; x < 8; x++){
 				int check1 = SCREEN_WIDTH * (*vy + y) + *vx + x;
-				uint8 check2 = (mem[indexRegister + y] << x) >> 7;
-
+				uint8 check2 = mem[indexRegister + y] << x;
+				check2 >>= 7;
+				//printf("%d ", check2);
 				if (videoBuffer[check1] & check2 != 0) *vf = 1;
 				videoBuffer[check1] ^= check2;
 			}
+			//printf("\n");
 		}
 		break;
 	case 0xe:	
@@ -216,7 +218,7 @@ void CPU::checkKeyInput(){
 		}
 		if (e.type == SDL_KEYUP) pressedKey = 0x10;
 	}
-	printf("pressed key : %x\n", pressedKey);
+	//printf("pressed key : %x\n", pressedKey);
 
 }
 
@@ -233,6 +235,9 @@ void CPU::init(){
 	pressedKey = 0x10;
 
 	load();
+
+	//init v register
+	for (int i = 0; i < V_REGISTER_SIZE; i++) v[i] = 0x0;
 
 	//clear videobuffer
 	for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) videoBuffer[i] = 0;
@@ -279,7 +284,7 @@ void CPU::update(){
 	decode(currentOpcode);
 
 	
-	SDL_Delay(1000 / 60); //60fps
+	//SDL_Delay(1000 / 60); //60fps
 
 	//delay timer
 	if (delayTimer > 0x0){
