@@ -150,9 +150,9 @@ void CPU::decode(uint16 input){
 		case 0x29:	indexRegister = *vx * 5;	//font is stored at mem[0 ~ FONT_COUNT * 5]
 			break;
 		case 0x33:	//bcd code
-			mem[indexRegister + 2] = *vx % 10; *vx /= 10;
-			mem[indexRegister + 1] = *vx % 10; *vx /= 10;
-			mem[indexRegister] = *vx;
+			mem[indexRegister] = *vx / 100;
+			mem[indexRegister + 1] = (*vx / 10) % 10;
+			mem[indexRegister + 2] = *vx % 10;
 			break;
 		case 0x55:	for (int i = 0; i <= (input & 0x0f00) >> 8; i++) mem[indexRegister++] = v[i];
 			break;
