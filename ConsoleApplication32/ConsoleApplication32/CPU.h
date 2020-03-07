@@ -6,13 +6,14 @@
 typedef unsigned char uint8;
 typedef unsigned short uint16;
 
-#define FULL_MEM_SIZE 0xfff
+#define FULL_MEM_SIZE 0x1000
 #define MID_MEM_SIZE 0x600
 #define START_MEM_SIZE 0x200
 #define STACK_SIZE 16
-#define V_REGISTER_SIZE 0xf
-#define SCREEN_WIDTH 64
-#define SCREEN_HEIGHT 32
+#define V_REGISTER_SIZE 0x10
+#define SCREEN_WIDTH 0x40
+#define SCREEN_HEIGHT 0x20
+#define FONT_COUNT 0x10
 
 class CPU{
 private:

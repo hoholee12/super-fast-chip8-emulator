@@ -1,6 +1,6 @@
 ﻿  CPU.cpp
-c:\users\hoholee12\documents\visual studio 2013\projects\consoleapplication32\consoleapplication32\cpu.cpp(147): warning C4554: '&' : 연산자 우선 순위에 오류가 있는지 확인하십시오. 괄호를 사용하여 우선 순위를 명확하게 지정하십시오.
-c:\users\hoholee12\documents\visual studio 2013\projects\consoleapplication32\consoleapplication32\cpu.cpp(268): warning C4244: '인수' : 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-c:\users\hoholee12\documents\visual studio 2013\projects\consoleapplication32\consoleapplication32\cpu.cpp(361): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\hoholee12\documents\visual studio 2013\projects\consoleapplication32\consoleapplication32\cpu.cpp(150): warning C4554: '&' : 연산자 우선 순위에 오류가 있는지 확인하십시오. 괄호를 사용하여 우선 순위를 명확하게 지정하십시오.
+c:\users\hoholee12\documents\visual studio 2013\projects\consoleapplication32\consoleapplication32\cpu.cpp(271): warning C4244: '인수' : 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+c:\users\hoholee12\documents\visual studio 2013\projects\consoleapplication32\consoleapplication32\cpu.cpp(367): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
           c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(211) : 'fopen' 선언을 참조하십시오.
   ConsoleApplication32.vcxproj -> C:\Users\hoholee12\documents\visual studio 2013\Projects\ConsoleApplication32\Debug\ConsoleApplication32.exe

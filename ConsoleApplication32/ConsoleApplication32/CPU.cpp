@@ -2,7 +2,7 @@
 #include<stdio.h>
 #include"CPU.h"
 
-uint8 fontSet[80] = {
+uint8 fontSet[FONT_COUNT * 5] = {
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 	0x20, 0x60, 0x20, 0x20, 0x70, // 1
 	0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -95,6 +95,9 @@ void CPU::decode(uint16 input){
 	//??y?
 	uint8 *vy = &v[(input & 0x00f0) >> 4];
 
+	//vf
+	uint8 *vf = &v[0xf];
+
 	//??kk
 	uint8 kk = input & 0x00ff;
 
@@ -140,15 +143,15 @@ void CPU::decode(uint16 input){
 			break;
 		case 0x3:	*vx ^= *vy;
 			break;
-		case 0x4:	v[V_REGISTER_SIZE] = (*vx + *vy > 0xff) ? 0x1 : 0x0; *vx += *vy;
+		case 0x4:	*vf = (*vx + *vy > 0xff) ? 0x1 : 0x0; *vx += *vy;
 			break;
-		case 0x5:	v[V_REGISTER_SIZE] = (*vx > *vy) ? 0x1 : 0x0; *vx -= *vy;
+		case 0x5:	*vf = (*vx > *vy) ? 0x1 : 0x0; *vx -= *vy;
 			break;
-		case 0x6:	v[V_REGISTER_SIZE] = (*vx & 0x000f == 0x1) ? 0x1 : 0x0; *vx >>= 1;
+		case 0x6:	*vf = (*vx & 0x000f == 0x1) ? 0x1 : 0x0; *vx >>= 1;
 			break;
-		case 0x7:	v[V_REGISTER_SIZE] = (*vx < *vy) ? 0x1 : 0x0; *vx = *vy - *vx;
+		case 0x7:	*vf = (*vx < *vy) ? 0x1 : 0x0; *vx = *vy - *vx;
 			break;
-		case 0xe:	v[V_REGISTER_SIZE] = ((*vx & 0xf000) >> 12 == 0x1) ? 0x1 : 0x0; *vx <<= 1;
+		case 0xe:	*vf = ((*vx & 0xf000) >> 12 == 0x1) ? 0x1 : 0x0; *vx <<= 1;
 			break;
 		}
 		break;
@@ -278,7 +281,7 @@ void CPU::init(){
 	load();
 
 	//load fontset from beginning of memory
-	for (int i = 0; i < 80; i++){
+	for (int i = 0; i < FONT_COUNT * 5; i++){
 		mem[i] = fontSet[i];
 	}
 
@@ -330,13 +333,16 @@ void CPU::update(){
 
 void CPU::draw(){
 
+	int scan = 0;
+
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer); //clear to blackscreen
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_Rect rect;
 	for (int i = 0; i < SCREEN_WIDTH; i++){
 		for (int j = 0; j < SCREEN_HEIGHT; j++){
-			if (videoBuffer[SCREEN_HEIGHT * i + j] > 0){
+			scan = SCREEN_HEIGHT * i + j;
+			if (videoBuffer[scan] > 0){
 				rect.x = i * 10;
 				rect.y = j * 10;
 				rect.w = 10;
