@@ -14,6 +14,7 @@ typedef unsigned short uint16;
 #define SCREEN_WIDTH 0x40
 #define SCREEN_HEIGHT 0x20
 #define FONT_COUNT 0x10
+#define SCALE 10
 
 class CPU{
 private:

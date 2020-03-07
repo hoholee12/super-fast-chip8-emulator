@@ -109,9 +109,6 @@ void CPU::decode(uint16 input){
 	//1 = is a jump; dont increment pc
 	int flag = 0;
 
-	//for DXYN
-	int pixel_flag = 0;	//if any pixel unset then vf = 1
-
 	//first nibble
 	switch ((input & 0xf000) >> 12){
 	case 0x0:
@@ -168,12 +165,17 @@ void CPU::decode(uint16 input){
 		break;
 	case 0xc:	*vx = (rand() % 0xff) & nn;	//random
 		break;
-	case 0xd:	
-		for (int i = 0; i < n; i++){
-			if (mem[indexRegister + i] == 0) pixel_flag = 1;
-			videoBuffer[SCREEN_WIDTH * *vy + *vx + i] = mem[indexRegister + i];	//draw screen
+	case 0xd:
+		*vf = 0x0; //default
+		for (int y = 0; y < n; y++){
+			for (int x = 0; x < 8; x++){
+				int check1 = SCREEN_WIDTH * (*vy + y) + *vx + x;
+				uint8 check2 = (mem[indexRegister + y] << x) >> 7;
+
+				if (videoBuffer[check1] & check2 != 0) *vf = 1;
+				videoBuffer[check1] ^= check2;
+			}
 		}
-		*vf = (pixel_flag == 1) ? 0x1 : 0x0;
 		break;
 	case 0xe:	
 		switch (input & 0x00ff){
@@ -224,44 +226,46 @@ void CPU::decode(uint16 input){
 */
 int CPU::checkKeyInput(uint8* vx, int flag){
 	int match = 0;
-	uint8 temp;
+	uint8 temp = 0x0;
 	SDL_Event e;
 	while (SDL_PollEvent(&e)){
-		switch (e.type){
-		case SDLK_0: temp = 0x0;
-			break;
-		case SDLK_1: temp = 0x1;
-			break;
-		case SDLK_2: temp = 0x2;
-			break;
-		case SDLK_3: temp = 0x3;
-			break;
-		case SDLK_4: temp = 0x4;
-			break;
-		case SDLK_5: temp = 0x5;
-			break;
-		case SDLK_6: temp = 0x6;
-			break;
-		case SDLK_7: temp = 0x7;
-			break;
-		case SDLK_8: temp = 0x8;
-			break;
-		case SDLK_9: temp = 0x9;
-			break;
-		case SDLK_a: temp = 0xa;
-			break;
-		case SDLK_b: temp = 0xb;
-			break;
-		case SDLK_c: temp = 0xc;
-			break;
-		case SDLK_d: temp = 0xd;
-			break;
-		case SDLK_e: temp = 0xe;
-			break;
-		case SDLK_f: temp = 0xf;
-			break;
-		default:	temp = 0x0;
-			break;
+		if (e.type == SDL_KEYDOWN) {
+			switch (e.key.keysym.sym){
+			case SDLK_0: temp = 0x0;
+				break;
+			case SDLK_1: temp = 0x1;
+				break;
+			case SDLK_2: temp = 0x2;
+				break;
+			case SDLK_3: temp = 0x3;
+				break;
+			case SDLK_4: temp = 0x4;
+				break;
+			case SDLK_5: temp = 0x5;
+				break;
+			case SDLK_6: temp = 0x6;
+				break;
+			case SDLK_7: temp = 0x7;
+				break;
+			case SDLK_8: temp = 0x8;
+				break;
+			case SDLK_9: temp = 0x9;
+				break;
+			case SDLK_a: temp = 0xa;
+				break;
+			case SDLK_b: temp = 0xb;
+				break;
+			case SDLK_c: temp = 0xc;
+				break;
+			case SDLK_d: temp = 0xd;
+				break;
+			case SDLK_e: temp = 0xe;
+				break;
+			case SDLK_f: temp = 0xf;
+				break;
+			default:	temp = 0x0;
+				break;
+			}
 		}
 	}
 
@@ -292,17 +296,17 @@ void CPU::init(){
 	}
 
 	SDL_Init(SDL_INIT_VIDEO);
-	window = SDL_CreateWindow("chip8 emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 10, SCREEN_HEIGHT * 10, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("chip8 emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 	int scan = 0;
 	for (int y = 0; y < SCREEN_HEIGHT; y++){
 		for (int x = 0; x < SCREEN_WIDTH; x++){
 			scan = SCREEN_WIDTH * y + x;
-			pixelRect[scan].x = x * 10;
-			pixelRect[scan].y = y * 10;
-			pixelRect[scan].w = 10;
-			pixelRect[scan].h = 10;
+			pixelRect[scan].x = x * SCALE;
+			pixelRect[scan].y = y * SCALE;
+			pixelRect[scan].w = SCALE;
+			pixelRect[scan].h = SCALE;
 		}
 
 	}
@@ -342,7 +346,8 @@ void CPU::update(){
 
 
 	//draw
-	draw();
+	if ((currentOpcode & 0xf000) >> 12 == 0xd)	//only when draw called
+		draw();
 
 
 }
