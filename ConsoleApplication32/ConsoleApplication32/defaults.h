@@ -9,9 +9,15 @@ defaults.h
 
 #include<SDL.h>
 #include<SDL_mixer.h>
+#include<stdlib.h>
+#include<stdio.h>
+
+#define SCREEN_FPS 60
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
+
+typedef unsigned int uint32;	//for tick
 
 class defaults{
 	Mix_Chunk* sound = NULL;
@@ -29,6 +35,13 @@ class defaults{
 
 	uint8 pressedKey;
 
+	//fps timer
+	uint32 screenFps = SCREEN_FPS;
+	uint32 screenTicksPerFrame = 1000 / screenFps;
+
+	uint32 prevTick;
+	int holdTick;
+
 public:
 
 	void audioInit();
@@ -39,6 +52,10 @@ public:
 
 	void inputInit();
 	uint8 getInput();
+
+	//fps timer
+	void startTime();
+	void endTime();
 };
 
 

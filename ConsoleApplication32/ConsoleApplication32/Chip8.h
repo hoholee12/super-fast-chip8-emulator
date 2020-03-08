@@ -7,7 +7,7 @@
 
 #include"defaults.h"
 
-class Chip8{
+class Chip8:public defaults{
 private:
 	CPU* cpu;
 	Memory* memory;

@@ -2,9 +2,15 @@
 
 void defaults::audioInit(){
 	//SDL stuff
+	putenv("SDL_AUDIODRIVER=DirectSound");
+	//SDL_ClearError();
 	SDL_Init(SDL_INIT_AUDIO);
+	//printf("%s\n", SDL_GetError());
+	//SDL_ClearError();
 	Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+	//printf("%s\n", SDL_GetError());
 	sound = Mix_LoadWAV(sound_file);
+	
 
 }
 
@@ -58,7 +64,7 @@ void defaults::drawVideo(uint8* videoBuffer){
 	}
 
 	SDL_RenderPresent(renderer); //update
-	SDL_Delay(1000 / 60); //60fps
+
 }
 
 void defaults::inputInit(){
@@ -111,4 +117,15 @@ uint8 defaults::getInput(){
 	}
 
 	return pressedKey;
+}
+
+void defaults::startTime(){
+	prevTick = SDL_GetTicks();
+}
+
+void defaults::endTime(){
+	uint32 currTick = SDL_GetTicks() - prevTick;
+	holdTick = screenTicksPerFrame - currTick;
+	if (holdTick > 0) SDL_Delay(holdTick);
+	//printf("prevTick = %d, currTick = %d, holdTick = %d\n", prevTick, currTick, holdTick);
 }

@@ -15,6 +15,7 @@ void Chip8::start(char* str){
 	input->init();
 	video->init(str);
 	audio->init();
+	audio->playAudio(); //test
 
 	keyinput = input->checkKeyInput();
 	run();
@@ -31,6 +32,8 @@ void Chip8::run(){
 
 
 void Chip8::update(){
+
+	defaults::startTime();
 
 	//fetch
 	currentOpcode = cpu->fetch(memory);
@@ -62,7 +65,7 @@ void Chip8::update(){
 	}
 	if (keyinput == 0xff) running = false;
 
-
+	defaults::endTime();
 	
 }
 

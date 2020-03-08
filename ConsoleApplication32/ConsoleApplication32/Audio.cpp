@@ -5,6 +5,7 @@ void Audio::init(){
 	
 	
 	defaults::audioInit();
+
 }
 
 void Audio::audioProcess(){
