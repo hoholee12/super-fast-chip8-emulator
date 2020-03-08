@@ -33,6 +33,12 @@
     <ClCompile Include="Chip8.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Audio.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="defaults.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CPU.h">
@@ -48,6 +54,12 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Chip8.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="defaults.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

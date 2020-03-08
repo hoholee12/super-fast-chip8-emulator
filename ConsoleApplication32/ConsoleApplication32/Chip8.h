@@ -1,14 +1,11 @@
 #pragma once
-
-#include<SDL/SDL.h>
-
 #include"CPU.h"
 #include"Memory.h"
 #include"Input.h"
 #include"Video.h"
+#include"Audio.h"
 
-typedef unsigned char uint8;
-typedef unsigned short uint16;
+#include"defaults.h"
 
 class Chip8{
 private:
@@ -16,6 +13,7 @@ private:
 	Memory* memory;
 	Input* input;
 	Video* video;
+	Audio* audio;
 
 	bool running;
 	uint16 currentOpcode;

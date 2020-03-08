@@ -1,8 +1,5 @@
 #pragma once
-#include<SDL/SDL.h>
-
-typedef unsigned char uint8;
-typedef unsigned short uint16;
+#include"defaults.h"
 
 /*
 
@@ -13,7 +10,7 @@ pressedKey:
 
 */
 
-class Input{
+class Input: public defaults{
 public:
 
 	

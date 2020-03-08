@@ -117,7 +117,7 @@ uint16 CPU::decode(Memory* memory, uint16 input, uint8 pressedKey){
 			break;
 		case 0x15:	delayTimer = *vx;
 			break;
-		case 0x18:	soundTimer = *vx;
+		case 0x18:	controllerOp = 0x3;
 			break;
 		case 0x1e:	indexRegister += *vx;
 			break;
@@ -152,12 +152,6 @@ uint16 CPU::decode(Memory* memory, uint16 input, uint8 pressedKey){
 		delayTimer--;
 	}
 
-	//beep until down to 0
-	if (soundTimer > 0x1){
-		printf("\a");
-		soundTimer--;
-	}
-
 	return controllerOp;
 
 }
@@ -187,7 +181,6 @@ void CPU::init(){
 	indexRegister = 0;
 
 	delayTimer = 0;
-	soundTimer = 0;
 
 	//init v register
 	for (int i = 0; i < V_REGISTER_SIZE; i++) v[i] = 0x0;

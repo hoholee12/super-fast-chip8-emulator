@@ -1,24 +1,17 @@
 #pragma once
-#include<SDL/SDL.h>
 #include"CPU.h"
 #include"Memory.h"
-
-typedef unsigned char uint8;
-typedef unsigned short uint16;
+#include"defaults.h"
 
 #define SCREEN_WIDTH 0x40
 #define SCREEN_HEIGHT 0x20
 #define SCALE 10
 
-class Video{
+class Video: public defaults{
 private:
 
 	uint8 videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
-	SDL_Rect pixelRect[SCREEN_WIDTH * SCREEN_HEIGHT];
-	//SDL stuff
-	SDL_Renderer* renderer;
-	SDL_Window* window;
-	SDL_Surface* screenSurface;
+	
 public:
 	void writeVBuffer(uint16 addr, uint8 input);
 	uint8 readVBuffer(uint16 addr);

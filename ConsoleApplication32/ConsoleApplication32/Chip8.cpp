@@ -8,12 +8,15 @@ void Chip8::start(char* str){
 	memory = new Memory();
 	input = new Input();
 	video = new Video();
+	audio = new Audio();
 
 	cpu->init();
 	memory->init(str);
 	input->init();
 	video->init(str);
+	audio->init();
 
+	keyinput = input->checkKeyInput();
 	run();
 
 }
@@ -23,7 +26,7 @@ void Chip8::run(){
 	while (running){
 		update();
 	}
-	SDL_Quit();
+	exit(0);
 }
 
 
@@ -39,8 +42,11 @@ void Chip8::update(){
 	//keyInput
 	keyinput = input->checkKeyInput();
 
+	//audio
+	audio->audioProcess();
 
-	//controller job
+
+	//controller
 	switch (controllerOp){
 	case 0x1:
 		video->clearVBuffer();
@@ -50,11 +56,13 @@ void Chip8::update(){
 		video->copySprite(currentOpcode, cpu, memory);
 		video->draw();
 		break;
+	case 0x3:
+		audio->setSoundTimer(currentOpcode, cpu);
+		break;
 	}
 	if (keyinput == 0xff) running = false;
 
 
-	//SDL_Delay(1000 / 60); //60fps
-
+	
 }
 

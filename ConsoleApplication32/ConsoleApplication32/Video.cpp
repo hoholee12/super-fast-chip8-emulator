@@ -4,23 +4,7 @@ void Video::init(char* str){
 	//clear videobuffer
 	for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) videoBuffer[i] = 0;
 
-
-	//SDL stuff
-	SDL_Init(SDL_INIT_VIDEO);
-	window = SDL_CreateWindow(str, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, SDL_WINDOW_SHOWN);
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-
-	int scan = 0;
-	for (int y = 0; y < SCREEN_HEIGHT; y++){
-		for (int x = 0; x < SCREEN_WIDTH; x++){
-			scan = SCREEN_WIDTH * y + x;
-			pixelRect[scan].x = x * SCALE;
-			pixelRect[scan].y = y * SCALE;
-			pixelRect[scan].w = SCALE;
-			pixelRect[scan].h = SCALE;
-		}
-
-	}
+	defaults::videoInit(str, SCREEN_WIDTH, SCREEN_HEIGHT, SCALE);
 
 	draw();
 
@@ -30,21 +14,8 @@ void Video::draw(){
 
 	int scan = 0;
 
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer); //clear to blackscreen
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	for (int y = 0; y < SCREEN_HEIGHT; y++){
-		for (int x = 0; x < SCREEN_WIDTH; x++){
-			scan = SCREEN_WIDTH * y + x;
-			if (videoBuffer[scan] > 0) SDL_SetRenderDrawColor(renderer, x * 4, y * 4, x * y * 16, 255);
-			else SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	defaults::drawVideo(videoBuffer);
 
-			SDL_RenderFillRect(renderer, &pixelRect[scan]);
-		}
-
-	}
-
-	SDL_RenderPresent(renderer); //update
 
 }
 

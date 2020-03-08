@@ -1,9 +1,7 @@
 #pragma once
 #include<stdio.h>
 #include<stdlib.h>	//FILE I/O
-
-typedef unsigned char uint8;
-typedef unsigned short uint16;
+#include"defaults.h"
 
 #define FONT_COUNT 0x10
 #define FULL_MEM_SIZE 0x1000

@@ -1,2 +1,14 @@
-﻿  Input.cpp
+﻿  defaults.cpp
+  Input.cpp
+  코드를 생성하고 있습니다...
+  컴파일하고 있습니다...
+  main.cpp
+  Video.cpp
+  Chip8.cpp
+  CPU.cpp
+c:\users\hoholee12\documents\visual studio 2013\projects\consoleapplication32\consoleapplication32\cpu.cpp(177): warning C4244: '인수' : 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  Audio.cpp
+  코드를 생성하고 있습니다...
+  건너뛰고 있습니다... (관련된 변경 내용 없음)
+  Memory.cpp
   ConsoleApplication32.vcxproj -> C:\Users\hoholee12\documents\visual studio 2013\Projects\ConsoleApplication32\Debug\ConsoleApplication32.exe

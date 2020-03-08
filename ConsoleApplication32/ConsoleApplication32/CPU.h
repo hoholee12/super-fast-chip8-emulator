@@ -4,9 +4,7 @@
 #include<stdlib.h>
 #include"Memory.h"
 #include"Input.h"
-
-typedef unsigned char uint8;
-typedef unsigned short uint16;
+#include"defaults.h"
 
 #define STACK_SIZE 16
 #define V_REGISTER_SIZE 0x10
@@ -21,7 +19,6 @@ private:
 	uint8 v[V_REGISTER_SIZE];
 	
 	uint8 delayTimer; //delay timer
-	uint8 soundTimer; //sound timer
 
 public:
 	//getters
