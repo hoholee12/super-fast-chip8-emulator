@@ -3,6 +3,7 @@
 #include<time.h>
 #include<stdlib.h>
 #include"Memory.h"
+#include"Input.h"
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -10,7 +11,7 @@ typedef unsigned short uint16;
 #define STACK_SIZE 16
 #define V_REGISTER_SIZE 0x10
 
-class CPU{
+class CPU: public Input{
 private:
 	
 	uint16 programCounter;

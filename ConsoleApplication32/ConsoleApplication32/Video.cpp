@@ -80,10 +80,10 @@ void Video::copySprite(uint16 input, CPU* cpu, Memory* memory){
 			int check1 = SCREEN_WIDTH * (*vy + y) + *vx + x;
 			uint8 check2 = memory->read(*cpu->getIndexRegister() + y) << x;
 			check2 >>= 7;
-			//printf("%d ", check2);
+			printf("%d ", check2);
 			if ((videoBuffer[check1] & check2) != 0) *vf = 0x1;
 			videoBuffer[check1] ^= check2;
 		}
-		//printf("\n");
+		printf("\n");
 	}
 }

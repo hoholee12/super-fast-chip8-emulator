@@ -4,6 +4,7 @@
 
 
 
+
 uint16 CPU::decode(Memory* memory, uint16 input, uint8 pressedKey){
 	uint16 controllerOp = 0x0;
 
@@ -112,7 +113,7 @@ uint16 CPU::decode(Memory* memory, uint16 input, uint8 pressedKey){
 		switch (input & 0x00ff){
 		case 0x07:	*vx = delayTimer;
 			break;
-		case 0x0a:	if (pressedKey != 0x10) *vx = pressedKey; else flag = 1; //wait again
+		case 0x0a:	if (Input::isKeyPressed(pressedKey) == true) *vx = pressedKey; else flag = 1; //wait again
 			break;
 		case 0x15:	delayTimer = *vx;
 			break;

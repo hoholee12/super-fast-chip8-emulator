@@ -1,4 +1,5 @@
 #include"Input.h"
+#include<stdio.h>
 
 void Input::init(){
 	pressedKey = 0xfe;
@@ -51,3 +52,6 @@ uint8 Input::checkKeyInput(){
 
 	return pressedKey;
 }
+
+
+bool Input::isKeyPressed(uint8 pressedKey){ return (pressedKey != defaultKey) ? true : false; }
