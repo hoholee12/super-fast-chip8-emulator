@@ -8,4 +8,4 @@ this project follows:
 http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
 
 demonstration:
-https://cdn.discordapp.com/attachments/650485184596017202/685896004868112611/bandicam_2020-03-08_02-05-18-658.mp4
+https://cdn.discordapp.com/attachments/465586212804100106/687357733414240324/bandicam_2020-03-12_02-46-06-470.mp4
