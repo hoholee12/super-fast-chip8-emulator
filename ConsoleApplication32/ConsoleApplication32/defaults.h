@@ -12,7 +12,8 @@ defaults.h
 #include<stdlib.h>
 #include<stdio.h>
 
-#define SCREEN_FPS 240
+#define SCREEN_FPS 960
+#define SKIP_FRAME 16
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -38,6 +39,8 @@ class defaults{
 	//fps timer
 	uint32 screenFps = SCREEN_FPS;
 	uint32 screenTicksPerFrame = 1000 / screenFps;
+
+	uint32 frameCount;
 
 	uint32 prevTick;
 	int holdTick;

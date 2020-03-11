@@ -48,16 +48,16 @@ void Chip8::update(){
 	//audio
 	audio->audioProcess();
 
+	//video - we now have frameskip
+	video->draw();
 
 	//controller
 	switch (controllerOp){
 	case 0x1:
 		video->clearVBuffer();
-		video->draw();
 		break;
 	case 0x2:
 		video->copySprite(currentOpcode, cpu, memory);
-		video->draw();
 		break;
 	case 0x3:
 		audio->setSoundTimer(currentOpcode, cpu);

@@ -45,9 +45,15 @@ void defaults::videoInit(char* str, int w, int h, int scale){
 
 	}
 
+	frameCount = 0;
+
 }
 
 void defaults::drawVideo(uint8* videoBuffer){
+
+	//update every SKIP_FRAME frames
+	if (frameCount++ % SKIP_FRAME != 0) return;
+
 	int scan = 0;
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer); //clear to blackscreen
