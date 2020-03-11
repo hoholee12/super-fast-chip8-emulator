@@ -35,7 +35,8 @@ uint16 CPU::decode(Memory* memory, uint16 input, uint8 pressedKey){
 	uint16 n = input & 0x000f;
 
 	//1 = is a jump; dont increment pc
-	int flag = 0;
+	//deprecated
+	int flag = 1;
 
 	//first nibble
 	switch ((input & 0xf000) >> 12){
@@ -163,6 +164,12 @@ uint16 CPU::fetch(Memory* memory){
 	//mem[pc] as top 8bit + mem[pc+1] as bottom 8bit = 16bit
 	currentOpcode = memory->read(programCounter) << 8;
 	currentOpcode |= memory->read(programCounter + 1);
+
+
+	//this is fetch -> programCounter++ -> execute
+	programCounter += 2;
+
+
 	return currentOpcode;
 }
 

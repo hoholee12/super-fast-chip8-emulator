@@ -12,7 +12,7 @@ defaults.h
 #include<stdlib.h>
 #include<stdio.h>
 
-#define SCREEN_FPS 60
+#define SCREEN_FPS 240
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
