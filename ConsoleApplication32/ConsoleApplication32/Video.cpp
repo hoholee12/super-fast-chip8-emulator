@@ -1,20 +1,20 @@
 #include"Video.h"
 
-void Video::init(char* str){
+void Video::init(char* str, defaults* mainwindow){
 	//clear videobuffer
 	for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) videoBuffer[i] = 0;
 
-	defaults::videoInit(str, SCREEN_WIDTH, SCREEN_HEIGHT, SCALE);
+	mainwindow->videoInit(str, SCREEN_WIDTH, SCREEN_HEIGHT, SCALE);
 
-	draw();
+	draw(mainwindow);
 
 }
 
-void Video::draw(){
+void Video::draw(defaults* mainwindow){
 
 	int scan = 0;
 
-	defaults::drawVideo(videoBuffer);
+	mainwindow->drawVideo(videoBuffer);
 
 
 }

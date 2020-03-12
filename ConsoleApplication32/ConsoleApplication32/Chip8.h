@@ -15,6 +15,9 @@
 
 class Chip8:public defaults{
 private:
+	char* title;
+	defaults* mainwindow;
+
 	CPU* cpu;
 	Memory* memory;
 	Input* input;
@@ -29,8 +32,13 @@ private:
 	uint8 keyinput;
 
 	//fps timer
-	uint32 screenTicksPerFrame = CPU_SPEED / SCREEN_FPS;
-	uint32 delayTimerPerFrame = CPU_SPEED / TIMER_SPEED;
+	uint32 cpuSpeed = CPU_SPEED;
+	uint32 timerSpeed = TIMER_SPEED;
+	uint32 screenFps = SCREEN_FPS;
+	//for reference. it will get reinitialized in start() and updateNewTimerSet()
+	uint32 screenTicksPerFrame = cpuSpeed / screenFps;	//cycles
+	uint32 delayTimerPerFrame = cpuSpeed / timerSpeed;	//cycles
+	uint32 screenDelayPerFrame = 1000 / screenFps;		//milliseconds
 
 	uint32 cycleCount;
 
@@ -40,10 +48,12 @@ private:
 	void startTime();
 	void videoDelay();	//set delay on video because primary output needs to be smooth
 
+	void updateNewTimerSet();
+
 public:
 	void run();	//looper
 	void update(); //all logic in here
 
-	void start(char* str); //start of emulation
+	void start(char* title, int cpuspeed = CPU_SPEED, int fps = SCREEN_FPS); //start of emulation
 
 };

@@ -7,7 +7,7 @@
 #define SCREEN_HEIGHT 0x20
 #define SCALE 10
 
-class Video: public defaults{
+class Video{
 private:
 
 	uint8 videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
@@ -20,8 +20,8 @@ public:
 
 	void copySprite(uint16 input, CPU* cpu, Memory* memory);
 
-	void draw(); //updates screen
+	void draw(defaults* mainwindow); //updates screen
 	
-	void init(char* str); //i do this only to display filename on window bar
+	void init(char* str, defaults* mainwindow); //i do this only to display filename on window bar
 
 };

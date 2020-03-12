@@ -25,9 +25,9 @@ void defaults::videoInit(char* str, int w, int h, int scale){
 	screenWidth = w;
 	screenHeight = h;
 
-
 	//SDL stuff
 	SDL_Init(SDL_INIT_VIDEO);
+	
 	window = SDL_CreateWindow(str, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w * scale, h * scale, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
@@ -128,4 +128,25 @@ uint32 defaults::checkTime(){
 
 void defaults::delayTime(uint32 input){
 	SDL_Delay(input);
+}
+
+void defaults::updateTitle(char* str, int cpuspeed, int fps, int frametime){
+	
+
+	strcpy(a0, str);
+	strcat(a0, a1);
+	itoa(cpuspeed, a5, 10);
+	strcat(a0, a5);
+	strcat(a0, a2);
+	itoa(fps, a5, 10);
+	strcat(a0, a5);
+	strcat(a0, a3);
+	itoa(frametime, a5, 10);
+	strcat(a0, a5);
+	strcat(a0, a4);
+
+	//printf("%s\n", a0);
+
+	SDL_SetWindowTitle(window, a0);
+
 }

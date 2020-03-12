@@ -1,11 +1,19 @@
 #include"Chip8.h"
 
-void Chip8::start(char* str){
+void Chip8::start(char* title, int cpuspeed, int fps){
+	this->title = title;
+
+	screenFps = fps;
+	cpuSpeed = cpuspeed;
+	updateNewTimerSet();
+
+
 	currentOpcode = 0;
 	keyinput = 0;
 
 	cycleCount = 0;
 
+	mainwindow = new defaults();
 	cpu = new CPU();
 	memory = new Memory();
 	input = new Input();
@@ -14,9 +22,9 @@ void Chip8::start(char* str){
 	timer = new Timer();
 
 	cpu->init();
-	memory->init(str);
+	memory->init(title);
 	input->init();
-	video->init(str);
+	video->init(title, mainwindow);
 	audio->init();
 	audio->playAudio(); //test
 	timer->init();
@@ -72,7 +80,7 @@ void Chip8::update(){
 
 	//video
 	if (cycleCount % screenTicksPerFrame == 0){
-		video->draw();
+		video->draw(mainwindow);
 		videoDelay();
 	}
 
@@ -89,8 +97,16 @@ void Chip8::startTime(){
 void Chip8::videoDelay(){
 	uint32 currTick = defaults::checkTime() - prevTick;
 
-	uint32 screenDelayPerFrame = 1000 / SCREEN_FPS;
 	holdTick = screenDelayPerFrame - currTick;
 	if (holdTick > 0) defaults::delayTime(holdTick);
-	//printf("prevTick = %d, currTick = %d, holdTick = %d\n", prevTick, currTick, holdTick);
+
+
+	//update title
+	mainwindow->updateTitle(title, cpuSpeed, screenFps, holdTick);
+}
+
+void Chip8::updateNewTimerSet(){
+	screenTicksPerFrame = cpuSpeed / screenFps;	//cycles
+	delayTimerPerFrame = cpuSpeed / timerSpeed;	//cycles
+	screenDelayPerFrame = 1000 / screenFps;		//milliseconds
 }

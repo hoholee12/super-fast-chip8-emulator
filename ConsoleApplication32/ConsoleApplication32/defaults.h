@@ -11,6 +11,7 @@ defaults.h
 #include<SDL_mixer.h>
 #include<stdlib.h>
 #include<stdio.h>
+#include<string.h>
 
 
 typedef unsigned char uint8;
@@ -19,6 +20,7 @@ typedef unsigned short uint16;
 typedef unsigned int uint32;	//for tick
 
 class defaults{
+public:
 	Mix_Chunk* sound = NULL;
 	char* sound_file = "klik.wav";
 
@@ -34,7 +36,15 @@ class defaults{
 
 	uint8 pressedKey;
 
-public:
+	//title stuff
+	char a0[100];
+	char* a1 = ": cpu speed=";
+	char* a2 = " fps=";
+	char* a3 = " frametime=";
+	char* a4 = "ms";
+	char a5[100];
+
+
 
 	void audioInit();
 	void playAudio();
@@ -48,6 +58,8 @@ public:
 	//fps timer
 	uint32 checkTime();
 	void delayTime(uint32 input); //sleep
+
+	void updateTitle(char* str, int cpuspeed, int fps, int frametime);
 };
 
 
