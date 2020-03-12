@@ -12,7 +12,8 @@
 #define CPU_SPEED 1000	//clockspeed
 #define TIMER_SPEED 60	//this is original implementation do not touch
 #define SCREEN_FPS 60	//fps
-#define WINDOW_FPS 60	//title refresh
+#define WINDOW_FPS 1	//window
+#define SKIP_VALUE 2	//fps / skipValue
 
 class Chip8:public defaults{
 private:
@@ -36,15 +37,21 @@ private:
 	uint32 cpuSpeed = CPU_SPEED;
 	uint32 timerSpeed = TIMER_SPEED;
 	uint32 screenFps = SCREEN_FPS;
+	uint32 windowFps = WINDOW_FPS;
 	//for reference. it will get reinitialized in start() and updateNewTimerSet()
 	uint32 screenTicksPerFrame = cpuSpeed / screenFps;	//cycles
 	uint32 delayTimerPerFrame = cpuSpeed / timerSpeed;	//cycles
 	uint32 screenDelayPerFrame = 1000 / screenFps;		//milliseconds
+	uint32 windowTicksPerFrame = cpuSpeed / windowFps;	//cycles
 
 	uint32 cycleCount;
 
 	uint32 prevTick;
 	int holdTick;
+
+	int skipValue = SKIP_VALUE; //frameskipper
+	bool skipFlag = false;
+	uint32 backupFps;
 	//fps timer
 	void startTime();
 	void videoDelay();	//set delay on video because primary output needs to be smooth
