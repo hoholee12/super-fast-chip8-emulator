@@ -11,18 +11,22 @@ pressedKey:
 */
 
 class Input: public defaults{
+private:
+	uint8 pressedKey;
 public:
 
 	
-
-	uint8 pressedKey;
+	uint8 getKey();
+	
 
 	//loop this with system
-	uint8 checkKeyInput();
+	void checkKeyInput();
 	void init();
+
 
 
 	//standalone
 	uint8 defaultKey = 0xfe;
 	bool isKeyPressed(uint8 pressedKey);
+
 };

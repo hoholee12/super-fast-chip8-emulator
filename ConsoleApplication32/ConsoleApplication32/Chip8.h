@@ -12,6 +12,7 @@
 #define CPU_SPEED 1000	//clockspeed
 #define TIMER_SPEED 60	//this is original implementation do not touch
 #define SCREEN_FPS 60	//fps
+#define WINDOW_FPS 60	//title refresh
 
 class Chip8:public defaults{
 private:

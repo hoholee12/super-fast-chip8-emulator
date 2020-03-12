@@ -7,14 +7,14 @@ void Input::init(){
 	defaults::inputInit();
 }
 
-uint8 Input::checkKeyInput(){
+void Input::checkKeyInput(){
 
 
 	pressedKey = defaults::getInput();
 	//printf("pressed key : %x\n", pressedKey);
 
-	return pressedKey;
 }
 
+uint8 Input::getKey(){ return pressedKey; }
 
 bool Input::isKeyPressed(uint8 pressedKey){ return (pressedKey != defaultKey) ? true : false; }

@@ -29,7 +29,7 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 	audio->playAudio(); //test
 	timer->init();
 
-	keyinput = input->checkKeyInput();
+	keyinput = input->getKey();
 	run();
 
 }
@@ -45,7 +45,8 @@ void Chip8::run(){
 
 void Chip8::update(){
 
-	startTime();
+	////check time on first frame
+	if (cycleCount % screenTicksPerFrame == 0) startTime();
 
 	//fetch
 	currentOpcode = cpu->fetch(memory);
@@ -68,25 +69,26 @@ void Chip8::update(){
 	if (keyinput == 0xff) running = false;
 
 
-
-	//keyInput
-	keyinput = input->checkKeyInput();
-
-	//audio
-	audio->audioProcess();
-
-	//delay timer
-	timer->cycleDelayTimer(cycleCount, delayTimerPerFrame);
-
-	//video
-	if (cycleCount % screenTicksPerFrame == 0){
-		video->draw(mainwindow);
-		videoDelay();
+	//delay timer - with audio, input process
+	if (timer->cycleDelayTimer(cycleCount, delayTimerPerFrame)){
+		audio->audioProcess();
+		input->checkKeyInput();
+		//get stored keyinput value
+		keyinput = input->getKey();
 	}
 
 
+
+	//video
+	////check time just before drawing next frame
+	if (cycleCount % screenTicksPerFrame == screenTicksPerFrame - 1){
+		video->draw(mainwindow);
+		videoDelay();
+		mainwindow->updateTitle(title, cpuSpeed, screenFps, holdTick);
+	}
+
 	cycleCount++;
-	
+
 }
 
 
@@ -99,10 +101,11 @@ void Chip8::videoDelay(){
 
 	holdTick = screenDelayPerFrame - currTick;
 	if (holdTick > 0) defaults::delayTime(holdTick);
+	else {
+		static int test = 0;
+		printf("delay skipped: %d times!\n", ++test);
+	}
 
-
-	//update title
-	mainwindow->updateTitle(title, cpuSpeed, screenFps, holdTick);
 }
 
 void Chip8::updateNewTimerSet(){
