@@ -4,11 +4,14 @@ void Chip8::start(char* str){
 	currentOpcode = 0;
 	keyinput = 0;
 
+	cycleCount = 0;
+
 	cpu = new CPU();
 	memory = new Memory();
 	input = new Input();
 	video = new Video();
 	audio = new Audio();
+	timer = new Timer();
 
 	cpu->init();
 	memory->init(str);
@@ -16,6 +19,7 @@ void Chip8::start(char* str){
 	video->init(str);
 	audio->init();
 	audio->playAudio(); //test
+	timer->init();
 
 	keyinput = input->checkKeyInput();
 	run();
@@ -33,23 +37,13 @@ void Chip8::run(){
 
 void Chip8::update(){
 
-	defaults::startTime();
+	startTime();
 
 	//fetch
 	currentOpcode = cpu->fetch(memory);
 	
-	
 	//decode
-	controllerOp = cpu->decode(memory, currentOpcode, keyinput);
-
-	//keyInput
-	keyinput = input->checkKeyInput();
-
-	//audio
-	audio->audioProcess();
-
-	//video - we now have frameskip
-	video->draw();
+	controllerOp = cpu->decode(memory, timer, currentOpcode, keyinput);
 
 	//controller
 	switch (controllerOp){
@@ -65,7 +59,38 @@ void Chip8::update(){
 	}
 	if (keyinput == 0xff) running = false;
 
-	defaults::endTime();
+
+
+	//keyInput
+	keyinput = input->checkKeyInput();
+
+	//audio
+	audio->audioProcess();
+
+	//delay timer
+	timer->cycleDelayTimer(cycleCount, delayTimerPerFrame);
+
+	//video
+	if (cycleCount % screenTicksPerFrame == 0){
+		video->draw();
+		videoDelay();
+	}
+
+
+	cycleCount++;
 	
 }
 
+
+void Chip8::startTime(){
+	prevTick = defaults::checkTime();
+}
+
+void Chip8::videoDelay(){
+	uint32 currTick = defaults::checkTime() - prevTick;
+
+	uint32 screenDelayPerFrame = 1000 / SCREEN_FPS;
+	holdTick = screenDelayPerFrame - currTick;
+	if (holdTick > 0) defaults::delayTime(holdTick);
+	//printf("prevTick = %d, currTick = %d, holdTick = %d\n", prevTick, currTick, holdTick);
+}

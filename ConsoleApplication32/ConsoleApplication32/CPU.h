@@ -1,10 +1,12 @@
 #pragma once
 
-#include<time.h>
 #include<stdlib.h>
+#include<time.h>	//for random seed
+
 #include"Memory.h"
 #include"Input.h"
 #include"defaults.h"
+#include"Timer.h"
 
 #define STACK_SIZE 16
 #define V_REGISTER_SIZE 0x10
@@ -18,7 +20,7 @@ private:
 	uint16 stack[STACK_SIZE];
 	uint8 v[V_REGISTER_SIZE];
 	
-	uint8 delayTimer; //delay timer
+	
 
 public:
 	//getters
@@ -30,7 +32,7 @@ public:
 
 
 
-	uint16 decode(Memory* memory, uint16 input, uint8 pressedKey); //current opcode decoder
+	uint16 decode(Memory* memory, Timer* timer, uint16 input, uint8 pressedKey); //current opcode decoder
 	uint16 fetch(Memory* memory);
 	
 	void init();

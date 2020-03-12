@@ -4,8 +4,7 @@
 
 
 
-
-uint16 CPU::decode(Memory* memory, uint16 input, uint8 pressedKey){
+uint16 CPU::decode(Memory* memory, Timer* timer, uint16 input, uint8 pressedKey){
 	uint16 controllerOp = 0x0;
 
 	//TODO
@@ -112,11 +111,11 @@ uint16 CPU::decode(Memory* memory, uint16 input, uint8 pressedKey){
 		break;
 	case 0xf:
 		switch (input & 0x00ff){
-		case 0x07:	*vx = delayTimer;
+		case 0x07:	*vx = timer->getDelayTimer();
 			break;
 		case 0x0a:	if (Input::isKeyPressed(pressedKey) == true) *vx = pressedKey; else flag = 1; //wait again
 			break;
-		case 0x15:	delayTimer = *vx;
+		case 0x15:	timer->setDelayTimer(*vx);
 			break;
 		case 0x18:	controllerOp = 0x3;
 			break;
@@ -148,10 +147,7 @@ uint16 CPU::decode(Memory* memory, uint16 input, uint8 pressedKey){
 	programCounter += 2; //increment after fetch
 
 
-	//delay timer
-	if (delayTimer > 0x0){
-		delayTimer--;
-	}
+	
 
 	return controllerOp;
 
@@ -186,8 +182,6 @@ void CPU::init(){
 	programCounter = 0x200; //start at 0x200
 	stackPointer = 0;
 	indexRegister = 0;
-
-	delayTimer = 0;
 
 	//init v register
 	for (int i = 0; i < V_REGISTER_SIZE; i++) v[i] = 0x0;

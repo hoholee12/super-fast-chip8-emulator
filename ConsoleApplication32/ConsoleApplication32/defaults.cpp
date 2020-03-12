@@ -45,14 +45,11 @@ void defaults::videoInit(char* str, int w, int h, int scale){
 
 	}
 
-	frameCount = 0;
+	
 
 }
 
 void defaults::drawVideo(uint8* videoBuffer){
-
-	//update every SKIP_FRAME frames
-	if (frameCount++ % SKIP_FRAME != 0) return;
 
 	int scan = 0;
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -125,13 +122,10 @@ uint8 defaults::getInput(){
 	return pressedKey;
 }
 
-void defaults::startTime(){
-	prevTick = SDL_GetTicks();
+uint32 defaults::checkTime(){
+	return SDL_GetTicks();
 }
 
-void defaults::endTime(){
-	uint32 currTick = SDL_GetTicks() - prevTick;
-	holdTick = screenTicksPerFrame - currTick;
-	if (holdTick > 0) SDL_Delay(holdTick);
-	//printf("prevTick = %d, currTick = %d, holdTick = %d\n", prevTick, currTick, holdTick);
+void defaults::delayTime(uint32 input){
+	SDL_Delay(input);
 }

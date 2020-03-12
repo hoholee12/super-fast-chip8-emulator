@@ -12,8 +12,6 @@ defaults.h
 #include<stdlib.h>
 #include<stdio.h>
 
-#define SCREEN_FPS 960
-#define SKIP_FRAME 16
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -36,15 +34,6 @@ class defaults{
 
 	uint8 pressedKey;
 
-	//fps timer
-	uint32 screenFps = SCREEN_FPS;
-	uint32 screenTicksPerFrame = 1000 / screenFps;
-
-	uint32 frameCount;
-
-	uint32 prevTick;
-	int holdTick;
-
 public:
 
 	void audioInit();
@@ -57,8 +46,8 @@ public:
 	uint8 getInput();
 
 	//fps timer
-	void startTime();
-	void endTime();
+	uint32 checkTime();
+	void delayTime(uint32 input); //sleep
 };
 
 
