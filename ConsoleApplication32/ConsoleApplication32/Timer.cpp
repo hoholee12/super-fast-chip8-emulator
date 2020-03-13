@@ -5,9 +5,10 @@ void Timer::init(uint32* input){
 	cycleCount = 0;
 }
 
-void Timer::updateTimer(){
-	if (cycleCount < *delayTimerPerFrame) cycleCount++;
-	else cycleCount = 0;
+void Timer::updateTimer(uint32 timerInput){
+	cycleCount++;
+	if (cycleCount > *delayTimerPerFrame / timerInput - 1) cycleCount = 0;
+	
 }
 
 bool Timer::checkTimer(){

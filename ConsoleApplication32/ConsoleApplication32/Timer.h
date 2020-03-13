@@ -10,7 +10,7 @@ private:
 
 public:
 	void init(uint32* input);
-	void updateTimer();
+	void updateTimer(uint32 timerInput = 1);
 
 	//return true if reached an end of delay
 	bool checkTimer();

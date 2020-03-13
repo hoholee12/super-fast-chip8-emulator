@@ -77,43 +77,51 @@ void Chip8::update(){
 			break;
 		}
 
-	//delay timer - with audio, input process
+	//delay timer - merged with audio, input, video, window process for less overhead.
+	////main 60hz - caution! anything undivisable by it may have slower response!!
 	if (delayTimerInstance->checkTimer()){
 		if (delayRegister > 0x0) delayRegister--;
-		audio->audioProcess();
-		input->checkKeyInput();
-		//get stored keyinput value
-		keyinput = input->getKey();
-	}
 
-	//video - loop based on frameskip value
-	if (fskipTimerInstance->checkTimer()){
-		video->draw(mainwindow);	//draw
+		//audio - 60hz
+		audio->audioProcess();
 		
+
+		//input - 60hz?
+		input->checkKeyInput();
+		keyinput = input->getKey(); //keyinput maybe needed for other instances
+
+
+		//video - loop based on fskip hz value, may skip a bit more if undivisable
+		if (fskipTimerInstance->checkTimer()){
+			video->draw(mainwindow);	//draw
+
+		}
+
+		//window - 1hz
+		if (windowTimerInstance->checkTimer()){
+			mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
+			if (keyinput == 0xff) running = false;	//shutdown emulator
+		}
+
+		//update internal timers
+		windowTimerInstance->updateTimer(*fskip->getDelayTimer());
+		fskipTimerInstance->updateTimer(*fskip->getDelayTimer());
 	}
 
 	//frameskip
-	////check time before drawing next frame
+	////user framerate most of the time undivisable by 60hz
 	if (videoTimerInstance->checkTimer()){
 		fskip->endTime();			//end timer
 		fskip->calculateSkip();		//calculate
 		fskip->videoDelay();		//delay
-		
+
 		fskip->startTime();			//next timer
 	}
-
-
-	//window
-	if (windowTimerInstance->checkTimer()){
-		mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
-		if (keyinput == 0xff) running = false;
-	}
-
-
+	
 	//update timers
-	videoTimerInstance->updateTimer();
-	fskipTimerInstance->updateTimer();
 	delayTimerInstance->updateTimer();
-	windowTimerInstance->updateTimer();
+	videoTimerInstance->updateTimer();
+
+
 }
 
