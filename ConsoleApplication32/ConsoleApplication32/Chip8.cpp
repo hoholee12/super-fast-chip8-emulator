@@ -3,13 +3,6 @@
 void Chip8::start(char* title, int cpuspeed, int fps){
 	this->title = title;
 
-
-	//frameskip init
-	screenFps = fps;
-	cpuSpeed = cpuspeed;
-	updateNewTimerSet();
-	calculateSkip();
-
 	currentOpcode = 0;
 	keyinput = 0;
 
@@ -19,6 +12,7 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 	input = new Input();
 	video = new Video();
 	audio = new Audio();
+	fskip = new Frameskip();
 
 	videoTimerInstance = new Timer();
 	fskipTimerInstance = new Timer();
@@ -31,19 +25,24 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 	video->init(title, mainwindow);
 	audio->init();
 	audio->playAudio(); //test
-	videoTimerInstance->init(&screenTicksPerFrame);
-	fskipTimerInstance->init(&backupTicksPerFrame);
-	delayTimerInstance->init(&delayTimerPerFrame);
-	windowTimerInstance->init(&windowTicksPerFrame);
+	
+	fskip->init(cpuspeed, fps);
+	videoTimerInstance->init(fskip->getVideoTimer());
+	fskipTimerInstance->init(fskip->getFskipTimer());
+	delayTimerInstance->init(fskip->getDelayTimer());
+	windowTimerInstance->init(fskip->getWindowTimer());
+
+	
+
 	delayRegister = 0x0;
 
 	keyinput = input->getKey();
 	run();
 
 	//start timer
-	endTime();			//end timer
-	calculateSkip();	//calculate
-	startTime();		//next timer
+	fskip->endTime();		//end timer
+	fskip->calculateSkip();	//calculate
+	fskip->startTime();		//next timer
 }
 
 void Chip8::run(){
@@ -88,23 +87,25 @@ void Chip8::update(){
 	}
 
 	//video - loop based on frameskip value
-	if (fskipTimerInstance->checkTimer())
+	if (fskipTimerInstance->checkTimer()){
 		video->draw(mainwindow);	//draw
-
+		
+	}
 
 	//frameskip
 	////check time before drawing next frame
 	if (videoTimerInstance->checkTimer()){
-		endTime();			//end timer
-		calculateSkip();	//calculate
-		videoDelay();		//delay
-		startTime();		//next timer
+		fskip->endTime();			//end timer
+		fskip->calculateSkip();		//calculate
+		fskip->videoDelay();		//delay
+		
+		fskip->startTime();			//next timer
 	}
 
 
 	//window
 	if (windowTimerInstance->checkTimer()){
-		mainwindow->updateTitle(title, cpuSpeed, backupFps, holdTick);
+		mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
 		if (keyinput == 0xff) running = false;
 	}
 
@@ -116,54 +117,3 @@ void Chip8::update(){
 	windowTimerInstance->updateTimer();
 }
 
-
-void Chip8::startTime(){
-	prevTick = defaults::checkTime();
-}
-
-void Chip8::endTime(){
-	currTick = defaults::checkTime() - prevTick;	//current tick checked here
-
-	holdTick = screenDelayPerFrame - currTick;		//for original speed
-	
-}
-
-void Chip8::videoDelay(){
-
-	holdTick_fskip = backupDelayPerFrame - currTick;	//for frameskip speed
-
-	
-	if(holdTick > 0) defaults::delayTime(holdTick);
-	
-
-}
-
-void Chip8::updateNewTimerSet(){
-
-	screenTicksPerFrame = cpuSpeed / screenFps;	//cycles
-	delayTimerPerFrame = cpuSpeed / timerSpeed;	//cycles
-	screenDelayPerFrame = 1000 / screenFps;		//milliseconds
-	windowTicksPerFrame = cpuSpeed / windowFps;	//cycles
-}
-
-void Chip8::calculateSkip(){
-	
-	//skip mechanism
-	int tempTick = holdTick;
-	if (holdTick < 0){
-		tempTick *= -1; //convert to positive
-		skipMultiplier = tempTick / screenDelayPerFrame + 1;
-		backupFps = screenFps / (skipValue * skipMultiplier);
-	}
-	else backupFps = screenFps;
-
-	if (backupFps == 0) backupFps = 1;		//prevent div by zero
-
-	//printf("holdtick = %d holdtickfskip = %d skipmultiplier = %d\n", holdTick, holdTick_fskip, skipMultiplier);
-
-	//apply skip value
-	backupTicksPerFrame = cpuSpeed / backupFps;
-	backupDelayPerFrame = 1000 / backupFps;		//milliseconds
-	
-
-}
