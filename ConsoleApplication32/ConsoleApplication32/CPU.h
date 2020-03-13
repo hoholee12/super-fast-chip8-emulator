@@ -32,7 +32,7 @@ public:
 
 
 
-	uint16 decode(Memory* memory, Timer* timer, uint16 input, uint8 pressedKey); //current opcode decoder
+	uint16 decode(Memory* memory, uint8 *delayRegister, uint16 input, uint8 pressedKey); //current opcode decoder
 	uint16 fetch(Memory* memory);
 	
 	void init();

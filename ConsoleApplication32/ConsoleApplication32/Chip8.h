@@ -5,6 +5,7 @@
 #include"Video.h"
 #include"Audio.h"
 #include"Timer.h"
+#include"Frameskip.h"
 
 #include"defaults.h"
 
@@ -12,7 +13,7 @@
 #define CPU_SPEED 1000	//clockspeed
 #define TIMER_SPEED 60	//this is original implementation do not touch
 #define SCREEN_FPS 60	//fps
-#define WINDOW_FPS 1	//window
+#define WINDOW_FPS 30	//window
 #define SKIP_VALUE 2	//fps / skipValue
 
 class Chip8:public defaults{
@@ -25,13 +26,19 @@ private:
 	Input* input;
 	Video* video;
 	Audio* audio;
-	Timer* timer;
 
 	bool running;
 	uint16 currentOpcode;
 	uint16 controllerOp;	//after cpu processes its stuff, next is chip8 controller output job
 
 	uint8 keyinput;
+	uint8 delayRegister; //delay register
+
+	Timer* videoTimerInstance;
+	Timer* fskipTimerInstance;
+	Timer* delayTimerInstance;
+	Timer* windowTimerInstance;
+
 
 	//fps timer
 	uint32 cpuSpeed = CPU_SPEED;
@@ -43,8 +50,6 @@ private:
 	uint32 delayTimerPerFrame = cpuSpeed / timerSpeed;	//cycles
 	uint32 screenDelayPerFrame = 1000 / screenFps;		//milliseconds
 	uint32 windowTicksPerFrame = cpuSpeed / windowFps;	//cycles
-
-	uint32 cycleCount;
 
 	uint32 prevTick = 0;
 	int holdTick = 0;
