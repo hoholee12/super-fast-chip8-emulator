@@ -83,6 +83,7 @@
     <ClCompile Include="Chip8.cpp" />
     <ClCompile Include="CPU.cpp" />
     <ClCompile Include="defaults.cpp" />
+    <ClCompile Include="Frameskip.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Memory.cpp" />
@@ -94,6 +95,7 @@
     <ClInclude Include="Chip8.h" />
     <ClInclude Include="CPU.h" />
     <ClInclude Include="defaults.h" />
+    <ClInclude Include="Frameskip.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="Timer.h" />

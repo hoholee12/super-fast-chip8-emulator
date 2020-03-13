@@ -3,10 +3,12 @@
 void Chip8::start(char* title, int cpuspeed, int fps){
 	this->title = title;
 
+
+	//frameskip init
 	screenFps = fps;
 	cpuSpeed = cpuspeed;
 	updateNewTimerSet();
-
+	calculateSkip();
 
 	currentOpcode = 0;
 	keyinput = 0;
@@ -33,7 +35,9 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 	run();
 
 	//start timer
-	startTime();
+	endTime();			//end timer
+	calculateSkip();	//calculate
+	startTime();		//next timer
 }
 
 void Chip8::run(){
@@ -77,17 +81,21 @@ void Chip8::update(){
 		keyinput = input->getKey();
 	}
 
+	//video - loop based on frameskip value
+	if (cycleCount % backupTicksPerFrame == 0)
+		video->draw(mainwindow);	//draw
 
 
-	//video
-	////check time just before drawing next frame
+
+	//frameskip
+	////check time before drawing next frame
 	if (cycleCount % screenTicksPerFrame == 0){
-		video->draw(mainwindow);
-		videoDelay();			//sets skipFlag
-		updateNewTimerSet();	//frameskipper
-
-		startTime();			//next timer
+		endTime();			//end timer
+		calculateSkip();	//calculate
+		videoDelay();		//delay
+		startTime();		//next timer
 	}
+
 
 	//window
 	if (cycleCount % windowTicksPerFrame == 0)
@@ -102,33 +110,49 @@ void Chip8::startTime(){
 	prevTick = defaults::checkTime();
 }
 
-void Chip8::videoDelay(){
-	uint32 currTick = defaults::checkTime() - prevTick;
+void Chip8::endTime(){
+	currTick = defaults::checkTime() - prevTick;	//current tick checked here
 
-	holdTick = screenDelayPerFrame - currTick;
-	skipFlag = false;
-	if (holdTick > 0) defaults::delayTime(holdTick);
-	else {
-		//static int test = 0;
-		//printf("delay skipped: %d times!\n", ++test);
-		skipFlag = true;	//halve next framerate
-	}
+	holdTick = screenDelayPerFrame - currTick;		//for original speed
+	
+}
+
+void Chip8::videoDelay(){
+
+	holdTick_fskip = backupDelayPerFrame - currTick;	//for frameskip speed
+
+	
+	if(holdTick > 0) defaults::delayTime(holdTick);
+	
 
 }
 
 void Chip8::updateNewTimerSet(){
 
+	screenTicksPerFrame = cpuSpeed / screenFps;	//cycles
+	delayTimerPerFrame = cpuSpeed / timerSpeed;	//cycles
+	screenDelayPerFrame = 1000 / screenFps;		//milliseconds
+	windowTicksPerFrame = cpuSpeed / windowFps;	//cycles
+}
+
+void Chip8::calculateSkip(){
+	
 	//skip mechanism
-	if (skipFlag == true){
-		backupFps /= skipValue;
-	}
-	else if (backupFps < screenFps){
-		backupFps *= skipValue;
+	int tempTick = holdTick;
+	if (holdTick < 0){
+		tempTick *= -1; //convert to positive
+		skipMultiplier = tempTick / screenDelayPerFrame + 1;
+		backupFps = screenFps / (skipValue * skipMultiplier);
 	}
 	else backupFps = screenFps;
 
-	screenTicksPerFrame = cpuSpeed / backupFps;	//cycles
-	delayTimerPerFrame = cpuSpeed / timerSpeed;	//cycles
-	screenDelayPerFrame = 1000 / backupFps;		//milliseconds
-	windowTicksPerFrame = cpuSpeed / windowFps;	//cycles
+	if (backupFps == 0) backupFps = 1;		//prevent div by zero
+
+	//printf("holdtick = %d holdtickfskip = %d skipmultiplier = %d\n", holdTick, holdTick_fskip, skipMultiplier);
+
+	//apply skip value
+	backupTicksPerFrame = cpuSpeed / backupFps;
+	backupDelayPerFrame = 1000 / backupFps;		//milliseconds
+	
+
 }

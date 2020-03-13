@@ -46,17 +46,24 @@ private:
 
 	uint32 cycleCount;
 
-	uint32 prevTick;
-	int holdTick;
+	uint32 prevTick = 0;
+	int holdTick = 0;
+	int holdTick_fskip = 0;
+	uint32 currTick = 0;
 
 	int skipValue = SKIP_VALUE; //frameskipper
-	bool skipFlag = false;
+	int skipMultiplier = 1;
 	uint32 backupFps;
+	uint32 backupTicksPerFrame = cpuSpeed / backupFps;
+	uint32 backupDelayPerFrame = 1000 / backupFps;
+
 	//fps timer
 	void startTime();
+	void endTime();
 	void videoDelay();	//set delay on video because primary output needs to be smooth
 
 	void updateNewTimerSet();
+	void calculateSkip();
 
 public:
 	void run();	//looper
