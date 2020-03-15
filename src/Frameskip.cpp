@@ -64,7 +64,8 @@ void Frameskip::calculateSkip(){
 
 	//apply skip value
 	backupTicksPerFrame = cpuSpeed / backupFps;
-	backupDelayPerFrame = 1000 / backupFps;		//milliseconds
+	//backupDelayPerFrame = 1000 / screenFps;		//milliseconds
+	//this wouldnt make sense, new sleep calculation means slower speed with slower fps lol
 
 
 }

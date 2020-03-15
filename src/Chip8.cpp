@@ -78,7 +78,7 @@ void Chip8::update(){
 		}
 
 	//delay timer - merged with audio, input, video, window process for less overhead.
-	////main 60hz - caution! anything undivisable by it may have slower response!!
+	////main 60hz - caution! anything indivisable by it may have slower response!!
 	if (delayTimerInstance->checkTimer()){
 		if (delayRegister > 0x0) delayRegister--;
 
@@ -91,7 +91,7 @@ void Chip8::update(){
 		keyinput = input->getKey(); //keyinput maybe needed for other instances
 
 
-		//video - loop based on fskip hz value, may skip a bit more if undivisable
+		//video - loop based on fskip hz value, may skip a bit more if indivisable
 		if (fskipTimerInstance->checkTimer()){
 			video->draw(mainwindow);	//draw
 
@@ -109,7 +109,7 @@ void Chip8::update(){
 	}
 
 	//frameskip
-	////user framerate most of the time undivisable by 60hz
+	////user framerate most of the time indivisable by 60hz
 	if (videoTimerInstance->checkTimer()){
 		fskip->endTime();			//end timer
 		fskip->calculateSkip();		//calculate
