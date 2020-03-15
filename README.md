@@ -1,8 +1,15 @@
 # chip8-emulator
-your average emulator using c and sdl2.0
+your average emulator using c++ and sdl2.0
 
 tried to make it as simple as possible.
-also im still fixing it so dont bother asking why it wont work!
+interpreter is done. recompiler is in the works
+
+-auto frameskip
+-upto 3.5mhz(3500000hz) in 60fps for intel 5th gen 3.1ghz cpu
+
+-this code requires sdl2 and sdl2_mixer to compile
+
+also im still fixing it so dont bother asking why some games wont work!
 
 this project follows:
 http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
