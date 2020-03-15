@@ -28,7 +28,7 @@ private:
 
 	int skipValue = SKIP_VALUE; //frameskipper
 	int skipMultiplier = 1;
-	uint32 backupFps;
+	uint32 backupFps = screenFps;
 	uint32 backupTicksPerFrame = cpuSpeed / backupFps;
 	uint32 backupDelayPerFrame = 1000 / backupFps;
 

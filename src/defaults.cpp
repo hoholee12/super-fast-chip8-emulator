@@ -131,18 +131,19 @@ void defaults::delayTime(uint32 input){
 }
 
 void defaults::updateTitle(char* str, int cpuspeed, int fps, int frametime){
-	
+	using namespace std;
+
 
 	strcpy(a0, str);
 	strcat(a0, a1);
-	itoa(cpuspeed, a5, 10);
-	strcat(a0, a5);
+	strcat(a0, to_string(cpuspeed).c_str());
+	//strcat(a0, a5);
 	strcat(a0, a2);
-	itoa(fps, a5, 10);
-	strcat(a0, a5);
+	strcat(a0, to_string(fps).c_str());
+	//strcat(a0, a5);
 	strcat(a0, a3);
-	itoa(frametime, a5, 10);
-	strcat(a0, a5);
+	strcat(a0, to_string(frametime).c_str());
+	//strcat(a0, a5);
 	strcat(a0, a4);
 
 	//printf("%s\n", a0);

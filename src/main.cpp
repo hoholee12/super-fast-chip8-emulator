@@ -1,6 +1,10 @@
 #include"Chip8.h"
 #include<stdio.h>
 
+#ifdef __cplusplus
+extern "C"
+#endif
+
 //argc argv is essential for SDL program!!!
 int main(int argc, char** argv){
 	Chip8 chip;
