@@ -7,7 +7,8 @@ interpreter is done. recompiler is in the works
 -auto frameskip
 -upto 3.5mhz(3500000hz) in 60fps for intel 5th gen 3.1ghz cpu(msvc2013)
 
--this code requires sdl2 and sdl2_mixer to compile(check your include locations.. its on SDL2/SDL.h and SDL2/SDL_Mixer.h)
+-this code requires sdl2 and sdl2_mixer to compile(look into defaults.h if you encounter location problems)
+-you also need data/sound/klik.wav in same directory format for sound.
 
 also im still fixing it so dont bother asking why some games wont work!
 
