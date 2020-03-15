@@ -22,7 +22,7 @@ typedef unsigned int uint32;	//for tick
 class defaults{
 public:
 	Mix_Chunk* sound = NULL;
-	char* sound_file = "klik.wav";
+	const char* sound_file = "klik.wav";
 
 
 	//SDL stuff
@@ -38,10 +38,10 @@ public:
 
 	//title stuff
 	char a0[100];
-	char* a1 = ": cpu speed=";
-	char* a2 = " fps=";
-	char* a3 = " frametime=";
-	char* a4 = "ms";
+	const char* a1 = ": cpu speed=";
+	const char* a2 = " fps=";
+	const char* a3 = " frametime=";
+	const char* a4 = "ms";
 	char a5[100];
 
 
