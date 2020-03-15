@@ -11,7 +11,10 @@ int main(int argc, char** argv){
 	int clockspeed;
 	int fps;
 
-
+	if(argc < 2){
+		fprintf(stderr, "feed me with a chip8 program.\n");
+		exit(1);
+	}
 	printf("do you want to change emulation settings? (y/n):");
 	switch (getchar()){
 	case 'y':
