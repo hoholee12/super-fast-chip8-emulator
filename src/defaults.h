@@ -7,8 +7,14 @@ defaults.h
 
 */
 
+#ifdef _WIN32
+#include<SDL.h>
+#include<SDL_mixer.h>	//this guy apparently requires SDL.h not SDL/SDL.h
+#else
 #include<SDL2/SDL.h>
 #include<SDL2/SDL_mixer.h>
+#endif
+
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
@@ -23,7 +29,7 @@ typedef unsigned int uint32;	//for tick
 class defaults{
 public:
 	Mix_Chunk* sound = NULL;
-	const char* sound_file = "klik.wav";
+	const char* sound_file = "data/sound/klik.wav";
 
 
 	//SDL stuff
