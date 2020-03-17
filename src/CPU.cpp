@@ -34,8 +34,7 @@ uint16 CPU::decode(Memory* memory, uint8* delayRegister, uint16 input, uint8 pre
 	uint16 n = input & 0x000f;
 
 	//1 = is a jump; dont increment pc
-	//deprecated
-	int flag = 1;
+	int flag = 0;
 
 	//first nibble
 	switch ((input & 0xf000) >> 12){
@@ -45,13 +44,13 @@ uint16 CPU::decode(Memory* memory, uint8* delayRegister, uint16 input, uint8 pre
 			break;
 		case 0xee:	programCounter = stack[--stackPointer]; flag = 1;//return from subroutine
 			break;
-		default:	stack[stackPointer++] = programCounter; programCounter = nnn; flag = 1;//call subroutine from nnn
+		default:	stack[stackPointer++] = programCounter += 2;/*pc++ before stack*/ programCounter = nnn; flag = 1;//call subroutine from nnn
 			break;
 		}
 		break;
 	case 0x1:	programCounter = nnn; flag = 1;//jump to nnn
 		break;
-	case 0x2:	stack[stackPointer++] = programCounter; programCounter = nnn; flag = 1;//call subroutine from nnn
+	case 0x2:	stack[stackPointer++] = programCounter += 2;/*pc++ before stack*/ programCounter = nnn; flag = 1;//call subroutine from nnn
 		break;
 	case 0x3:	if (*vx == nn) programCounter += 2; //skip if ==
 		break;
@@ -163,7 +162,7 @@ uint16 CPU::fetch(Memory* memory){
 
 
 	//this is fetch -> programCounter++ -> execute
-	programCounter += 2;
+	//programCounter += 2;
 
 
 	return currentOpcode;

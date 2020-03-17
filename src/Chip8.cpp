@@ -60,6 +60,12 @@ void Chip8::update(){
 	//fetch
 	currentOpcode = cpu->fetch(memory);
 
+#ifdef DEBUG_ME
+	//debugger
+	static int count = 0;
+	Debug::printDebug(count++, *cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode);
+#endif
+
 	//decode
 	controllerOp = cpu->decode(memory, &delayRegister, currentOpcode, keyinput);
 
@@ -122,6 +128,6 @@ void Chip8::update(){
 	delayTimerInstance->updateTimer();
 	videoTimerInstance->updateTimer();
 
-
+	
 }
 

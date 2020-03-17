@@ -8,10 +8,11 @@
 #include"Frameskip.h"
 
 #include"defaults.h"
+#include"Debug.h"
 
 
 
-class Chip8:public defaults{
+class Chip8:public defaults, Debug{
 private:
 	char* title;
 	defaults* mainwindow;
