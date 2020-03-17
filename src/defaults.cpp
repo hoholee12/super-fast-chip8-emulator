@@ -1,8 +1,10 @@
 #include"defaults.h"
 
 void defaults::audioInit(){
+#ifdef _WIN32
 	//SDL stuff
 	putenv("SDL_AUDIODRIVER=DirectSound");
+#endif
 	//SDL_ClearError();
 	SDL_Init(SDL_INIT_AUDIO);
 	//printf("%s\n", SDL_GetError());
