@@ -1,22 +1,26 @@
 #include"Debug.h"
 
-void Debug::printDebug(int count, uint8 pc, uint16 stack, uint16 input){
-	printf("%d:\tpc: %x\t\tstack: %x\tcurrent opcode: %x\t", count, pc, stack, input);
+void Debug::printDebug(uint16 pc, uint16 stack, uint16 input){
+	static int count = 0;
+	static bool inCall = false;
+
+	if (inCall) printf("(call)\t");
+	printf("%d:\tpc: %x\t\tstack: %x\topcode: %x\t", ++count, pc, stack, input);
 
 	switch ((input & 0xf000) >> 12){
 	case 0x0:
 		switch (input & 0x00ff){
 		case 0xe0: printf("video\n");
 			break;
-		case 0xee:	printf("ret\n");//return from subroutine
+		case 0xee:	printf("ret\n"); inCall = false;//return from subroutine
 			break;
-		default: printf("call\n");//call subroutine from nnn
+		default: printf("call\n"); inCall = true; //call subroutine from nnn
 			break;
 		}
 		break;
 	case 0x1: printf("jmp\n");//jump to nnn
 		break;
-	case 0x2:	 printf("call\n");//call subroutine from nnn
+	case 0x2:	 printf("call\n"); inCall = true; //call subroutine from nnn
 		break;
 	case 0x3:	 printf("skip\n");//skip if ==
 		break;

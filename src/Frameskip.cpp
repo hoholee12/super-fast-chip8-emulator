@@ -7,6 +7,7 @@ void Frameskip::init(int cpuspeed, int fps){
 	screenFps = fps;
 	if (screenFps > timerSpeed) screenFps = timerSpeed; //no more than timerSpeed 60hz
 	cpuSpeed = cpuspeed;
+	if (cpuSpeed < timerSpeed) cpuSpeed = timerSpeed; //prevent division by zero
 	updateNewTimerSet();
 	calculateSkip();
 

@@ -42,15 +42,15 @@ uint16 CPU::decode(Memory* memory, uint8* delayRegister, uint16 input, uint8 pre
 		switch (input & 0x00ff){
 		case 0xe0:	controllerOp = 0x1;
 			break;
-		case 0xee:	programCounter = stack[--stackPointer]; flag = 1;//return from subroutine
+		case 0xee:	programCounter = stack[--stackPointer]; //return from subroutine	(and increment pc after to get out of loop)
 			break;
-		default:	stack[stackPointer++] = programCounter += 2;/*pc++ before stack*/ programCounter = nnn; flag = 1;//call subroutine from nnn
+		default:	stack[stackPointer++] = programCounter; programCounter = nnn; flag = 1;//call subroutine from nnn	(dont increment pc)
 			break;
 		}
 		break;
-	case 0x1:	programCounter = nnn; flag = 1;//jump to nnn
+	case 0x1:	programCounter = nnn; flag = 1;//jump to nnn	(dont increment pc)
 		break;
-	case 0x2:	stack[stackPointer++] = programCounter += 2;/*pc++ before stack*/ programCounter = nnn; flag = 1;//call subroutine from nnn
+	case 0x2:	stack[stackPointer++] = programCounter; programCounter = nnn; flag = 1;//call subroutine from nnn	(dont increment pc)
 		break;
 	case 0x3:	if (*vx == nn) programCounter += 2; //skip if ==
 		break;
@@ -90,7 +90,7 @@ uint16 CPU::decode(Memory* memory, uint8* delayRegister, uint16 input, uint8 pre
 		break;
 	case 0xa:	indexRegister = nnn;
 		break;
-	case 0xb:	programCounter = nnn + v[0]; flag = 1;
+	case 0xb:	programCounter = nnn + v[0]; flag = 1; //(dont increment pc)
 		break;
 	case 0xc:	*vx = (rand() % 0xff) & nn;	//random
 		break;
@@ -112,7 +112,7 @@ uint16 CPU::decode(Memory* memory, uint8* delayRegister, uint16 input, uint8 pre
 		switch (input & 0x00ff){
 		case 0x07:	*vx = *delayRegister;
 			break;
-		case 0x0a:	if (Input::isKeyPressed(pressedKey) == true) *vx = pressedKey; else flag = 1; //wait again
+		case 0x0a:	if (Input::isKeyPressed(pressedKey) == true) *vx = pressedKey; else flag = 1; //wait again	(dont increment pc)
 			break;
 		case 0x15:	*delayRegister = *vx;
 			break;

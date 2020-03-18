@@ -7,7 +7,7 @@ void Timer::init(uint32* input){
 
 void Timer::updateTimer(uint32 timerInput){
 	cycleCount++;
-	if (cycleCount > *delayTimerPerFrame / timerInput - 1) cycleCount = 0;
+	if (cycleCount > (*delayTimerPerFrame / timerInput) - 1) cycleCount = 0;
 	
 }
 

@@ -1,10 +1,15 @@
 #include"Chip8.h"
 
 void Chip8::start(char* title, int cpuspeed, int fps){
+	//backup
 	this->title = title;
+	this->cpuspeed = cpuspeed;
+	this->fps = fps;
 
 	currentOpcode = 0;
 	keyinput = 0;
+
+	isEndlessLoop = false;
 
 	mainwindow = new defaults();
 	cpu = new CPU();
@@ -26,23 +31,22 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 	audio->init();
 	audio->playAudio(); //test
 	
-	fskip->init(cpuspeed, fps);
-	videoTimerInstance->init(fskip->getVideoTimer());
-	fskipTimerInstance->init(fskip->getFskipTimer());
-	delayTimerInstance->init(fskip->getDelayTimer());
-	windowTimerInstance->init(fskip->getWindowTimer());
-
-	
+	init(cpuspeed, fps);
 
 	delayRegister = 0x0;
 
 	keyinput = input->getKey();
 	run();
 
-	//start timer
-	fskip->endTime();		//end timer
-	fskip->calculateSkip();	//calculate
-	fskip->startTime();		//next timer
+}
+
+void Chip8::init(int cpuspeed, int fps){
+	fskip->init(cpuspeed, fps);
+	videoTimerInstance->init(fskip->getVideoTimer());
+	fskipTimerInstance->init(fskip->getFskipTimer());
+	delayTimerInstance->init(fskip->getDelayTimer());
+	windowTimerInstance->init(fskip->getWindowTimer());
+	
 }
 
 void Chip8::run(){
@@ -58,13 +62,14 @@ void Chip8::run(){
 void Chip8::update(){
 
 	//fetch
+	previousOpcode = currentOpcode;
 	currentOpcode = cpu->fetch(memory);
 
 #ifdef DEBUG_ME
 	//debugger
-	static int count = 0;
-	Debug::printDebug(count++, *cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode);
+	debugMe();
 #endif
+
 
 	//decode
 	controllerOp = cpu->decode(memory, &delayRegister, currentOpcode, keyinput);
@@ -109,6 +114,10 @@ void Chip8::update(){
 			if (keyinput == 0xff) running = false;	//shutdown emulator
 		}
 
+
+		//cycle optimizations
+		optimizations();
+
 		//update internal timers
 		windowTimerInstance->updateTimer(*fskip->getDelayTimer());
 		fskipTimerInstance->updateTimer(*fskip->getDelayTimer());
@@ -128,6 +137,59 @@ void Chip8::update(){
 	delayTimerInstance->updateTimer();
 	videoTimerInstance->updateTimer();
 
-	
 }
 
+void Chip8::optimizations(){
+	//optimize endless loops
+	if (previousOpcode == currentOpcode){
+		static bool doOnce = false;
+		if (doOnce == false){
+			init(1, fps);
+			isEndlessLoop = true;
+			doOnce = true;
+		}
+	}
+
+	//optimize three inst loops
+	static int count = 0;
+	static bool doOnce = false;
+	if (currentOpcode == 0x3000 && count == 0){
+		count++;
+	}
+	else if (currentOpcode == 0x121a && count == 1){
+		count++;
+	}
+	else if (currentOpcode == 0xf007 && count == 2){
+		count = 0;
+		if (doOnce == false){
+			init(1, fps);
+			isEndlessLoop = true;
+			doOnce = true;
+		}
+	}
+	else{
+		if (doOnce == true){
+			init(cpuspeed, fps);
+			isEndlessLoop = false;
+			doOnce = false;
+		}
+		count = 0;
+		isEndlessLoop = false;
+	}
+}
+
+void Chip8::debugMe(){
+	//debugger
+	static int count = 0;
+	static bool doOnce = false;
+	if (!isEndlessLoop){
+		doOnce = false;
+		Debug::printDebug(*cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode);
+	}
+	else{
+		if (doOnce == false){
+			printf("endless loop from here\n");
+			doOnce = true;
+		}
+	}
+}

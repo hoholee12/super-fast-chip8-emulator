@@ -31,7 +31,7 @@ public:
 	uint8* getV(uint8 input);
 
 
-
+	//interpreter needs memory to access, a 60hz delay register(not implemented in cpu), a fetched opcode, and input key
 	uint16 decode(Memory* memory, uint8 *delayRegister, uint16 input, uint8 pressedKey); //current opcode decoder
 	uint16 fetch(Memory* memory);
 	
