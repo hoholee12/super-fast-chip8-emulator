@@ -172,9 +172,10 @@ void Chip8::optimizations(){
 			init(cpuspeed, fps);
 			isEndlessLoop = false;
 			doOnce = false;
+
+			count = 0;
+			isEndlessLoop = false;
 		}
-		count = 0;
-		isEndlessLoop = false;
 	}
 }
 
