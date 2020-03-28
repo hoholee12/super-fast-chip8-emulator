@@ -23,6 +23,7 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 	fskipTimerInstance = new Timer();
 	delayTimerInstance = new Timer();
 	windowTimerInstance = new Timer();
+	fsbInstance = new Timer();
 
 	cpu->init();
 	memory->init(title);
@@ -31,7 +32,7 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 	audio->init();
 	audio->playAudio(); //test
 	
-	init(cpuspeed, fps);
+	initSpeed(cpuspeed, fps);
 
 	delayRegister = 0x0;
 
@@ -40,13 +41,13 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 
 }
 
-void Chip8::init(int cpuspeed, int fps){
+void Chip8::initSpeed(int cpuspeed, int fps){
 	fskip->init(cpuspeed, fps);
 	videoTimerInstance->init(fskip->getVideoTimer());
 	fskipTimerInstance->init(fskip->getFskipTimer());
 	delayTimerInstance->init(fskip->getDelayTimer());
 	windowTimerInstance->init(fskip->getWindowTimer());
-	
+	fsbInstance->init(fskip->getFsbTimer());
 }
 
 void Chip8::run(){
@@ -88,19 +89,20 @@ void Chip8::update(){
 			break;
 		}
 
-	//delay timer - merged with audio, input, video, window process for less overhead.
-	////main 60hz - caution! anything indivisable by it may have slower response!!
-	if (delayTimerInstance->checkTimer()){
-		if (delayRegister > 0x0) delayRegister--;
-
-		//audio - 60hz
-		audio->audioProcess();
+	//120hz for extra cycle optimization
+	if (fsbInstance->checkTimer()){
 		
+		//delay timer - 60hz
+		if (delayTimerInstance->checkTimer()){
+			if (delayRegister > 0x0) delayRegister--;
 
-		//input - 60hz?
-		input->checkKeyInput();
-		keyinput = input->getKey(); //keyinput maybe needed for other instances
+			//audio - 60hz
+			audio->audioProcess();
 
+			//input - 60hz?
+			input->checkKeyInput();
+			keyinput = input->getKey(); //keyinput maybe needed for other instances
+		}
 
 		//video - loop based on fskip hz value, may skip a bit more if indivisable
 		if (fskipTimerInstance->checkTimer()){
@@ -115,12 +117,13 @@ void Chip8::update(){
 		}
 
 
-		//cycle optimizations
+		//cycle optimizations - 120hz
 		optimizations();
 
 		//update internal timers
-		windowTimerInstance->updateTimer(*fskip->getDelayTimer());
-		fskipTimerInstance->updateTimer(*fskip->getDelayTimer());
+		delayTimerInstance->updateTimer(*fskip->getFsbTimer());
+		windowTimerInstance->updateTimer(*fskip->getFsbTimer());
+		fskipTimerInstance->updateTimer(*fskip->getFsbTimer());
 	}
 
 	//frameskip
@@ -134,7 +137,7 @@ void Chip8::update(){
 	}
 	
 	//update timers
-	delayTimerInstance->updateTimer();
+	fsbInstance->updateTimer();
 	videoTimerInstance->updateTimer();
 
 }
@@ -144,7 +147,7 @@ void Chip8::optimizations(){
 	if (previousOpcode == currentOpcode){
 		static bool doOnce = false;
 		if (doOnce == false){
-			init(1, fps);
+			initSpeed(1, fps);
 			isEndlessLoop = true;
 			doOnce = true;
 		}
@@ -153,23 +156,23 @@ void Chip8::optimizations(){
 	//optimize three inst loops
 	static int count = 0;
 	static bool doOnce = false;
-	if (currentOpcode == 0x3000 && count == 0){
+	if (((currentOpcode >> 12) == 0xf) && ((currentOpcode & 0x00ff) == 0x07)  && count == 0){
 		count++;
 	}
-	else if (currentOpcode == 0x121a && count == 1){
+	else if (((currentOpcode >> 12) == 0x3) && count == 1){
 		count++;
 	}
-	else if (currentOpcode == 0xf007 && count == 2){
+	else if (((currentOpcode >> 12) == 0x1) && count == 2){
 		count = 0;
 		if (doOnce == false){
-			init(1, fps);
+			initSpeed(1, fps);
 			isEndlessLoop = true;
 			doOnce = true;
 		}
 	}
 	else{
 		if (doOnce == true){
-			init(cpuspeed, fps);
+			initSpeed(cpuspeed, fps);
 			isEndlessLoop = false;
 			doOnce = false;
 

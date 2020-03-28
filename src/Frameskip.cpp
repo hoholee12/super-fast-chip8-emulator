@@ -7,7 +7,7 @@ void Frameskip::init(int cpuspeed, int fps){
 	screenFps = fps;
 	if (screenFps > timerSpeed) screenFps = timerSpeed; //no more than timerSpeed 60hz
 	cpuSpeed = cpuspeed;
-	if (cpuSpeed < timerSpeed) cpuSpeed = timerSpeed; //prevent division by zero
+	if (cpuSpeed < fsbSpeed) cpuSpeed = fsbSpeed; //prevent division by zero
 	updateNewTimerSet();
 	calculateSkip();
 
@@ -17,6 +17,7 @@ uint32* Frameskip::getVideoTimer(){ return &screenTicksPerFrame; }
 uint32* Frameskip::getFskipTimer(){ return &backupTicksPerFrame; }
 uint32* Frameskip::getDelayTimer(){ return &delayTimerPerFrame; }
 uint32* Frameskip::getWindowTimer(){ return &windowTicksPerFrame; }
+uint32* Frameskip::getFsbTimer(){ return &fsbTicksPerFrame; }
 
 uint32 Frameskip::getCpuSpeed(){ return cpuSpeed; }
 uint32 Frameskip::getBackupFps(){ return backupFps; }
@@ -42,10 +43,11 @@ void Frameskip::videoDelay(){
 
 void Frameskip::updateNewTimerSet(){
 
-	screenTicksPerFrame = cpuSpeed / screenFps;	//cycles
-	delayTimerPerFrame = cpuSpeed / timerSpeed;	//cycles
-	screenDelayPerFrame = 1000 / screenFps;		//milliseconds
-	windowTicksPerFrame = cpuSpeed / windowFps;	//cycles
+	screenTicksPerFrame = cpuSpeed / screenFps;		//cycles
+	delayTimerPerFrame = cpuSpeed / timerSpeed;		//cycles
+	screenDelayPerFrame = 1000 / screenFps;			//milliseconds
+	windowTicksPerFrame = cpuSpeed / windowFps;		//cycles
+	fsbTicksPerFrame = cpuSpeed / fsbSpeed;	//cycles
 }
 
 void Frameskip::calculateSkip(){

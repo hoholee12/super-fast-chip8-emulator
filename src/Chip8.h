@@ -34,12 +34,13 @@ private:
 	uint8 keyinput;
 	uint8 delayRegister; //delay register
 
+	Timer* fsbInstance;
 	Timer* videoTimerInstance;
 	Timer* fskipTimerInstance;
 	Timer* delayTimerInstance;
 	Timer* windowTimerInstance;
 
-	void init(int cpuspeed, int fps);	//in case of reinitialization
+	void initSpeed(int cpuspeed, int fps);	//in case of reinitialization
 	
 	bool isEndlessLoop = false;
 
