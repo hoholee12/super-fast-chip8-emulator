@@ -37,7 +37,7 @@ uint16 CPU::decode(Memory* memory, uint8* delayRegister, uint16 input, uint8 pre
 	int flag = 0;
 
 	//first nibble
-	switch ((input & 0xf000) >> 12){
+	switch (input >> 12){
 	case 0x0:
 		switch (input & 0x00ff){
 		case 0xe0:	controllerOp = 0x1;

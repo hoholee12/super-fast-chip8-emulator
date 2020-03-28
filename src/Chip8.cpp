@@ -91,6 +91,8 @@ void Chip8::update(){
 
 	//120hz for extra cycle optimization
 	if (fsbInstance->checkTimer()){
+		//cycle optimizations - 120hz
+		optimizations();
 		
 		//delay timer - 60hz
 		if (delayTimerInstance->checkTimer()){
@@ -113,13 +115,10 @@ void Chip8::update(){
 		//window - 1hz
 		if (windowTimerInstance->checkTimer()){
 			mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
+			if (keyinput == 0xff) running = false;	//shutdown emulator
 		}
 
-		if (keyinput == 0xff) running = false;	//shutdown emulator
-
-		//cycle optimizations - 120hz
-		optimizations();
-
+		
 		//update internal timers
 		delayTimerInstance->updateTimer(*fskip->getFsbTimer());
 		windowTimerInstance->updateTimer(*fskip->getFsbTimer());
@@ -165,7 +164,7 @@ void Chip8::optimizations(){
 	else if (((currentOpcode >> 12) == 0x1) && count == 2){
 		count = 0;
 		if (doOnce == false){
-			initSpeed(cpuspeed / 2, fps);
+			initSpeed(1, fps);
 			isEndlessLoop = true;
 			doOnce = true;
 		}
