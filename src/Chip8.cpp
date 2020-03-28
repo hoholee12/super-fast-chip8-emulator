@@ -113,9 +113,9 @@ void Chip8::update(){
 		//window - 1hz
 		if (windowTimerInstance->checkTimer()){
 			mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
-			if (keyinput == 0xff) running = false;	//shutdown emulator
 		}
 
+		if (keyinput == 0xff) running = false;	//shutdown emulator
 
 		//cycle optimizations - 120hz
 		optimizations();
@@ -165,7 +165,7 @@ void Chip8::optimizations(){
 	else if (((currentOpcode >> 12) == 0x1) && count == 2){
 		count = 0;
 		if (doOnce == false){
-			initSpeed(1, fps);
+			initSpeed(cpuspeed / 2, fps);
 			isEndlessLoop = true;
 			doOnce = true;
 		}
