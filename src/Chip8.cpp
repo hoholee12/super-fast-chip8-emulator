@@ -91,8 +91,6 @@ void Chip8::update(){
 
 	//120hz for extra cycle optimization
 	if (fsbInstance->checkTimer()){
-		//cycle optimizations - 120hz
-		optimizations();
 		
 		//delay timer - 60hz
 		if (delayTimerInstance->checkTimer()){
@@ -115,9 +113,13 @@ void Chip8::update(){
 		//window - 1hz
 		if (windowTimerInstance->checkTimer()){
 			mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
-			if (keyinput == 0xff) running = false;	//shutdown emulator
 		}
 
+		if (keyinput == 0xff) running = false;	//shutdown emulator
+
+		//cycle optimizations - 120hz
+		optimizations();
+		useSpeedHack(); //here
 		
 		//update internal timers
 		delayTimerInstance->updateTimer(*fskip->getFsbTimer());
@@ -128,11 +130,14 @@ void Chip8::update(){
 	//frameskip
 	////user framerate most of the time indivisable by 60hz
 	if (videoTimerInstance->checkTimer()){
+
 		fskip->endTime();			//end timer
 		fskip->calculateSkip();		//calculate
 		fskip->videoDelay();		//delay
-
+		
 		fskip->startTime();			//next timer
+		
+
 	}
 	
 	//update timers
@@ -141,12 +146,24 @@ void Chip8::update(){
 
 }
 
+// -1: neutral, 0: low, 0<: high
+void Chip8::useSpeedHack(){
+	if (speedHack > 0){
+		initSpeed(speedHack, fps);
+		speedHack = -1;	//neutral
+	}
+	else if (speedHack == 0){
+		initSpeed(cpuspeed, fps);
+		speedHack = -1;	//neutral
+	}
+}
+
 void Chip8::optimizations(){
 	//optimize endless loops
 	if (previousOpcode == currentOpcode){
 		static bool doOnce = false;
 		if (doOnce == false){
-			initSpeed(1, fps);
+			speedHack = 1;
 			isEndlessLoop = true;
 			doOnce = true;
 		}
@@ -164,14 +181,14 @@ void Chip8::optimizations(){
 	else if (((currentOpcode >> 12) == 0x1) && count == 2){
 		count = 0;
 		if (doOnce == false){
-			initSpeed(1, fps);
+			speedHack = 1;
 			isEndlessLoop = true;
 			doOnce = true;
 		}
 	}
 	else{
 		if (doOnce == true){
-			initSpeed(cpuspeed, fps);
+			speedHack = 0;
 			isEndlessLoop = false;
 			doOnce = false;
 

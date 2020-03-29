@@ -40,9 +40,13 @@ private:
 	Timer* delayTimerInstance;
 	Timer* windowTimerInstance;
 
+	int speedHack = -1; // -1: neutral, 0: low, 0<: high
+
 	void initSpeed(int cpuspeed, int fps);	//in case of reinitialization
+
+	void useSpeedHack();
 	
-	bool isEndlessLoop = false;
+	bool isEndlessLoop = false;	//notify debugger that this is endless loop
 
 public:
 	void run();	//looper
