@@ -24,12 +24,18 @@ private:
 	uint16 stack[STACK_SIZE];
 	uint8 v[V_REGISTER_SIZE];
 
+
+#define OPCODE_TABLE_SIZE 0x10
+#define OPCODE_TABLE_0_SIZE 0xff
+#define OPCODE_TABLE_8_SIZE 0xf
+#define OPCODE_TABLE_E_SIZE 0xff
+#define OPCODE_TABLE_F_SIZE 0xff
 	//opcode table
-	CPUTable opcode_table[0x10];
-	CPUTable opcode_table_0[0xef];
-	CPUTable opcode_table_8[0x9];
-	CPUTable opcode_table_e[0xa2];
-	CPUTable opcode_table_f[0x66];
+	CPUTable opcode_table[OPCODE_TABLE_SIZE];
+	CPUTable opcode_table_0[OPCODE_TABLE_0_SIZE];
+	CPUTable opcode_table_8[OPCODE_TABLE_8_SIZE];
+	CPUTable opcode_table_e[OPCODE_TABLE_E_SIZE];
+	CPUTable opcode_table_f[OPCODE_TABLE_F_SIZE];
 	
 	uint16 controllerOp = 0x0;
 	//TODO
