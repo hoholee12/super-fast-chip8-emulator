@@ -11,16 +11,45 @@
 #define STACK_SIZE 16
 #define V_REGISTER_SIZE 0x10
 
+class CPU;	//forward declaration for cputable
+typedef void (CPU::*       CPUTable)();
+
+
 class CPU: public Input{
 private:
-	
+	uint16 currentOpcode;
 	uint16 programCounter;
 	uint8 stackPointer;
 	uint16 indexRegister;	//I register
 	uint16 stack[STACK_SIZE];
 	uint8 v[V_REGISTER_SIZE];
+
+	//opcode table
+	CPUTable opcode_table[0x10];
+	CPUTable opcode_table_0[0xef];
+	CPUTable opcode_table_8[0x9];
+	CPUTable opcode_table_e[0xa2];
+	CPUTable opcode_table_f[0x66];
 	
-	
+	uint16 controllerOp = 0x0;
+	//TODO
+	bool throwError;
+	uint8 head;
+	uint8 sub_dual;
+	uint8 sub;
+	uint8 *vx;
+	uint8 *vy;
+	uint8 *vf;
+	uint8 nn;
+	uint16 nnn;
+	uint8 n;
+
+	//1 = is a jump; dont increment pc
+	int flag;
+
+	Memory* memory;
+	uint8* delayRegister;
+	uint8* pressedKey;
 
 public:
 	//getters
@@ -32,9 +61,53 @@ public:
 
 
 	//interpreter needs memory to access, a 60hz delay register(not implemented in cpu), a fetched opcode, and input key
-	uint16 decode(Memory* memory, uint8 *delayRegister, uint16 input, uint8 pressedKey); //current opcode decoder
-	uint16 fetch(Memory* memory);
+	uint16 decode(); //current opcode decoder
+	uint16 fetch();
 	
-	void init();
+	//opcodes
+	void opcodetoTable0();
+	void opcodetoTable8();
+	void opcodetoTablee();
+	void opcodetoTablef();
+	void opcode00e0();
+	void opcode00ee();
+	void opcode0nnn();
+	void opcode1nnn();
+	void opcode2nnn();
+	void opcode3xnn();
+	void opcode4xnn();
+	void opcode5xy0();
+	void opcode6xnn();
+	void opcode7xnn();
+	void opcode8xy0();
+	void opcode8xy1();
+	void opcode8xy2();
+	void opcode8xy3();
+	void opcode8xy4();
+	void opcode8xy5();
+	void opcode8xy6();
+	void opcode8xy7();
+	void opcode8xye();
+	void opcode9xy0();
+	void opcodeannn();
+	void opcodebnnn();
+	void opcodecxnn();
+	void opcodedxyn();
+	void opcodeex9e();
+	void opcodeexa1();
+	void opcodefx01();
+	void opcodefx07();
+	void opcodefx0a();
+	void opcodefx15();
+	void opcodefx18();
+	void opcodefx1e();
+	void opcodefx29();
+	void opcodefx33();
+	void opcodefx55();
+	void opcodefx65();
+	void opcodenull();
 
+	void init(Memory* memory, uint8* delayRegister, uint8* pressedKey);
+	
 };
+

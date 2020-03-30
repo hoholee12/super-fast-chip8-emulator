@@ -25,7 +25,7 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 	windowTimerInstance = new Timer();
 	fsbInstance = new Timer();
 
-	cpu->init();
+	cpu->init(memory, &delayRegister, &keyinput);
 	memory->init(title);
 	input->init();
 	video->init(title, mainwindow);
@@ -64,8 +64,9 @@ void Chip8::update(){
 
 	//fetch
 	previousOpcode = currentOpcode;
-	currentOpcode = cpu->fetch(memory);
+	currentOpcode = cpu->fetch();
 
+#define DEBUG_ME
 #ifdef DEBUG_ME
 	//debugger
 	debugMe();
@@ -73,7 +74,7 @@ void Chip8::update(){
 
 
 	//decode
-	controllerOp = cpu->decode(memory, &delayRegister, currentOpcode, keyinput);
+	controllerOp = cpu->decode();
 
 	//controller
 	if (controllerOp != 0x0)		//optimization
