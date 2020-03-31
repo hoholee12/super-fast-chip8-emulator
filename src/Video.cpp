@@ -45,7 +45,10 @@ void Video::copySprite(uint16 input, CPU* cpu, Memory* memory){
 	uint8 n = input & 0x000f;
 	*vf = 0x0; //default
 
-
+#define DEBUG_ME
+#ifdef DEBUG_ME
+	printf("indexReg = %x, x = %x, y = %x, n = %x\n", *cpu->getIndexRegister(), *vx, *vy, n);
+#endif
 	for (int y = 0; y < n; y++){
 		for (int x = 0; x < 8; x++){
 			int check1 = SCREEN_WIDTH * (*vy + y) + *vx + x;

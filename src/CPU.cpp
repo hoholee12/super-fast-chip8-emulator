@@ -5,6 +5,7 @@
 
 
 uint16 CPU::decode(){
+	throwError = false;
 
 	//opcode table
 	(this->*(opcode_table[head]))();
@@ -13,10 +14,7 @@ uint16 CPU::decode(){
 		fprintf(stderr, "unsupported opcode!: %x\n", currentOpcode);
 
 	if (flag != 1)	//only if its not jump
-	programCounter += 2; //increment after fetch
-
-
-	
+	programCounter += 2; //increment after fetch	
 
 	return controllerOp;
 

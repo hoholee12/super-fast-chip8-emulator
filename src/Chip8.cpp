@@ -25,18 +25,23 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 	windowTimerInstance = new Timer();
 	fsbInstance = new Timer();
 
-	cpu->init(memory, &delayRegister, &keyinput);
-	memory->init(title);
-	input->init();
-	video->init(title, mainwindow);
-	audio->init();
-	audio->playAudio(); //test
+	
 	
 	initSpeed(cpuspeed, fps);
 
 	delayRegister = 0x0;
 
+	
+
+	cpu->init(memory, &delayRegister, &keyinput);
+	memory->init(title);
+	input->init();
 	keyinput = input->getKey();
+	video->init(title, mainwindow);
+	audio->init();
+	audio->playAudio(); //test
+
+
 	run();
 
 }
@@ -71,7 +76,6 @@ void Chip8::update(){
 	//debugger
 	debugMe();
 #endif
-
 
 	//decode
 	controllerOp = cpu->decode();
