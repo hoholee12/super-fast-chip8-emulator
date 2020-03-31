@@ -124,9 +124,7 @@ void CPU::init(Memory* memory, uint8* delayRegister, uint8* pressedKey){
 	for (uint16 i = 0xa2; i < OPCODE_TABLE_E_SIZE; i++) opcode_table_e[i] = &CPU::opcodenull;		//exception
 
 	//table f
-	for (uint16 i = 0x0; i < 0x01; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
-	opcode_table_f[0x01] = &CPU::opcodefx01;
-	for (uint16 i = 0x02; i < 0x07; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
+	for (uint16 i = 0x0; i < 0x07; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x07] = &CPU::opcodefx07;
 	for (uint16 i = 0x08; i < 0x0a; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x0a] = &CPU::opcodefx0a;
@@ -254,11 +252,8 @@ void CPU::opcodeex9e(){
 void CPU::opcodeexa1(){
 	if (*pressedKey != *vx) programCounter += 2;
 }
-void CPU::opcodefx01(){
-	*vx = *delayRegister;
-}
 void CPU::opcodefx07(){
-	controllerOp = 0x3;
+	*vx = *delayRegister;
 }
 void CPU::opcodefx0a(){
 	if (Input::isKeyPressed(*pressedKey) == true) *vx = *pressedKey; else flag = 1; //wait again	(dont increment pc)

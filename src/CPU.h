@@ -101,7 +101,6 @@ public:
 	void opcodedxyn();
 	void opcodeex9e();
 	void opcodeexa1();
-	void opcodefx01();
 	void opcodefx07();
 	void opcodefx0a();
 	void opcodefx15();

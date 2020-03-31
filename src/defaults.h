@@ -21,7 +21,7 @@ defaults.h
 #include<string>
 
 
-#define DEBUG_ME
+//#define DEBUG_ME
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
