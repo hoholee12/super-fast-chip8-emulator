@@ -6,6 +6,7 @@
 
 uint16 CPU::decode(){
 	throwError = false;
+	controllerOp = 0x0; //this motherfucker
 
 	//opcode table
 	(this->*(opcode_table[head]))();

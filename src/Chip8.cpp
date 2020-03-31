@@ -66,15 +66,17 @@ void Chip8::run(){
 
 //always be cautious on this function - it needs to loop a million times
 void Chip8::update(){
+	controllerOp = 0x0; //safe measure
 
 	//fetch
 	previousOpcode = currentOpcode;
 	currentOpcode = cpu->fetch();
 
-#define DEBUG_ME
 #ifdef DEBUG_ME
 	//debugger
+	printf("delayReg = %x,\t", delayRegister);
 	debugMe();
+	
 #endif
 
 	//decode
