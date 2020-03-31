@@ -5,7 +5,7 @@
 
 #define SCREEN_WIDTH 0x40
 #define SCREEN_HEIGHT 0x20
-#define SCALE 10
+#define SCALE 20
 
 class Video{
 private:

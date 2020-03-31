@@ -1,0 +1,4 @@
+src/*.o
+src/chip8-emu
+chip8-emu
+pong.ch8
