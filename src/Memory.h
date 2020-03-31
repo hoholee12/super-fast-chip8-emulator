@@ -10,7 +10,7 @@
 
 
 //write default fontdata to memory[0~]
-const uint8 fontSet[FONT_COUNT * 5] = {
+const uint8_t fontSet[FONT_COUNT * 5] = {
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 	0x20, 0x60, 0x20, 0x20, 0x70, // 1
 	0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -31,12 +31,12 @@ const uint8 fontSet[FONT_COUNT * 5] = {
 
 class Memory{
 private:
-	uint8 mem[FULL_MEM_SIZE];
+	uint8_t mem[FULL_MEM_SIZE];
 
 public:
 
-	uint8 read(uint16 addr);
-	void write(uint16 addr, uint8 input);
+	uint8_t read(uint16_t addr);
+	void write(uint16_t addr, uint8_t input);
 
 	void init(char* str);	//file load included
 

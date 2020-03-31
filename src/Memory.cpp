@@ -1,11 +1,11 @@
 #include"Memory.h"
 
-void Memory::write(uint16 addr, uint8 input){
+void Memory::write(uint16_t addr, uint8_t input){
 	mem[addr] = input;
 
 }
 
-uint8 Memory::read(uint16 addr){
+uint8_t Memory::read(uint16_t addr){
 	return mem[addr];
 
 }
@@ -30,7 +30,7 @@ void Memory::init(char* str){
 	fseek(file, 0l, SEEK_SET);
 
 	//file to buffer(not mem)
-	uint8* buffer = (uint8*)malloc(fsize);
+	uint8_t* buffer = (uint8_t*)malloc(fsize);
 	fread(buffer, fsize, 1, file);
 	fclose(file);
 

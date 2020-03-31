@@ -4,13 +4,13 @@
 
 class Audio:public defaults{
 private:
-	uint8 soundTimer;
+	uint8_t soundTimer;
 	
 public:
 	void init();
 	void audioProcess();	//opcode and cpu
 
 	//setter
-	void setSoundTimer(uint16 input, CPU* cpu);
+	void setSoundTimer(uint16_t input, CPU* cpu);
 
 };

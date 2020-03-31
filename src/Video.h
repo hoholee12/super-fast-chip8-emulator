@@ -10,15 +10,15 @@
 class Video{
 private:
 
-	uint8 videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
+	uint8_t videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
 	
 public:
-	void writeVBuffer(uint16 addr, uint8 input);
-	uint8 readVBuffer(uint16 addr);
+	void writeVBuffer(uint16_t addr, uint8_t input);
+	uint8_t readVBuffer(uint16_t addr);
 
 	void clearVBuffer();
 
-	void copySprite(uint16 input, CPU* cpu, Memory* memory);
+	void copySprite(uint16_t input, CPU* cpu, Memory* memory);
 
 	void draw(defaults* mainwindow); //updates screen
 	

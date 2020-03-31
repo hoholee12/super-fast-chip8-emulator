@@ -12,43 +12,43 @@
 class Frameskip:public defaults{
 private:
 	//fps timer
-	uint32 cpuSpeed = CPU_SPEED;
-	uint32 timerSpeed = TIMER_SPEED;
-	uint32 screenFps = SCREEN_FPS;
-	uint32 windowFps = WINDOW_FPS;
-	uint32 fsbSpeed = FSB_SPEED;
+	uint32_t cpuSpeed = CPU_SPEED;
+	uint32_t timerSpeed = TIMER_SPEED;
+	uint32_t screenFps = SCREEN_FPS;
+	uint32_t windowFps = WINDOW_FPS;
+	uint32_t fsbSpeed = FSB_SPEED;
 	//for reference. it will get reinitialized in start() and updateNewTimerSet()
-	uint32 screenTicksPerFrame = cpuSpeed / screenFps;	//cycles
-	uint32 delayTimerPerFrame = cpuSpeed / timerSpeed;	//cycles
-	uint32 screenDelayPerFrame = 1000 / screenFps;		//milliseconds
-	uint32 windowTicksPerFrame = cpuSpeed / windowFps;	//cycles
-	uint32 fsbTicksPerFrame = cpuSpeed / fsbSpeed;		//cycles
+	uint32_t screenTicksPerFrame = cpuSpeed / screenFps;	//cycles
+	uint32_t delayTimerPerFrame = cpuSpeed / timerSpeed;	//cycles
+	uint32_t screenDelayPerFrame = 1000 / screenFps;		//milliseconds
+	uint32_t windowTicksPerFrame = cpuSpeed / windowFps;	//cycles
+	uint32_t fsbTicksPerFrame = cpuSpeed / fsbSpeed;		//cycles
 
-	uint32 prevTick = 0;
+	uint32_t prevTick = 0;
 	int holdTick = 0;
 	int holdTick_fskip = 0;
-	uint32 currTick = 0;
+	uint32_t currTick = 0;
 
 	int skipValue = SKIP_VALUE; //frameskipper
 	int skipMultiplier = 1;
-	uint32 backupFps = screenFps;
-	uint32 backupTicksPerFrame = cpuSpeed / backupFps;
-	uint32 backupDelayPerFrame = 1000 / backupFps;
+	uint32_t backupFps = screenFps;
+	uint32_t backupTicksPerFrame = cpuSpeed / backupFps;
+	uint32_t backupDelayPerFrame = 1000 / backupFps;
 
 public:
 
 	void init(int cpuspeed, int fps);
 
-	uint32* getVideoTimer();
-	uint32* getFskipTimer();
-	uint32* getDelayTimer();
-	uint32* getWindowTimer();
-	uint32* getFsbTimer();
+	uint32_t* getVideoTimer();
+	uint32_t* getFskipTimer();
+	uint32_t* getDelayTimer();
+	uint32_t* getWindowTimer();
+	uint32_t* getFsbTimer();
 
 	//for window
-	uint32 getCpuSpeed();
-	uint32 getBackupFps();
-	uint32 getHoldTick();
+	uint32_t getCpuSpeed();
+	uint32_t getBackupFps();
+	uint32_t getHoldTick();
 
 	void endTime();
 	void calculateSkip();

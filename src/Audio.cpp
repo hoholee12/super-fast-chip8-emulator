@@ -19,8 +19,8 @@ void Audio::audioProcess(){
 
 }
 
-void Audio::setSoundTimer(uint16 input, CPU* cpu){
+void Audio::setSoundTimer(uint16_t input, CPU* cpu){
 	//?x??
-	uint8 *vx = cpu->getV((input & 0x0f00) >> 8);
+	uint8_t *vx = cpu->getV((input & 0x0f00) >> 8);
 	soundTimer = *vx;
 }

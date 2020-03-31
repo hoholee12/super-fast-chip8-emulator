@@ -19,14 +19,11 @@ defaults.h
 #include<stdio.h>
 #include<string.h>
 #include<string>
+#include<stdint.h>
 
 
 //#define DEBUG_ME
 
-typedef unsigned char uint8;
-typedef unsigned short uint16;
-
-typedef unsigned int uint32;	//for tick
 
 class defaults{
 public:
@@ -43,7 +40,7 @@ public:
 	int screenWidth;
 	int screenHeight;
 
-	uint8 pressedKey;
+	uint8_t pressedKey;
 
 	//title stuff
 	char a0[100];
@@ -59,14 +56,14 @@ public:
 	void playAudio();
 
 	void videoInit(char* str, int w, int h, int scale);
-	void drawVideo(uint8* videoBuffer);
+	void drawVideo(uint8_t* videoBuffer);
 
 	void inputInit();
-	uint8 getInput();
+	uint8_t getInput();
 
 	//fps timer
-	uint32 checkTime();
-	void delayTime(uint32 input); //sleep
+	uint32_t checkTime();
+	void delayTime(uint32_t input); //sleep
 
 	void updateTitle(char* str, int cpuspeed, int fps, int frametime);
 };

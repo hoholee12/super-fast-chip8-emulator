@@ -27,12 +27,12 @@ private:
 	Frameskip* fskip;
 
 	bool running;
-	uint16 currentOpcode;
-	uint16 previousOpcode;	//for some optimization
-	uint16 controllerOp;	//after cpu processes its stuff, next is chip8 controller output job
+	uint16_t currentOpcode;
+	uint16_t previousOpcode;	//for some optimization
+	uint16_t controllerOp;	//after cpu processes its stuff, next is chip8 controller output job
 
-	uint8 keyinput;
-	uint8 delayRegister; //delay register
+	uint8_t keyinput;
+	uint8_t delayRegister; //delay register
 
 	Timer* fsbInstance;
 	Timer* videoTimerInstance;

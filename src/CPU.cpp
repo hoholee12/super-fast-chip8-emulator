@@ -4,7 +4,7 @@
 
 
 
-uint16 CPU::decode(){
+uint16_t CPU::decode(){
 	throwError = false;
 	controllerOp = 0x0; //this motherfucker
 
@@ -21,7 +21,7 @@ uint16 CPU::decode(){
 
 }
 
-uint16 CPU::fetch(){
+uint16_t CPU::fetch(){
 
 	//fetch - mem is 8bit, opcode is 16bit, big endian
 	//mem[pc] as top 8bit + mem[pc+1] as bottom 8bit = 16bit
@@ -65,14 +65,14 @@ uint16 CPU::fetch(){
 	return currentOpcode;
 }
 
-uint16* CPU::getProgramCounter(){ return &programCounter; }
-uint8* CPU::getStackPointer(){ return &stackPointer; }
-uint16* CPU::getIndexRegister(){ return &indexRegister; }
-uint16* CPU::getStack(uint8 input){ return &stack[input]; }
-uint8* CPU::getV(uint8 input){ return &v[input]; }
+uint16_t* CPU::getProgramCounter(){ return &programCounter; }
+uint8_t* CPU::getStackPointer(){ return &stackPointer; }
+uint16_t* CPU::getIndexRegister(){ return &indexRegister; }
+uint16_t* CPU::getStack(uint8_t input){ return &stack[input]; }
+uint8_t* CPU::getV(uint8_t input){ return &v[input]; }
 
 //get everything here instead
-void CPU::init(Memory* memory, uint8* delayRegister, uint8* pressedKey){
+void CPU::init(Memory* memory, uint8_t* delayRegister, uint8_t* pressedKey){
 	this->memory = memory;
 	this->delayRegister = delayRegister;
 	this->pressedKey = pressedKey;
@@ -98,10 +98,10 @@ void CPU::init(Memory* memory, uint8* delayRegister, uint8* pressedKey){
 	opcode_table[0xf] = &CPU::opcodetoTablef;
 
 	//table 0
-	for (uint16 i = 0; i < 0xe0; i++) opcode_table_0[i] = &CPU::opcodenull;		//exception
+	for (uint16_t i = 0; i < 0xe0; i++) opcode_table_0[i] = &CPU::opcodenull;		//exception
 	opcode_table_0[0xe0] = &CPU::opcode00e0;
 	opcode_table_0[0xee] = &CPU::opcode00ee;
-	for (uint16 i = 0xef; i < OPCODE_TABLE_0_SIZE; i++) opcode_table_0[i] = &CPU::opcodenull;		//exception
+	for (uint16_t i = 0xef; i < OPCODE_TABLE_0_SIZE; i++) opcode_table_0[i] = &CPU::opcodenull;		//exception
 
 	//table 8
 	opcode_table_8[0x0] = &CPU::opcode8xy0;
@@ -112,37 +112,37 @@ void CPU::init(Memory* memory, uint8* delayRegister, uint8* pressedKey){
 	opcode_table_8[0x5] = &CPU::opcode8xy5;
 	opcode_table_8[0x6] = &CPU::opcode8xy6;
 	opcode_table_8[0x7] = &CPU::opcode8xy7;
-	for (uint16 i = 0x8; i < 0xe; i++) opcode_table_8[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x8; i < 0xe; i++) opcode_table_8[i] = &CPU::opcodenull;	//exception
 	opcode_table_8[0xe] = &CPU::opcode8xye;
-	for (uint16 i = 0xf; i < OPCODE_TABLE_8_SIZE; i++) opcode_table_8[i] = &CPU::opcodenull;		//exception
+	for (uint16_t i = 0xf; i < OPCODE_TABLE_8_SIZE; i++) opcode_table_8[i] = &CPU::opcodenull;		//exception
 	
 	//table e
-	for (uint16 i = 0x0; i < 0x9e; i++) opcode_table_e[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x0; i < 0x9e; i++) opcode_table_e[i] = &CPU::opcodenull;	//exception
 	opcode_table_e[0x9e] = &CPU::opcodeex9e;
-	for (uint16 i = 0x9f; i < 0xa1; i++) opcode_table_e[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x9f; i < 0xa1; i++) opcode_table_e[i] = &CPU::opcodenull;	//exception
 	opcode_table_e[0xa1] = &CPU::opcodeexa1;
-	for (uint16 i = 0xa2; i < OPCODE_TABLE_E_SIZE; i++) opcode_table_e[i] = &CPU::opcodenull;		//exception
+	for (uint16_t i = 0xa2; i < OPCODE_TABLE_E_SIZE; i++) opcode_table_e[i] = &CPU::opcodenull;		//exception
 
 	//table f
-	for (uint16 i = 0x0; i < 0x07; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x0; i < 0x07; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x07] = &CPU::opcodefx07;
-	for (uint16 i = 0x08; i < 0x0a; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x08; i < 0x0a; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x0a] = &CPU::opcodefx0a;
-	for (uint16 i = 0x0b; i < 0x15; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x0b; i < 0x15; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x15] = &CPU::opcodefx15;
-	for (uint16 i = 0x16; i < 0x18; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x16; i < 0x18; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x18] = &CPU::opcodefx18;
-	for (uint16 i = 0x19; i < 0x1e; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x19; i < 0x1e; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x1e] = &CPU::opcodefx1e;
-	for (uint16 i = 0x1f; i < 0x29; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x1f; i < 0x29; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x29] = &CPU::opcodefx29;
-	for (uint16 i = 0x2a; i < 0x33; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x2a; i < 0x33; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x33] = &CPU::opcodefx33;
-	for (uint16 i = 0x34; i < 0x55; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x34; i < 0x55; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x55] = &CPU::opcodefx55;
-	for (uint16 i = 0x56; i < 0x65; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
+	for (uint16_t i = 0x56; i < 0x65; i++) opcode_table_f[i] = &CPU::opcodenull;	//exception
 	opcode_table_f[0x65] = &CPU::opcodefx65;
-	for (uint16 i = 0x66; i < OPCODE_TABLE_F_SIZE; i++) opcode_table_f[i] = &CPU::opcodenull;		//exception
+	for (uint16_t i = 0x66; i < OPCODE_TABLE_F_SIZE; i++) opcode_table_f[i] = &CPU::opcodenull;		//exception
 
 	
 	srand(time(NULL));	//random seed

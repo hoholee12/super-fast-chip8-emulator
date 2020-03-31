@@ -51,7 +51,7 @@ void defaults::videoInit(char* str, int w, int h, int scale){
 
 }
 
-void defaults::drawVideo(uint8* videoBuffer){
+void defaults::drawVideo(uint8_t* videoBuffer){
 
 	int scan = 0;
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -77,7 +77,7 @@ void defaults::inputInit(){
 
 }
 
-uint8 defaults::getInput(){
+uint8_t defaults::getInput(){
 
 	SDL_Event e;
 	while (SDL_PollEvent(&e)){
@@ -124,11 +124,11 @@ uint8 defaults::getInput(){
 	return pressedKey;
 }
 
-uint32 defaults::checkTime(){
+uint32_t defaults::checkTime(){
 	return SDL_GetTicks();
 }
 
-void defaults::delayTime(uint32 input){
+void defaults::delayTime(uint32_t input){
 	SDL_Delay(input);
 }
 

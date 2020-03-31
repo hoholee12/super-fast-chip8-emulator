@@ -1,6 +1,6 @@
 #include"Debug.h"
 
-void Debug::printDebug(uint16 pc, uint16 stack, uint16 input){
+void Debug::printDebug(uint16_t pc, uint16_t stack, uint16_t input){
 	static int count = 0;
 	static bool inCall = false;
 

@@ -17,12 +17,12 @@ typedef void (CPU::*       CPUTable)();
 
 class CPU: public Input{
 private:
-	uint16 currentOpcode;
-	uint16 programCounter;
-	uint8 stackPointer;
-	uint16 indexRegister;	//I register
-	uint16 stack[STACK_SIZE];
-	uint8 v[V_REGISTER_SIZE];
+	uint16_t currentOpcode;
+	uint16_t programCounter;
+	uint8_t stackPointer;
+	uint16_t indexRegister;	//I register
+	uint16_t stack[STACK_SIZE];
+	uint8_t v[V_REGISTER_SIZE];
 
 
 #define OPCODE_TABLE_SIZE 0x10
@@ -37,38 +37,38 @@ private:
 	CPUTable opcode_table_e[OPCODE_TABLE_E_SIZE];
 	CPUTable opcode_table_f[OPCODE_TABLE_F_SIZE];
 	
-	uint16 controllerOp = 0x0;
+	uint16_t controllerOp = 0x0;
 	//TODO
 	bool throwError;
-	uint8 head;
-	uint8 sub_dual;
-	uint8 sub;
-	uint8 *vx;
-	uint8 *vy;
-	uint8 *vf;
-	uint8 nn;
-	uint16 nnn;
-	uint8 n;
+	uint8_t head;
+	uint8_t sub_dual;
+	uint8_t sub;
+	uint8_t *vx;
+	uint8_t *vy;
+	uint8_t *vf;
+	uint8_t nn;
+	uint16_t nnn;
+	uint8_t n;
 
 	//1 = is a jump; dont increment pc
 	int flag;
 
 	Memory* memory;
-	uint8* delayRegister;
-	uint8* pressedKey;
+	uint8_t* delayRegister;
+	uint8_t* pressedKey;
 
 public:
 	//getters
-	uint16* getProgramCounter();
-	uint8* getStackPointer();
-	uint16* getIndexRegister();	//I register
-	uint16* getStack(uint8 input);
-	uint8* getV(uint8 input);
+	uint16_t* getProgramCounter();
+	uint8_t* getStackPointer();
+	uint16_t* getIndexRegister();	//I register
+	uint16_t* getStack(uint8_t input);
+	uint8_t* getV(uint8_t input);
 
 
 	//interpreter needs memory to access, a 60hz delay register(not implemented in cpu), a fetched opcode, and input key
-	uint16 decode(); //current opcode decoder
-	uint16 fetch();
+	uint16_t decode(); //current opcode decoder
+	uint16_t fetch();
 	
 	//opcodes
 	void opcodetoTable0();
@@ -112,7 +112,7 @@ public:
 	void opcodefx65();
 	void opcodenull();
 
-	void init(Memory* memory, uint8* delayRegister, uint8* pressedKey);
+	void init(Memory* memory, uint8_t* delayRegister, uint8_t* pressedKey);
 	
 };
 

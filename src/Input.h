@@ -12,11 +12,11 @@ pressedKey:
 
 class Input: public defaults{
 private:
-	uint8 pressedKey;
+	uint8_t pressedKey;
 public:
 
 	
-	uint8 getKey();
+	uint8_t getKey();
 	
 
 	//loop this with system
@@ -26,7 +26,7 @@ public:
 
 
 	//standalone
-	uint8 defaultKey = 0xfe;
-	bool isKeyPressed(uint8 pressedKey);
+	uint8_t defaultKey = 0xfe;
+	bool isKeyPressed(uint8_t pressedKey);
 
 };

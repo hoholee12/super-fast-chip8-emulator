@@ -126,7 +126,7 @@ void Chip8::update(){
 
 		//cycle optimizations - 120hz
 		optimizations();
-		useSpeedHack(); //here
+		//useSpeedHack(); //quite buggy atm
 		
 		//update internal timers
 		delayTimerInstance->updateTimer(*fskip->getFsbTimer());
@@ -200,7 +200,6 @@ void Chip8::optimizations(){
 			doOnce = false;
 
 			count = 0;
-			isEndlessLoop = false;
 		}
 	}
 }
