@@ -49,9 +49,9 @@ void Chip8::start(char* title, int cpuspeed, int fps){
 void Chip8::initSpeed(int cpuspeed, int fps){
 	fskip->init(cpuspeed, fps);
 	videoTimerInstance->init(fskip->getVideoTimer());
-	fskipTimerInstance->init(fskip->getFskipTimer(), fskip->getFsbTimer());
-	delayTimerInstance->init(fskip->getDelayTimer(), fskip->getFsbTimer());
-	windowTimerInstance->init(fskip->getWindowTimer(), fskip->getFsbTimer());
+	fskipTimerInstance->init(fskip->getFskipTimer());
+	delayTimerInstance->init(fskip->getDelayTimer());
+	windowTimerInstance->init(fskip->getWindowTimer());
 	fsbInstance->init(fskip->getFsbTimer());
 }
 
@@ -126,12 +126,12 @@ void Chip8::update(){
 
 		//cycle optimizations - 120hz
 		optimizations();
-		useSpeedHack(); //quite buggy atm
+		//useSpeedHack(); //quite buggy atm
 		
 		//update internal timers
-		delayTimerInstance->updateTimer();
-		windowTimerInstance->updateTimer();
-		fskipTimerInstance->updateTimer();
+		delayTimerInstance->updateTimer(*fskip->getFsbTimer());
+		windowTimerInstance->updateTimer(*fskip->getFsbTimer());
+		fskipTimerInstance->updateTimer(*fskip->getFsbTimer());
 	}
 
 	//frameskip

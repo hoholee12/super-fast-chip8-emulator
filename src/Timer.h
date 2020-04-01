@@ -6,19 +6,11 @@
 class Timer{
 private:
 	uint32_t *delayTimerPerFrame; //delay timer
-	uint32_t *secondaryInput;
-
-	uint32_t cycleCount = 0;
-	uint32_t cycleLimit;
-
-	uint32_t temp;
-
-	void calcLimit();
+	uint32_t cycleCount;
 
 public:
-	void init(uint32_t* input);	//for main
-	void init(uint32_t* input, uint32_t* secondaryInput);	//for sub
-	void updateTimer();
+	void init(uint32_t* input);
+	void updateTimer(uint32_t timerInput = 1);
 
 	//return true if reached an end of delay
 	bool checkTimer();
