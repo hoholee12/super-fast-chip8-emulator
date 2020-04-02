@@ -2,6 +2,7 @@
 your average emulator using c++ and sdl2.0
 
 tried to make it as simple as possible.
+
 interpreter is done. recompiler is in the works
 
 -auto frameskip
@@ -17,7 +18,15 @@ also im still fixing it so dont bother asking why some games wont work!
 this project follows:
 http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
 
-demonstration:
+## options
+
+ive implemented three different interpreter methods (switchcase/partitionizedLUT/bigLUT)
+
+theres also an option to change clockspeed and fps.
+
+you can change these options when loading the game.
+
+### demonstration:
 
 
 [![](http://img.youtube.com/vi/5feeAfAG0w8/0.jpg)](http://www.youtube.com/watch?v=5feeAfAG0w8 "https://i.ytimg.com/vi/5feeAfAG0w8/hqdefault.jpg?sqp=-oaymwEZCNACELwBSFXyq4qpAwsIARUAAIhCGAFwAQ==&rs=AOn4CLCQM2SEeP7qw29AFuZv0c7xR3VCRA")
