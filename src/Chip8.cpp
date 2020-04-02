@@ -50,12 +50,18 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter){
 }
 
 void Chip8::initSpeed(int cpuspeed, int fps){
+	//init fskip
 	fskip->init(cpuspeed, fps);
+
+	//main timers
 	videoTimerInstance->init(fskip->getVideoTimer());
+	fsbInstance->init(fskip->getFsbTimer());
+	
+	//timers inside fsb timer
 	fskipTimerInstance->init(fskip->getFskipTimer(), fskip->getFsbTimer());
 	delayTimerInstance->init(fskip->getDelayTimer(), fskip->getFsbTimer());
 	windowTimerInstance->init(fskip->getWindowTimer(), fskip->getFsbTimer());
-	fsbInstance->init(fskip->getFsbTimer());
+
 }
 
 void Chip8::run(){

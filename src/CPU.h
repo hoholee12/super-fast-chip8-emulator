@@ -8,6 +8,30 @@
 #include"defaults.h"
 #include"Timer.h"
 
+//opcode parser
+#define HEAD (currentOpcode >> 12)
+#define SUB (currentOpcode & 0x000f)
+#define SUB_DUAL (currentOpcode & 0x00ff)
+//?x??
+#define VX (v[(currentOpcode & 0x0f00) >> 8])
+
+//??y?
+#define VY (v[(currentOpcode & 0x00f0) >> 4])
+
+//vf
+#define VF (v[0xf])
+
+//??nn
+#define NN (currentOpcode & 0x00ff)
+
+//nnn
+#define NNN (currentOpcode & 0x0fff)
+
+#define N (currentOpcode & 0x000f)
+
+
+
+
 #define STACK_SIZE 16
 #define V_REGISTER_SIZE 0x10
 
@@ -44,6 +68,8 @@ private:
 	uint16_t controllerOp = 0x0;
 	//TODO
 	bool throwError;
+
+	/*	===replaced by macros===
 	uint8_t head;
 	uint8_t sub_dual;
 	uint8_t sub;
@@ -53,6 +79,7 @@ private:
 	uint8_t nn;
 	uint16_t nnn;
 	uint8_t n;
+	*/
 
 	//1 = is a jump; dont increment pc
 	int flag;
@@ -77,7 +104,7 @@ public:
 	uint16_t decode_jumboLUT(); //even more sparsely populated table
 
 	//for switch method
-	uint16_t decode(Memory* memory, uint8_t *delayRegister, uint16_t input, uint8_t pressedKey); //current opcode decoder
+	uint16_t decode(Memory* memory, uint8_t *delayRegister, uint16_t currentOpcode, uint8_t pressedKey); //current opcode decoder
 	uint16_t fetch(Memory* memory);
 	
 	//opcodes

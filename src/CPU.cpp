@@ -24,7 +24,7 @@ uint16_t CPU::decode(){
 	controllerOp = 0x0; //this motherfucker
 
 	//opcode table
-	(this->*(opcode_table[head]))();
+	(this->*(opcode_table[HEAD]))();
 	
 	if (throwError == true)
 		fprintf(stderr, "unsupported opcode!: %x\n", currentOpcode);
@@ -50,29 +50,6 @@ uint16_t CPU::fetch(){
 	//x, y -Vx, Vy registers
 	//index register
 
-	//opcode parser
-	head = currentOpcode >> 12;
-	sub = currentOpcode & 0x000f;
-	sub_dual = currentOpcode & 0x00ff;
-	
-
-	//?x??
-	vx = &v[(currentOpcode & 0x0f00) >> 8];
-
-	//??y?
-	vy = &v[(currentOpcode & 0x00f0) >> 4];
-
-	//vf
-	vf = &v[0xf];
-
-	//??nn
-	nn = currentOpcode & 0x00ff;
-
-	//nnn
-	nnn = currentOpcode & 0x0fff;
-
-	n = currentOpcode & 0x000f;
-
 	//1 = is a jump; dont increment pc
 	flag = 0;
 
@@ -81,7 +58,7 @@ uint16_t CPU::fetch(){
 }
 
 //for switch method
-uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t input, uint8_t pressedKey){
+uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t currentOpcode, uint8_t pressedKey){
 	uint16_t controllerOp = 0x0;
 
 	//TODO
@@ -93,120 +70,103 @@ uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t input, uin
 	//x, y -Vx, Vy registers
 	//index register
 
-	//?x??
-	uint8_t *vx = &v[(input & 0x0f00) >> 8];
-
-	//??y?
-	uint8_t *vy = &v[(input & 0x00f0) >> 4];
-
-	//vf
-	uint8_t *vf = &v[0xf];
-
-	//??nn
-	uint8_t nn = input & 0x00ff;
-
-	//nnn
-	uint16_t nnn = input & 0x0fff;
-
-	uint16_t n = input & 0x000f;
-
 	//1 = is a jump; dont increment pc
 	int flag = 0;
 
 	//first nibble
-	switch (input >> 12){
+	switch (currentOpcode >> 12){
 	case 0x0:
-		switch (input & 0x00ff){
+		switch (currentOpcode & 0x00ff){
 		case 0xe0:	controllerOp = 0x1;
 			break;
-		case 0xee:	programCounter = stack[--stackPointer]; //return from subroutine	(and increment pc after to get out of loop)
+		case 0xee:	programCounter = stack[--stackPointer]; //return from SUBroutine	(and increment pc after to get out of loop)
 			break;
-		default:	stack[stackPointer++] = programCounter; programCounter = nnn; flag = 1;//call subroutine from nnn	(dont increment pc)
+		default:	stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 			break;
 		}
 		break;
-	case 0x1:	programCounter = nnn; flag = 1;//jump to nnn	(dont increment pc)
+	case 0x1:	programCounter = NNN; flag = 1;//jump to nnn	(dont increment pc)
 		break;
-	case 0x2:	stack[stackPointer++] = programCounter; programCounter = nnn; flag = 1;//call subroutine from nnn	(dont increment pc)
+	case 0x2:	stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 		break;
-	case 0x3:	if (*vx == nn) programCounter += 2; //skip if ==
+	case 0x3:	if (VX == NN) programCounter += 2; //skip if ==
 		break;
-	case 0x4:	if (*vx != nn) programCounter += 2; //skip if !=
+	case 0x4:	if (VX != NN) programCounter += 2; //skip if !=
 		break;
-	case 0x5:	if (*vx == *vy) programCounter += 2; //skip if vx == vy
+	case 0x5:	if (VX == VY) programCounter += 2; //skip if vx == vy
 		break;
-	case 0x6:	*vx = nn; //into
+	case 0x6:	VX = NN; //into
 		break;
-	case 0x7:	*vx += nn;
+	case 0x7:	VX += NN;
 		break;
 	case 0x8:
-		switch (input & 0x000f){
-		case 0x0:	*vx = *vy;
+		switch (currentOpcode & 0x000f){
+		case 0x0:	VX = VY;
 			break;
-		case 0x1:	*vx |= *vy;
+		case 0x1:	VX |= VY;
 			break;
-		case 0x2:	*vx &= *vy;
+		case 0x2:	VX &= VY;
 			break;
-		case 0x3:	*vx ^= *vy;
+		case 0x3:	VX ^= VY;
 			break;
-		case 0x4:	*vf = (*vx + *vy > 0xff) ? 0x1 : 0x0; *vx += *vy;
+		case 0x4:	VF = (VX + VY > 0xff) ? 0x1 : 0x0; VX += VY;
 			break;
-		case 0x5:	*vf = (*vx < *vy) ? 0x0 : 0x1; *vx -= *vy;
+		case 0x5:	VF = (VX < VY) ? 0x0 : 0x1; VX -= VY;
 			break;
-		case 0x6:	*vf = *vx << 7; *vf >>= 7; *vx >>= 1;
+		case 0x6:	VF = VX << 7; VF >>= 7; VX >>= 1;
 			break;
-		case 0x7:	*vf = (*vy < *vx) ? 0x0 : 0x1; *vx = *vy - *vx;
+		case 0x7:	VF = (VY < VX) ? 0x0 : 0x1; VX = VY - VX;
 			break;
-		case 0xe:	*vf = *vx >> 7; *vx <<= 1;
+		case 0xe:	VF = VX >> 7; VX <<= 1;
 			break;
 		default: throwError = true;
 			break;
 		}
 		break;
-	case 0x9:	if (*vx != *vy) programCounter += 2; //skip if vx != vy
+	case 0x9:	if (VX != VY) programCounter += 2; //skip if vx != vy
 		break;
-	case 0xa:	indexRegister = nnn;
+	case 0xa:	indexRegister = NNN;
 		break;
-	case 0xb:	programCounter = nnn + v[0]; flag = 1; //(dont increment pc)
+	case 0xb:	programCounter = NNN + v[0]; flag = 1; //(dont increment pc)
 		break;
-	case 0xc:	*vx = (rand() % 0xff) & nn;	//random
+	case 0xc:	VX = (rand() % 0xff) & NN;	//random
 		break;
 	case 0xd:	controllerOp = 0x2;
 		break;
 	case 0xe:
-		switch (input & 0x00ff){
+		switch (currentOpcode & 0x00ff){
 		case 0x9e:
-			if (pressedKey == *vx) programCounter += 2;
+			if (pressedKey == VX) programCounter += 2;
 			break;
 		case 0xa1:
-			if (pressedKey != *vx) programCounter += 2;
+			if (pressedKey != VX) programCounter += 2;
 			break;
 		default: throwError = true;
 			break;
 		}
 		break;
 	case 0xf:
-		switch (input & 0x00ff){
-		case 0x07:	*vx = *delayRegister;
+		switch (currentOpcode & 0x00ff){
+		case 0x07:	VX = *delayRegister;
 			break;
-		case 0x0a:	if (Input::isKeyPressed(pressedKey) == true) *vx = pressedKey; else flag = 1; //wait again	(dont increment pc)
+		case 0x0a:	if (Input::isKeyPressed(pressedKey) == true) VX = pressedKey; else flag = 1; //wait again	(dont increment pc)
 			break;
-		case 0x15:	*delayRegister = *vx;
+		case 0x15:	*delayRegister = VX;
 			break;
 		case 0x18:	controllerOp = 0x3;
 			break;
-		case 0x1e:	indexRegister += *vx;
+		case 0x1e:	indexRegister += VX;
 			break;
-		case 0x29:	indexRegister = *vx * 5;	//font is stored at mem[0 ~ FONT_COUNT * 5]
+		case 0x29:	indexRegister = VX * 5;	//font is stored at mem[0 ~ FONT_COUNT * 5]
 			break;
 		case 0x33:	//bcd code
-			memory->write(indexRegister, *vx / 100);
-			memory->write(indexRegister + 1, (*vx / 10) % 10);
-			memory->write(indexRegister + 2, *vx % 10);
+			memory->write(indexRegister, VX / 100);
+			memory->write(indexRegister + 1, (VX / 10) % 10);
+			memory->write(indexRegister + 2, VX % 10);
 			break;
-		case 0x55:	for (int i = 0; i <= (input & 0x0f00) >> 8; i++) memory->write(indexRegister + i, v[i]);
+		case 0x55:	for (int i = 0; i <= (currentOpcode & 0x0f00) >> 8; i++) memory->write(indexRegister + i, v[i]);
 			break;
-		case 0x65:	for (int i = 0; i <= (input & 0x0f00) >> 8; i++) v[i] = memory->read(indexRegister + i);
+		case 0x65:	for (int i = 0; i <= (currentOpcode & 0x0f00) >> 8; i++) v[i] = memory->read(indexRegister + i);
 			break;
 		default: throwError = true;
 			break;
@@ -217,7 +177,7 @@ uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t input, uin
 	}
 
 	if (throwError == true)
-		fprintf(stderr, "unsupported opcode!: %x\n", input);
+		fprintf(stderr, "unsupported opcode!: %x\n", currentOpcode);
 
 	if (flag != 1)	//only if its not jump
 		programCounter += 2; //increment after fetch
@@ -370,16 +330,16 @@ void CPU::init(Memory* memory, uint8_t* delayRegister, uint8_t* pressedKey){
 //opcodes to specific tables for more opcodes
 //do this by dereferencing a member function
 void CPU::opcodetoTable0(){
-	(this->*(opcode_table_0[sub_dual]))();
+	(this->*(opcode_table_0[SUB_DUAL]))();
 }
 void CPU::opcodetoTable8(){
-	(this->*(opcode_table_8[sub]))();
+	(this->*(opcode_table_8[SUB]))();
 }
 void CPU::opcodetoTablee(){
-	(this->*(opcode_table_e[sub_dual]))();
+	(this->*(opcode_table_e[SUB_DUAL]))();
 }
 void CPU::opcodetoTablef(){
-	(this->*(opcode_table_f[sub_dual]))();
+	(this->*(opcode_table_f[SUB_DUAL]))();
 }
 
 //opcodes
@@ -387,102 +347,102 @@ void CPU::opcode00e0(){
 	controllerOp = 0x1;
 }
 void CPU::opcode00ee(){
-	programCounter = stack[--stackPointer]; //return from subroutine	(and increment pc after to get out of loop)
+	programCounter = stack[--stackPointer]; //return from SUBroutine	(and increment pc after to get out of loop)
 }
 void CPU::opcode0nnn(){
-	stack[stackPointer++] = programCounter; programCounter = nnn; flag = 1;//call subroutine from nnn	(dont increment pc)
+	stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 }
 void CPU::opcode1nnn(){
-	programCounter = nnn; flag = 1;//jump to nnn	(dont increment pc)
+	programCounter = NNN; flag = 1;//jump to nnn	(dont increment pc)
 }
 void CPU::opcode2nnn(){
-	stack[stackPointer++] = programCounter; programCounter = nnn; flag = 1;//call subroutine from nnn	(dont increment pc)
+	stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 }
 void CPU::opcode3xnn(){
-	if (*vx == nn) programCounter += 2; //skip if ==
+	if (VX == NN) programCounter += 2; //skip if ==
 }
 void CPU::opcode4xnn(){
-	if (*vx != nn) programCounter += 2; //skip if !=
+	if (VX != NN) programCounter += 2; //skip if !=
 }
 void CPU::opcode5xy0(){
-	if (*vx == *vy) programCounter += 2; //skip if vx == vy
+	if (VX == VY) programCounter += 2; //skip if vx == vy
 }
 void CPU::opcode6xnn(){
-	*vx = nn; //into
+	VX = NN; //into
 }
 void CPU::opcode7xnn(){
-	*vx += nn;
+	VX += NN;
 }
 void CPU::opcode8xy0(){
-	*vx = *vy;
+	VX = VY;
 }
 void CPU::opcode8xy1(){
-	*vx |= *vy;
+	VX |= VY;
 }
 void CPU::opcode8xy2(){
-	*vx &= *vy;
+	VX &= VY;
 }
 void CPU::opcode8xy3(){
-	*vx ^= *vy;
+	VX ^= VY;
 }
 void CPU::opcode8xy4(){
-	*vf = (*vx + *vy > 0xff) ? 0x1 : 0x0; *vx += *vy;
+	VF = (VX + VY > 0xff) ? 0x1 : 0x0; VX += VY;
 }
 void CPU::opcode8xy5(){
-	*vf = (*vx < *vy) ? 0x0 : 0x1; *vx -= *vy;
+	VF = (VX < VY) ? 0x0 : 0x1; VX -= VY;
 }
 void CPU::opcode8xy6(){
-	*vf = *vx << 7; *vf >>= 7; *vx >>= 1;
+	VF = VX << 7; VF >>= 7; VX >>= 1;
 }
 void CPU::opcode8xy7(){
-	*vf = (*vy < *vx) ? 0x0 : 0x1; *vx = *vy - *vx;
+	VF = (VY < VX) ? 0x0 : 0x1; VX = VY - VX;
 }
 void CPU::opcode8xye(){
-	*vf = *vx >> 7; *vx <<= 1;
+	VF = VX >> 7; VX <<= 1;
 }
 void CPU::opcode9xy0(){
-	if (*vx != *vy) programCounter += 2; //skip if vx != vy
+	if (VX != VY) programCounter += 2; //skip if vx != vy
 }
 void CPU::opcodeannn(){
-	indexRegister = nnn;
+	indexRegister = NNN;
 }
 void CPU::opcodebnnn(){
-	programCounter = nnn + v[0]; flag = 1; //(dont increment pc)
+	programCounter = NNN + v[0]; flag = 1; //(dont increment pc)
 }
 void CPU::opcodecxnn(){
-	*vx = (rand() % 0xff) & nn;	//random
+	VX = (rand() % 0xff) & NN;	//random
 }
 void CPU::opcodedxyn(){
 	controllerOp = 0x2;
 }
 void CPU::opcodeex9e(){
-	if (*pressedKey == *vx) programCounter += 2;
+	if (*pressedKey == VX) programCounter += 2;
 }
 void CPU::opcodeexa1(){
-	if (*pressedKey != *vx) programCounter += 2;
+	if (*pressedKey != VX) programCounter += 2;
 }
 void CPU::opcodefx07(){
-	*vx = *delayRegister;
+	VX = *delayRegister;
 }
 void CPU::opcodefx0a(){
-	if (Input::isKeyPressed(*pressedKey) == true) *vx = *pressedKey; else flag = 1; //wait again	(dont increment pc)
+	if (Input::isKeyPressed(*pressedKey) == true) VX = *pressedKey; else flag = 1; //wait again	(dont increment pc)
 }
 void CPU::opcodefx15(){
-	*delayRegister = *vx;
+	*delayRegister = VX;
 }
 void CPU::opcodefx18(){
 	controllerOp = 0x3;
 }
 void CPU::opcodefx1e(){
-	indexRegister += *vx;
+	indexRegister += VX;
 }
 void CPU::opcodefx29(){
-	indexRegister = *vx * 5;	//font is stored at mem[0 ~ FONT_COUNT * 5]
+	indexRegister = VX * 5;	//font is stored at mem[0 ~ FONT_COUNT * 5]
 }
 void CPU::opcodefx33(){
-	memory->write(indexRegister, *vx / 100);
-	memory->write(indexRegister + 1, (*vx / 10) % 10);
-	memory->write(indexRegister + 2, *vx % 10);
+	memory->write(indexRegister, VX / 100);
+	memory->write(indexRegister + 1, (VX / 10) % 10);
+	memory->write(indexRegister + 2, VX % 10);
 }
 void CPU::opcodefx55(){
 	for (int i = 0; i <= (currentOpcode & 0x0f00) >> 8; i++) memory->write(indexRegister + i, v[i]);
