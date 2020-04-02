@@ -361,8 +361,8 @@ void Chip8::useSpeedHack(){
 }
 
 void Chip8::optimizations(){
-	//optimize endless loops
-	if (previousOpcode == currentOpcode){
+	//optimize endless loops(jump)
+	if (((currentOpcode >> 12) == 0x1) && previousOpcode == currentOpcode){
 		static bool doOnce = false;
 		if (doOnce == false){
 			speedHack = 1;
@@ -371,7 +371,7 @@ void Chip8::optimizations(){
 		}
 	}
 
-	//optimize three inst loops
+	//optimize three inst loops(delay, check, jump)
 	static int count = 0;
 	static bool doOnce = false;
 	if (((currentOpcode >> 12) == 0xf) && ((currentOpcode & 0x00ff) == 0x07)  && count == 0){
