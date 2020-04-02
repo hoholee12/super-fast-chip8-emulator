@@ -26,16 +26,20 @@ private:
 
 
 #define OPCODE_TABLE_SIZE 0x10
-#define OPCODE_TABLE_0_SIZE 0xff
-#define OPCODE_TABLE_8_SIZE 0xf
-#define OPCODE_TABLE_E_SIZE 0xff
-#define OPCODE_TABLE_F_SIZE 0xff
+#define OPCODE_TABLE_0_SIZE 0x100
+#define OPCODE_TABLE_8_SIZE 0x10
+#define OPCODE_TABLE_E_SIZE 0x100
+#define OPCODE_TABLE_F_SIZE 0x100
 	//opcode table
 	CPUTable opcode_table[OPCODE_TABLE_SIZE];
 	CPUTable opcode_table_0[OPCODE_TABLE_0_SIZE];
 	CPUTable opcode_table_8[OPCODE_TABLE_8_SIZE];
 	CPUTable opcode_table_e[OPCODE_TABLE_E_SIZE];
 	CPUTable opcode_table_f[OPCODE_TABLE_F_SIZE];
+
+	//jumboLUT version of opcode table
+#define JUMBO_TABLE_SIZE 0x10000
+	CPUTable jumbo_table[JUMBO_TABLE_SIZE];
 	
 	uint16_t controllerOp = 0x0;
 	//TODO
@@ -69,6 +73,12 @@ public:
 	//interpreter needs memory to access, a 60hz delay register(not implemented in cpu), a fetched opcode, and input key
 	uint16_t decode(); //current opcode decoder
 	uint16_t fetch();
+
+	uint16_t decode_jumboLUT(); //even more sparsely populated table
+
+	//for switch method
+	uint16_t decode(Memory* memory, uint8_t *delayRegister, uint16_t input, uint8_t pressedKey); //current opcode decoder
+	uint16_t fetch(Memory* memory);
 	
 	//opcodes
 	void opcodetoTable0();

@@ -10,27 +10,30 @@ int main(int argc, char** argv){
 	Chip8 chip;
 	int clockspeed;
 	int fps;
+	int method;
 
 	if(argc < 2){
 		fprintf(stderr, "feed me with a chip8 program.\n");
 		exit(1);
 	}
-	printf("do you want to change emulation settings? (y/n):");
+	printf("would you like to change emulation settings? (y/n):");
 	switch (getchar()){
 	case 'y':
+		printf("interpreter method (1: switch/2: LUT/3: jumboLUT): ");
+		scanf("%d", &method);
 		printf("clockspeed: ");
 		scanf("%d", &clockspeed);
 		printf("fps: ");
 		scanf("%d", &fps);
-		printf("\nREADY.\n");
+		printf("\nLOAD.\n");
 
 
-		chip.start(argv[1], clockspeed, fps);
+		chip.start(argv[1], clockspeed, fps, method);
 		break;
 	default:
 
 
-		printf("\nREADY.\n");
+		printf("\nLOAD.\n");
 
 
 		chip.start(argv[1]);

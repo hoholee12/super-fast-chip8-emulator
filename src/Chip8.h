@@ -48,11 +48,15 @@ private:
 	
 	bool isEndlessLoop = false;	//notify debugger that this is endless loop
 
+	int whichInterpreter; //choose interpreter method
+
 public:
 	void run();	//looper
-	void update(); //all logic in here
+	void updateInterpreter_switch(); //all logic in here
+	void updateInterpreter_LUT(); //all logic in here
+	void updateInterpreter_jumboLUT(); //all logic in here
 
-	void start(char* title, int cpuspeed = CPU_SPEED, int fps = SCREEN_FPS); //start of emulation
+	void start(char* title, int cpuspeed = CPU_SPEED, int fps = SCREEN_FPS, int whichInterpreter = 1); //start of emulation
 	void debugMe();
 	void optimizations(); //cycle optimizations
 };
