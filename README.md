@@ -5,7 +5,7 @@ tried to make it as simple as possible.
 
 interpreter is done. recompiler is in the works
 
--auto frameskip
+-auto frameskip, auto reduce cycles(because why not)
 
 -upto 3.5mhz(3500000hz) in 60fps for intel 5th gen 3.1ghz cpu(msvc2013-debug)
 
