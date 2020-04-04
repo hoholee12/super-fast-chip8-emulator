@@ -70,16 +70,19 @@ void Chip8::run(){
 	case 1:
 		while (running){
 			updateInterpreter_switch();
+			update_lowerhalf();
 		}
 		break;
 	case 2:
 		while (running){
 			updateInterpreter_LUT();
+			update_lowerhalf();
 		}
 		break;
 	case 3:
 		while (running){
 			updateInterpreter_jumboLUT();
+			update_lowerhalf();
 		}
 		break;
 	default:
