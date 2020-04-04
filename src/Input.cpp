@@ -15,6 +15,4 @@ void Input::checkKeyInput(){
 
 }
 
-uint8_t Input::getKey(){ return pressedKey; }
 
-bool Input::isKeyPressed(uint8_t pressedKey){ return (pressedKey != defaultKey) ? true : false; }

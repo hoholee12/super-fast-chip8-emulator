@@ -2,4 +2,4 @@
 
 make clean
 make
-./chip8-emu pong.ch8
+echo "chip8-emu build finished in the /build folder."

@@ -30,3 +30,8 @@ public:
 	bool isKeyPressed(uint8_t pressedKey);
 
 };
+
+//inline getters
+inline uint8_t Input::getKey(){ return pressedKey; }
+
+inline bool Input::isKeyPressed(uint8_t pressedKey){ return (pressedKey != defaultKey) ? true : false; }

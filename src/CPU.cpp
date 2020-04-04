@@ -205,11 +205,7 @@ uint16_t CPU::fetch(Memory* memory){
 	return currentOpcode;
 }
 
-uint16_t* CPU::getProgramCounter(){ return &programCounter; }
-uint8_t* CPU::getStackPointer(){ return &stackPointer; }
-uint16_t* CPU::getIndexRegister(){ return &indexRegister; }
-uint16_t* CPU::getStack(uint8_t input){ return &stack[input]; }
-uint8_t* CPU::getV(uint8_t input){ return &v[input]; }
+
 
 //get everything here instead
 void CPU::init(Memory* memory, uint8_t* delayRegister, uint8_t* pressedKey){

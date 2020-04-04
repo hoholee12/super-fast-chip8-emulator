@@ -7,14 +7,18 @@
 #define SCREEN_HEIGHT 0x20
 #define SCALE 20
 
-class Video{
+class Video final{
 private:
 
 	uint8_t videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
 	
 public:
 	void writeVBuffer(uint16_t addr, uint8_t input);
-	uint8_t readVBuffer(uint16_t addr);
+	
+	//inline getter
+	uint8_t readVBuffer(uint16_t addr){
+		return videoBuffer[addr];
+	}
 
 	void clearVBuffer();
 

@@ -2,7 +2,7 @@
 #include"defaults.h"
 #include"CPU.h"
 
-class Audio:public defaults{
+class Audio final:public defaults{
 private:
 	uint8_t soundTimer;
 	

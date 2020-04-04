@@ -39,7 +39,7 @@ class CPU;	//forward declaration for cputable
 typedef void (CPU::*       CPUTable)();
 
 
-class CPU: public Input{
+class CPU final: public Input{
 private:
 	uint16_t currentOpcode;
 	uint16_t programCounter;
@@ -89,12 +89,12 @@ private:
 	uint8_t* pressedKey;
 
 public:
-	//getters
-	uint16_t* getProgramCounter();
-	uint8_t* getStackPointer();
-	uint16_t* getIndexRegister();	//I register
-	uint16_t* getStack(uint8_t input);
-	uint8_t* getV(uint8_t input);
+	//inline getters
+	uint16_t* getProgramCounter(){ return &programCounter; }
+	uint8_t* getStackPointer(){ return &stackPointer; }
+	uint16_t* getIndexRegister(){ return &indexRegister; }
+	uint16_t* getStack(uint8_t input){ return &stack[input]; }
+	uint8_t* getV(uint8_t input){ return &v[input]; }
 
 
 	//interpreter needs memory to access, a 60hz delay register(not implemented in cpu), a fetched opcode, and input key

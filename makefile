@@ -1,13 +1,35 @@
-src = $(filter-out src/X86Emitter.cpp, $(filter-out src/Translator.cpp,\
- $(filter-out src/Dynarec.cpp, $(filter-out src/Cache.cpp, $(wildcard src/*.cpp)))))
-obj = $(src:.cpp=.o)
+.PHONY: default
+.DEFAULT_GOAL: default
 
-CC=g++
-SDLFLAGS=`pkg-config --cflags --libs sdl2` -lSDL2main -lSDL2 -lSDL2_mixer
-CFLAGS=-g -O2 -flto -Wno-unused-result
+SRCDIR=$(CURDIR)/src
+OBJDIR=$(CURDIR)/build
 
-build: $(obj)
-	$(CC) -o chip8-emu $^ $(SDLFLAGS) $(CFLAGS)
+SOURCES=$(filter-out $(SRCDIR)/X86Emitter.cpp,\
+	$(filter-out $(SRCDIR)/Translator.cpp,\
+	$(filter-out $(SRCDIR)/Dynarec.cpp,\
+	$(filter-out $(SRCDIR)/Cache.cpp,\
+	$(wildcard $(SRCDIR)/*.cpp)))))
+OBJECTS=$(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
+DEPENDS=$(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.d,$(SOURCES))
+
+CXXFLAGS=-g -O2 -Wno-unused-result
+LDFLAGS=`pkg-config --cflags --libs sdl2` -lSDL2main -lSDL2 -lSDL2_mixer
+
+default: $(OBJDIR)/chip8-emu
+
+$(OBJDIR)/%.d: $(SRCDIR)/%.cpp | $(OBJDIR)
+	$(CXX) $(CXXFLAGS) -MM -MT $(patsubst %.d,%.o,$@) -MF $@ $<
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+$(OBJDIR)/chip8-emu: $(OBJECTS) | $(OBJDIR)
+	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
+
+-include $(DEPENDS)
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 clean:
-	rm -rf $(obj) chip8-emu
+	rm -rf $(OBJDIR)

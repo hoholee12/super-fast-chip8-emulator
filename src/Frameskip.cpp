@@ -14,16 +14,6 @@ void Frameskip::init(int cpuspeed, int fps){
 
 }
 
-uint32_t* Frameskip::getVideoTimer(){ return &screenTicksPerFrame; }
-uint32_t* Frameskip::getFskipTimer(){ return &backupTicksPerFrame; }
-uint32_t* Frameskip::getDelayTimer(){ return &delayTimerPerFrame; }
-uint32_t* Frameskip::getWindowTimer(){ return &windowTicksPerFrame; }
-uint32_t* Frameskip::getFsbTimer(){ return &fsbTicksPerFrame; }
-
-uint32_t Frameskip::getCpuSpeed(){ return cpuSpeed; }
-uint32_t Frameskip::getBackupFps(){ return backupFps; }
-uint32_t Frameskip::getHoldTick(){ return holdTick; }
-
 void Frameskip::startTime(){
 	prevTick = defaults::checkTime();
 }

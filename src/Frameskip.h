@@ -9,7 +9,7 @@
 #define WINDOW_FPS 1	//window - do not go over TIMER_SPEED
 #define SKIP_VALUE 2	//fps / skipValue
 
-class Frameskip:public defaults{
+class Frameskip final:public defaults{
 private:
 	//fps timer
 	uint32_t cpuSpeed = CPU_SPEED;
@@ -39,16 +39,17 @@ public:
 
 	void init(int cpuspeed, int fps);
 
-	uint32_t* getVideoTimer();
-	uint32_t* getFskipTimer();
-	uint32_t* getDelayTimer();
-	uint32_t* getWindowTimer();
-	uint32_t* getFsbTimer();
+	//inline getters
+	uint32_t* getVideoTimer(){ return &screenTicksPerFrame; }
+	uint32_t* getFskipTimer(){ return &backupTicksPerFrame; }
+	uint32_t* getDelayTimer(){ return &delayTimerPerFrame; }
+	uint32_t* getWindowTimer(){ return &windowTicksPerFrame; }
+	uint32_t* getFsbTimer(){ return &fsbTicksPerFrame; }
 
 	//for window
-	uint32_t getCpuSpeed();
-	uint32_t getBackupFps();
-	uint32_t getHoldTick();
+	uint32_t getCpuSpeed(){ return cpuSpeed; }
+	uint32_t getBackupFps(){ return backupFps; }
+	uint32_t getHoldTick(){ return holdTick; }
 
 	void endTime();
 	void calculateSkip();

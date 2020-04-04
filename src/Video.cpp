@@ -23,10 +23,6 @@ void Video::writeVBuffer(uint16_t addr, uint8_t input){
 	videoBuffer[addr] = input;
 }
 
-uint8_t Video::readVBuffer(uint16_t addr){
-	return videoBuffer[addr];
-}
-
 void Video::clearVBuffer(){
 	for(int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) videoBuffer[i] = 0;
 }

@@ -29,12 +29,12 @@ const uint8_t fontSet[FONT_COUNT * 5] = {
 	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-class Memory{
+class Memory final{
 private:
 	uint8_t mem[FULL_MEM_SIZE];
 
 public:
-
+	//inline getter
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t input);
 
@@ -42,3 +42,8 @@ public:
 
 
 };
+
+inline uint8_t Memory::read(uint16_t addr){
+		return mem[addr];
+
+}
