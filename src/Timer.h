@@ -35,3 +35,10 @@ inline bool Timer::checkTimer(){
 	return false;
 
 }
+
+//loop inline
+inline void Timer::updateTimer(){
+
+	cycleCount++;
+	if (cycleCount > cycleLimit) cycleCount = 0;
+}

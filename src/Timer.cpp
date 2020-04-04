@@ -24,8 +24,4 @@ void Timer::calcLimit(){
 }
 
 
-void Timer::updateTimer(){
 
-	cycleCount++;
-	if (cycleCount > cycleLimit) cycleCount = 0;
-}
