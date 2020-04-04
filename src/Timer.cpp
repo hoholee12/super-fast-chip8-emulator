@@ -29,14 +29,3 @@ void Timer::updateTimer(){
 	cycleCount++;
 	if (cycleCount > cycleLimit) cycleCount = 0;
 }
-
-bool Timer::checkTimer(){
-
-	if (cycleCount == 0){
-		calcLimit();											//calculate new limit
-		return true;
-	}
-
-	return false;
-
-}

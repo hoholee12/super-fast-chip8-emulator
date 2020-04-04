@@ -23,3 +23,15 @@ public:
 	//return true if reached an end of delay
 	bool checkTimer();
 };
+
+//inline getter
+inline bool Timer::checkTimer(){
+
+	if (cycleCount == 0){
+		calcLimit();											//calculate new limit
+		return true;
+	}
+
+	return false;
+
+}
