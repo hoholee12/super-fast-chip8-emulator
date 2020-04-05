@@ -59,7 +59,7 @@ public:
 	void updateInterpreter_jumboLUT(); //all logic in here
 	void update_lowerhalf();
 
-	void start(char* title, int cpuspeed = CPU_SPEED, int fps = SCREEN_FPS, int whichInterpreter = 1); //start of emulation
+	void start(char* title, int cpuspeed = CPU_SPEED, int fps = SCREEN_FPS, int whichInterpreter = 1, int flickerOffset = 4); //start of emulation
 	void debugMe();
 	void optimizations(); //cycle optimizations
 };

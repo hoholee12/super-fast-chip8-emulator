@@ -1,6 +1,6 @@
 #include"Chip8.h"
 
-void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter){
+void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int flickerOffset){
 	//backup
 	this->title = title;
 	this->cpuspeed = cpuspeed;
@@ -37,7 +37,7 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter){
 	memory->init(title);
 	input->init();
 	keyinput = input->getKey();
-	video->init(title, mainwindow);
+	video->init(title, mainwindow, flickerOffset);
 	audio->init();
 	audio->playAudio(); //test
 
