@@ -52,7 +52,7 @@ you can change these options when loading the game.
 
 ### Demonstration:
 
-[![](http://img.youtube.com/vi/5feeAfAG0w8/0.jpg)](http://www.youtube.com/watch?v=5feeAfAG0w8 "https://i.ytimg.com/vi/5feeAfAG0w8/hqdefault.jpg?sqp=-oaymwEZCNACELwBSFXyq4qpAwsIARUAAIhCGAFwAQ==&rs=AOn4CLCQM2SEeP7qw29AFuZv0c7xR3VCRA")
+[![](http://img.youtube.com/vi/smC-RAgf5yA/0.jpg)](http://www.youtube.com/watch?v=smC-RAgf5yA "https://i9.ytimg.com/vi/5feeAfAG0w8/mqdefault.jpg?time=1586088267181&sqp=CMCQp_QF&rs=AOn4CLCtqFvyLYqW0Ur1FKyLRmdaO-miRQ")
 
 #### Have fun!
 
