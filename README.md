@@ -1,6 +1,6 @@
 # chip8-emulator
 
-## infos
+## Info
 
 your average emulator using c++ and sdl2.0
 
@@ -16,11 +16,11 @@ interpreter is done. recompiler is in the works
 
 -upto 150mhz(150000000hz) in 60fps on ubuntu linux
 
-## how to play
+## How to play
 
 pass your rom location to program parameter.
 
-type 'y' if you wish to setup clockspeed, fps, etc.
+type 'y' if you wish to custom setup interpreter method, clockspeed, fps, and flicker offset!
 
 keyinput goes like this:
 
@@ -31,18 +31,18 @@ keyinput goes like this:
 |a|s|d|f|
 |z|x|c|v|
 
-## build?
+## Build?
 
 -this code requires sdl2 and sdl2_mixer to compile(look into defaults.h if you encounter location problems)
 
 -you also need data/sound/klik.wav in same directory format for sound.
 
-also im still fixing it so dont bother asking why some games wont work!
+please help me make my project run faster :D
 
 this project follows:
 http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
 
-## options
+## Options
 
 ive implemented three different interpreter methods (switchcase/partitionizedLUT/bigLUT)
 
@@ -50,10 +50,10 @@ theres also an option to change clockspeed and fps.
 
 you can change these options when loading the game.
 
-### demonstration:
+### Demonstration:
 
 [![](http://img.youtube.com/vi/5feeAfAG0w8/0.jpg)](http://www.youtube.com/watch?v=5feeAfAG0w8 "https://i.ytimg.com/vi/5feeAfAG0w8/hqdefault.jpg?sqp=-oaymwEZCNACELwBSFXyq4qpAwsIARUAAIhCGAFwAQ==&rs=AOn4CLCQM2SEeP7qw29AFuZv0c7xR3VCRA")
 
-#### have fun!
+#### Have fun!
 
 hoholee12@naver.com
