@@ -10,7 +10,7 @@
 //queue size
 #define QUEUE_SIZE 0x100
 //queue offset
-#define QUEUE_OFFSET 4
+#define QUEUE_OFFSET 0
 
 class Video final{
 private:

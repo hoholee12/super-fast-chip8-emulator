@@ -20,13 +20,13 @@ int main(int argc, char** argv){
 	printf("would you like to change emulation settings? (y/n):");
 	switch (getchar()){
 	case 'y':
-		printf("interpreter method (1: switch/2: LUT/3: jumboLUT): ");
+		printf("interpreter method (1: switch/2: LUT/3: jumboLUT)(anything is fine): ");
 		scanf("%d", &method);
-		printf("clockspeed: ");
+		printf("clockspeed (1000hz(1000) works for most apps, try 100mhz(100000000) if you want to go extreme): ");
 		scanf("%d", &clockspeed);
-		printf("fps: ");
+		printf("fps (default; 60fps): ");
 		scanf("%d", &fps);
-		printf("flicker offset (example; pong requires 4): ");
+		printf("flicker offset (default; 0, however pong game requires 4): ");
 		scanf("%d", &flickerOffset);
 		printf("\nLOAD.\n");
 
