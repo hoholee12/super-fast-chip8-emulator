@@ -1,4 +1,7 @@
 # chip8-emulator
+
+## infos
+
 your average emulator using c++ and sdl2.0
 
 tried to make it as simple as possible.
@@ -7,7 +10,28 @@ interpreter is done. recompiler is in the works
 
 -auto frameskip, auto reduce cycles(because why not)
 
+-video deflicker!
+
 -upto 3.5mhz(3500000hz) in 60fps for intel 5th gen 3.1ghz cpu(msvc2013-debug)
+
+-upto 150mhz(150000000hz) in 60fps on ubuntu linux
+
+## how to play
+
+pass your rom location to program parameter.
+
+type 'y' if you wish to setup clockspeed, fps, etc.
+
+keyinput goes like this:
+
+|||||
+|---|---|---|---|
+|1|2|3|4|
+|q|w|e|r|
+|a|s|d|f|
+|z|x|c|v|
+
+## build?
 
 -this code requires sdl2 and sdl2_mixer to compile(look into defaults.h if you encounter location problems)
 
@@ -28,5 +52,8 @@ you can change these options when loading the game.
 
 ### demonstration:
 
-
 [![](http://img.youtube.com/vi/5feeAfAG0w8/0.jpg)](http://www.youtube.com/watch?v=5feeAfAG0w8 "https://i.ytimg.com/vi/5feeAfAG0w8/hqdefault.jpg?sqp=-oaymwEZCNACELwBSFXyq4qpAwsIARUAAIhCGAFwAQ==&rs=AOn4CLCQM2SEeP7qw29AFuZv0c7xR3VCRA")
+
+#### have fun!
+
+hoholee12@naver.com
