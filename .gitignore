@@ -1,4 +1,6 @@
 src/*.o
 src/chip8-emu
+build/*.*
+build/*
 chip8-emu
 pong.ch8
