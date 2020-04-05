@@ -50,6 +50,8 @@ private:
 
 	int whichInterpreter; //choose interpreter method
 
+	bool drawFlag = false; //possible speed optimization
+
 public:
 	void run();	//looper
 	void updateInterpreter_switch(); //all logic in here
@@ -131,9 +133,13 @@ inline void Chip8::update_lowerhalf(){
 	if (controllerOp != 0x0)		//optimization
 		switch (controllerOp){
 		case 0x1:
-			video->clearVBuffer();
+			drawFlag = true;
 			break;
 		case 0x2:
+			if(drawFlag){
+				video->clearVBuffer();
+				drawFlag = false;
+			}
 			video->copySprite(currentOpcode, cpu, memory);
 			break;
 		case 0x3:

@@ -104,43 +104,51 @@ void Chip8::useSpeedHack(){
 	}
 }
 
+//try to make codeblocks so as to not interfere with one another
 void Chip8::optimizations(){
+
 	//optimize endless loops(jump)
-	if (((currentOpcode >> 12) == 0x1) && previousOpcode == currentOpcode){
-		static bool doOnce = false;
-		if (doOnce == false){
-			speedHack = 1;
-			isEndlessLoop = true;
-			doOnce = true;
+	{
+		if (((currentOpcode >> 12) == 0x1) && previousOpcode == currentOpcode){
+			static bool doOnce = false;
+			if (doOnce == false){
+				speedHack = 1;
+				isEndlessLoop = true;
+				doOnce = true;
+			}
 		}
 	}
 
 	//optimize three inst loops(delay, check, jump)
-	static int count = 0;
-	static bool doOnce = false;
-	if (((currentOpcode >> 12) == 0xf) && ((currentOpcode & 0x00ff) == 0x07)  && count == 0){
-		count++;
-	}
-	else if (((currentOpcode >> 12) == 0x3) && count == 1){
-		count++;
-	}
-	else if (((currentOpcode >> 12) == 0x1) && count == 2){
-		count = 0;
-		if (doOnce == false){
-			speedHack = 1;
-			isEndlessLoop = true;
-			doOnce = true;
+	{
+		static int count = 0;
+		static bool doOnce = false;
+		if (((currentOpcode >> 12) == 0xf) && ((currentOpcode & 0x00ff) == 0x07) && count == 0){
+			count++;
 		}
-	}
-	else{
-		if (doOnce == true){
-			speedHack = 0;
-			isEndlessLoop = false;
-			doOnce = false;
-
+		else if (((currentOpcode >> 12) == 0x3) && count == 1){
+			count++;
+		}
+		else if (((currentOpcode >> 12) == 0x1) && count == 2){
 			count = 0;
+			if (doOnce == false){
+				speedHack = 1;
+				isEndlessLoop = true;
+				doOnce = true;
+			}
+		}
+		else{
+			if (doOnce == true){
+				speedHack = 0;
+				isEndlessLoop = false;
+				doOnce = false;
+
+				count = 0;
+			}
 		}
 	}
+
+	
 }
 
 void Chip8::debugMe(){

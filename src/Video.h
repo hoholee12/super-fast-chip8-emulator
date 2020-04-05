@@ -7,25 +7,72 @@
 #define SCREEN_HEIGHT 0x20
 #define SCALE 20
 
+//queue size
+#define QUEUE_SIZE 0x100
+//queue offset
+#define QUEUE_OFFSET 2
+
 class Video final{
 private:
 
 	uint8_t videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
-	
-public:
-	void writeVBuffer(uint16_t addr, uint8_t input);
-	
-	//inline getter
-	uint8_t readVBuffer(uint16_t addr){
-		return videoBuffer[addr];
+	uint8_t frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //one for real display
+
+	//simple queue
+	int offset = QUEUE_OFFSET; //how much to ignore before start queueing
+	bool offsetFlag = true;		//true until offset completed
+	bool copyFlag = false; //signal to copy to fbuffer
+	uint16_t opcodeQueue[QUEUE_SIZE];
+	uint32_t queuePointer = 0;	//first
+	void enqueue(uint16_t opcode){
+		if(offsetFlag){ if(offset-- != 0) return; }
+		offsetFlag = false;
+		opcodeQueue[queueMask(queuePointer++)] = opcode; 
 	}
+	void emptyqueue(){ queuePointer = 0; }
+	//either copy when loop found
+	void findOpcodefromQueue(uint16_t opcode){
+		for(int i = 0; i < queuePointer; i++){
+			//detect loop
+			if(opcode == opcodeQueue[queueMask(i)]){
+				copyFlag = true;
+				return;
+			}
+		}
+
+	}
+	//or copy when limit exceeded
+	int queueMask(int i){
+		if(i > QUEUE_SIZE - 1){
+			copyFlag = true;
+		}
+		return i % QUEUE_SIZE;
+	}
+
+
+public:
+
+	void copyToFbuffer(); //clone to fbuffer
 
 	void clearVBuffer();
 
-	void copySprite(uint16_t input, CPU* cpu, Memory* memory);
+	void copySprite(uint16_t opcode, CPU* cpu, Memory* memory);
 
 	void draw(defaults* mainwindow); //updates screen
 	
 	void init(char* str, defaults* mainwindow); //i do this only to display filename on window bar
 
+	void optimizations(uint16_t opcode);	//separate optimizations for video
+
 };
+
+inline void Video::optimizations(uint16_t opcode){
+	//deflicker
+	findOpcodefromQueue(opcode);
+	if(copyFlag){
+		emptyqueue();
+		copyToFbuffer();
+		copyFlag = false;
+	}
+	enqueue(opcode);
+}

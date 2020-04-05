@@ -1,8 +1,8 @@
 #include"Video.h"
 
 void Video::init(char* str, defaults* mainwindow){
-	//clear videobuffer
-	for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) videoBuffer[i] = 0;
+	//clear videobuffer(also does fbuffer)
+	clearVBuffer();
 
 	mainwindow->videoInit(str, SCREEN_WIDTH, SCREEN_HEIGHT, SCALE);
 
@@ -10,35 +10,40 @@ void Video::init(char* str, defaults* mainwindow){
 
 }
 
+//real final draw
 void Video::draw(defaults* mainwindow){
 
 	int scan = 0;
 
-	mainwindow->drawVideo(videoBuffer);
+	mainwindow->drawVideo(frameBuffer);
 
 
 }
 
-void Video::writeVBuffer(uint16_t addr, uint8_t input){
-	videoBuffer[addr] = input;
+//clone to fbuffer
+void Video::copyToFbuffer(){
+	for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) frameBuffer[i] = videoBuffer[i];
+
 }
 
+//also does fbuffer
 void Video::clearVBuffer(){
 	for(int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) videoBuffer[i] = 0;
+	copyToFbuffer();
 }
 
-void Video::copySprite(uint16_t input, CPU* cpu, Memory* memory){
+void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory){
 	//?x??
-	uint8_t *vx = cpu->getV((input & 0x0f00) >> 8);
+	uint8_t *vx = cpu->getV((opcode & 0x0f00) >> 8);
 
 	//??y?
-	uint8_t *vy = cpu->getV((input & 0x00f0) >> 4);
+	uint8_t *vy = cpu->getV((opcode & 0x00f0) >> 4);
 
 	//vf
 	uint8_t *vf = cpu->getV(0xf);
 
 	//??nn
-	uint8_t n = input & 0x000f;
+	uint8_t n = opcode & 0x000f;
 	*vf = 0x0; //default
 
 #ifdef DEBUG_ME
@@ -55,4 +60,7 @@ void Video::copySprite(uint16_t input, CPU* cpu, Memory* memory){
 		}
 		//printf("\n");
 	}
+
+	optimizations(opcode);
 }
+
