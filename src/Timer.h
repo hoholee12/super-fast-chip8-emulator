@@ -46,7 +46,8 @@ inline void Timer::updateTimer(){
 	if (cycleCount > cycleLimit) cycleCount = 0;
 }
 
+//for sched
 inline void Timer::updateTimer(uint32_t* secondaryInput){
-	cycleCount++;
-	if (cycleCount > ((*delayTimerPerFrame / *secondaryInput) - 1)) cycleCount = 0;
+	init(this->delayTimerPerFrame, secondaryInput);
+	updateTimer();
 }

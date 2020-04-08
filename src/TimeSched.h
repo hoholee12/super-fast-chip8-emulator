@@ -19,9 +19,9 @@ private:
 		for (uint32_t i = 0; i < queueSize; i++){
 			uint32_t temp = timeQueue[i]->getCycleLimit();
 			if (baseClock > temp)
-				baseClock = temp; //hax
+				baseClock = temp;
 		}
-	}	//check which clock is the biggest and store that one as base. selection
+	}	//check which timer is the smallest and store that one as base. selection
 
 	uint32_t pointerWrap(uint32_t queuePointer){
 		return (queuePointer == queueSize) ? 0 : queuePointer;
@@ -55,13 +55,16 @@ public:
 	} //ALL TASKS MUST BE RUNNING IN ORDER HOW IT WAS ADDED!!!
 	//queuePointer will increment every end and start with new timer.
 
-	void reinitTimer(){
+	void reinitSched(){
 		checkBaseClock();
+		for (uint32_t i = 0; i < queueSize; i++) timeQueue[i]->updateTimer(&baseClock);
 	}	//in case of clockspeed/fps readjustment in realtime
+
+	void initSched(){ reinitSched(); }
 
 	void addTimeQueue(Timer *timer){
 		timeQueue[queueSize++] = timer;
-		reinitTimer();
+		checkBaseClock();
 	}	//add
 
 

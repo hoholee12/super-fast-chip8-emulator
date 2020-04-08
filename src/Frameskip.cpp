@@ -38,7 +38,7 @@ void Frameskip::updateNewTimerSet(){
 	delayTimerPerFrame = cpuSpeed / timerSpeed;		//cycles
 	screenDelayPerFrame = 1000 / screenFps;			//milliseconds
 	windowTicksPerFrame = cpuSpeed / windowFps;		//cycles
-	fsbTicksPerFrame = cpuSpeed / fsbSpeed;	//cycles
+	fsbTicksPerFrame = cpuSpeed / fsbSpeed;			//cycles
 }
 
 void Frameskip::calculateSkip(){

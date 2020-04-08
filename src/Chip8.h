@@ -153,7 +153,38 @@ inline void Chip8::update_controller(){
 
 //rest of the logic
 inline void Chip8::update_lowerhalf(){
+
+	//delay timer - 60hz
+	if (scheduler->subCheck()){
+		if (delayRegister > 0x0) delayRegister--;
+
+		//audio - 60hz
+		audio->audioProcess();
+
+		//input - 60hz?
+		input->checkKeyInput();
+		keyinput = input->getKey(); //keyinput maybe needed for other instances
+	}
+
+	//video - loop based on fskip hz value, may skip a bit more if indivisable
+	if (scheduler->subCheck()){
+		video->draw(mainwindow);	//draw
+
+	}
+
+	//window - 1hz
+	if (scheduler->subCheck()){
+		mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
+	}
+
 	
+
+	//120hz for extra cycle optimization
+	if (scheduler->subCheck()){
+		//cycle optimizations - 120hz
+		optimizations();
+		//useSpeedHack(); //quite buggy atm
+	}
 
 
 
@@ -170,37 +201,6 @@ inline void Chip8::update_lowerhalf(){
 
 	}
 
-
-	//video - loop based on fskip hz value, may skip a bit more if indivisable
-	if (scheduler->subCheck()){
-		video->draw(mainwindow);	//draw
-
-	}
-
-	//delay timer - 60hz
-	if (scheduler->subCheck()){
-		if (delayRegister > 0x0) delayRegister--;
-
-		//audio - 60hz
-		audio->audioProcess();
-
-		//input - 60hz?
-		input->checkKeyInput();
-		keyinput = input->getKey(); //keyinput maybe needed for other instances
-	}
-
-	//window - 1hz
-	if (scheduler->subCheck()){
-		mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
-	}
-
-
-	//120hz for extra cycle optimization
-	if (scheduler->subCheck()){
-		//cycle optimizations - 120hz
-		optimizations();
-		//useSpeedHack(); //quite buggy atm
-	}
 
 	if (keyinput == 0xff) running = false;	//shutdown emulator
 

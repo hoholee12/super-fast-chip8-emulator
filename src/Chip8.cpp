@@ -25,13 +25,15 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 	scheduler = new TimeSched();
 
 	initSpeed(cpuspeed, fps);
-	scheduler->addTimeQueue(videoTimerInstance);
-	scheduler->addTimeQueue(fskipTimerInstance);
+	//must be added in order!!
 	scheduler->addTimeQueue(delayTimerInstance);
+	scheduler->addTimeQueue(fskipTimerInstance);
 	scheduler->addTimeQueue(windowTimerInstance);
 	scheduler->addTimeQueue(fsbInstance);
-
+	scheduler->addTimeQueue(videoTimerInstance);
 	
+	scheduler->initSched();
+
 	//init components
 	currentOpcode = 0;
 	keyinput = 0;
@@ -76,7 +78,8 @@ void Chip8::initSpeed(int cpuspeed, int fps){
 	delayTimerInstance->init(fskip->getDelayTimer());
 	windowTimerInstance->init(fskip->getWindowTimer());
 
-	scheduler->reinitTimer();
+	scheduler->reinitSched();
+
 
 }
 
