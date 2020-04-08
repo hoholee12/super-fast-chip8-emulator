@@ -5,6 +5,7 @@
 #include"Video.h"
 #include"Audio.h"
 #include"Timer.h"
+#include"TimeSched.h"
 #include"Frameskip.h"
 
 #include"defaults.h"
@@ -40,6 +41,8 @@ private:
 	Timer* delayTimerInstance;
 	Timer* windowTimerInstance;
 
+	TimeSched* scheduler;
+
 	int speedHack = -1; // -1: neutral, 0: low, 0<: high
 
 	void initSpeed(int cpuspeed, int fps);	//in case of reinitialization
@@ -57,6 +60,7 @@ public:
 	void updateInterpreter_switch(); //all logic in here
 	void updateInterpreter_LUT(); //all logic in here
 	void updateInterpreter_jumboLUT(); //all logic in here
+	void update_controller();
 	void update_lowerhalf();
 
 	void start(char* title, int cpuspeed = CPU_SPEED, int fps = SCREEN_FPS, int whichInterpreter = 1, int flickerOffset = 0); //start of emulation
@@ -127,8 +131,7 @@ inline void Chip8::updateInterpreter_jumboLUT(){
 
 }
 
-//rest of the logic
-inline void Chip8::update_lowerhalf(){
+inline void Chip8::update_controller(){
 	//controller
 	if (controllerOp != 0x0)		//optimization
 		switch (controllerOp){
@@ -136,7 +139,7 @@ inline void Chip8::update_lowerhalf(){
 			drawFlag = true;
 			break;
 		case 0x2:
-			if(drawFlag){
+			if (drawFlag){
 				video->clearVBuffer();
 				drawFlag = false;
 			}
@@ -146,48 +149,22 @@ inline void Chip8::update_lowerhalf(){
 			audio->setSoundTimer(currentOpcode, cpu);
 			break;
 	}
+}
+
+//rest of the logic
+inline void Chip8::update_lowerhalf(){
+	
 
 	//120hz for extra cycle optimization
-	if (fsbInstance->checkTimer()){
-
-		//delay timer - 60hz
-		if (delayTimerInstance->checkTimer()){
-			if (delayRegister > 0x0) delayRegister--;
-
-			//audio - 60hz
-			audio->audioProcess();
-
-			//input - 60hz?
-			input->checkKeyInput();
-			keyinput = input->getKey(); //keyinput maybe needed for other instances
-		}
-
-		//video - loop based on fskip hz value, may skip a bit more if indivisable
-		if (fskipTimerInstance->checkTimer()){
-			video->draw(mainwindow);	//draw
-
-		}
-
-		//window - 1hz
-		if (windowTimerInstance->checkTimer()){
-			mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
-		}
-
-		if (keyinput == 0xff) running = false;	//shutdown emulator
-
+	if (scheduler->shouldOneRunThis()){
 		//cycle optimizations - 120hz
 		optimizations();
 		useSpeedHack(); //quite buggy atm
-
-		//update internal timers
-		delayTimerInstance->updateTimer();
-		windowTimerInstance->updateTimer();
-		fskipTimerInstance->updateTimer();
 	}
 
 	//frameskip
 	////user framerate most of the time indivisable by 60hz
-	if (videoTimerInstance->checkTimer()){
+	if (scheduler->shouldOneRunThis()){
 
 		fskip->endTime();			//end timer
 		fskip->calculateSkip();		//calculate
@@ -198,7 +175,32 @@ inline void Chip8::update_lowerhalf(){
 
 	}
 
-	//update timers
-	fsbInstance->updateTimer();
-	videoTimerInstance->updateTimer();
+
+	//video - loop based on fskip hz value, may skip a bit more if indivisable
+	if (scheduler->shouldOneRunThis()){
+		video->draw(mainwindow);	//draw
+
+	}
+
+	//delay timer - 60hz
+	if (scheduler->shouldOneRunThis()){
+		if (delayRegister > 0x0) delayRegister--;
+
+		//audio - 60hz
+		audio->audioProcess();
+
+		//input - 60hz?
+		input->checkKeyInput();
+		keyinput = input->getKey(); //keyinput maybe needed for other instances
+	}
+
+	//window - 1hz
+	if (scheduler->shouldOneRunThis()){
+		mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
+	}
+
+	if (keyinput == 0xff) running = false;	//shutdown emulator
+
+	
+
 }

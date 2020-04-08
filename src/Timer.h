@@ -20,6 +20,8 @@ public:
 	void init(uint32_t* input, uint32_t* secondaryInput);	//for sub
 	void updateTimer();
 
+	uint32_t getCycleLimit(){ return cycleLimit + 1; } //for TimerSched
+
 	//return true if reached an end of delay
 	bool checkTimer();
 };

@@ -6,11 +6,7 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 	this->cpuspeed = cpuspeed;
 	this->fps = fps;
 
-	currentOpcode = 0;
-	keyinput = 0;
-
-	isEndlessLoop = false;
-
+	//create instances
 	mainwindow = new defaults();
 	cpu = new CPU();
 	memory = new Memory();
@@ -19,20 +15,29 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 	audio = new Audio();
 	fskip = new Frameskip();
 
+	//init timers
 	videoTimerInstance = new Timer();
 	fskipTimerInstance = new Timer();
 	delayTimerInstance = new Timer();
 	windowTimerInstance = new Timer();
 	fsbInstance = new Timer();
 
-	
-	
+	scheduler = new TimeSched();
+
 	initSpeed(cpuspeed, fps);
+	scheduler->addTimeQueue(fsbInstance);
+	scheduler->addTimeQueue(videoTimerInstance);
+	scheduler->addTimeQueue(fskipTimerInstance);
+	scheduler->addTimeQueue(delayTimerInstance);
+	scheduler->addTimeQueue(windowTimerInstance);
 
-	delayRegister = 0x0;
 
 	
-
+	//init components
+	currentOpcode = 0;
+	keyinput = 0;
+	isEndlessLoop = false;
+	delayRegister = 0x0;
 	cpu->init(memory, &delayRegister, &keyinput);
 	memory->init(title);
 	input->init();
@@ -43,16 +48,18 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 
 	this->whichInterpreter = whichInterpreter;
 
+
+	//READY.
 	printf("\nREADY.\n");
 
-	run();
+	run();	//start looping!!!
 
 }
 
 void Chip8::initSpeed(int cpuspeed, int fps){
 	//init fskip
 	fskip->init(cpuspeed, fps);
-
+	/*
 	//main timers
 	videoTimerInstance->init(fskip->getVideoTimer());
 	fsbInstance->init(fskip->getFsbTimer());
@@ -61,6 +68,16 @@ void Chip8::initSpeed(int cpuspeed, int fps){
 	fskipTimerInstance->init(fskip->getFskipTimer(), fskip->getFsbTimer());
 	delayTimerInstance->init(fskip->getDelayTimer(), fskip->getFsbTimer());
 	windowTimerInstance->init(fskip->getWindowTimer(), fskip->getFsbTimer());
+	*/
+
+	//for scheduler
+	videoTimerInstance->init(fskip->getVideoTimer());
+	fsbInstance->init(fskip->getFsbTimer());
+	fskipTimerInstance->init(fskip->getFskipTimer());
+	delayTimerInstance->init(fskip->getDelayTimer());
+	windowTimerInstance->init(fskip->getWindowTimer());
+
+	scheduler->reinitTimer();
 
 }
 
@@ -69,19 +86,28 @@ void Chip8::run(){
 	switch (whichInterpreter){
 	case 1:
 		while (running){
-			updateInterpreter_switch();
+			while (scheduler->baseLoop()){
+				updateInterpreter_switch();
+				update_controller();
+			}
 			update_lowerhalf();
 		}
 		break;
 	case 2:
 		while (running){
-			updateInterpreter_LUT();
+			while (scheduler->baseLoop()){
+				updateInterpreter_LUT();
+				update_controller();
+			}
 			update_lowerhalf();
 		}
 		break;
 	case 3:
 		while (running){
-			updateInterpreter_jumboLUT();
+			while (scheduler->baseLoop()){
+				updateInterpreter_jumboLUT();
+				update_controller();
+			}
 			update_lowerhalf();
 		}
 		break;
