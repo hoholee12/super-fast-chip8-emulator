@@ -12,9 +12,11 @@ interpreter is done. recompiler is in the works
 
 -video deflicker!
 
--upto 3.5mhz(3500000hz) in 60fps for intel 5th gen 3.1ghz cpu(msvc2013-debug)
+-upto 4mhz(4000000hz) in 60fps for intel 5th gen 3.1ghz cpu(msvc2013-debug)
 
--upto 150mhz(150000000hz) in 60fps on ubuntu linux
+-upto 250mhz(250000000hz) in 60fps on ubuntu linux
+
+(performance improved alot after implementing time scheduling)
 
 ## How to play
 
