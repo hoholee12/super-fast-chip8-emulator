@@ -5,7 +5,7 @@
 
 #define SCREEN_WIDTH 0x40
 #define SCREEN_HEIGHT 0x20
-#define SCALE 20
+#define SCALE 10
 
 //queue size
 #define QUEUE_SIZE 0x100
@@ -19,8 +19,8 @@ private:
 	uint8_t frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //one for real display
 
 	//simple queue
-	uint32_t offset_count = 0;
-	uint32_t offset_limit = QUEUE_OFFSET; //how much loops to ignore before flush
+	int offset_count = 0;
+	int offset_limit = QUEUE_OFFSET; //how much loops to ignore before flush, disable deflicker if -1
 	bool copyFlag = false; //signal to copy to fbuffer
 	uint16_t opcodeQueue[QUEUE_SIZE];
 	uint32_t queuePointer = 0;	//first
@@ -28,12 +28,14 @@ private:
 	void emptyqueue(){ queuePointer = 0; }
 	//either copy when loop found
 	void findOpcodefromQueue(uint16_t opcode){
-		for(int i = 0; i < queuePointer; i++){
+		for(uint32_t i = 0; i < queuePointer; i++){
 			//detect loop
-			if((opcode == opcodeQueue[queueMask(i)]) && (++offset_count > offset_limit)){
-				copyFlag = true;
-				offset_count = 0;
-				return;
+			if(opcode == opcodeQueue[queueMask(i)]){
+				if (++offset_count > offset_limit){
+					copyFlag = true;
+					offset_count = 0;
+					return;
+				}
 			}
 		}
 
@@ -57,7 +59,7 @@ public:
 
 	void draw(defaults* mainwindow); //updates screen
 	
-	void init(char* str, defaults* mainwindow, uint32_t queue_offset = QUEUE_OFFSET); //i do this only to display filename on window bar
+	void init(char* str, defaults* mainwindow, int queue_offset = QUEUE_OFFSET); //i do this only to display filename on window bar
 
 	void optimizations(uint16_t opcode);	//separate optimizations for video
 
@@ -66,7 +68,7 @@ public:
 inline void Video::optimizations(uint16_t opcode){
 	//deflicker
 	findOpcodefromQueue(opcode);
-	if(copyFlag){
+	if(copyFlag || offset_limit < 0){
 		emptyqueue();
 		copyToFbuffer();
 		copyFlag = false;

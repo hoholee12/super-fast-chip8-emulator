@@ -1,6 +1,6 @@
 #include"Video.h"
 
-void Video::init(char* str, defaults* mainwindow, uint32_t queue_offset){
+void Video::init(char* str, defaults* mainwindow, int queue_offset){
 	this->offset_limit = queue_offset;
 
 	//clear videobuffer(also does fbuffer)
@@ -53,7 +53,7 @@ void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory){
 #endif
 	for (int y = 0; y < n; y++){
 		for (int x = 0; x < 8; x++){
-			int check1 = SCREEN_WIDTH * (*vy + y) + *vx + x;
+			int check1 = SCREEN_WIDTH * (*vy + y) + (*vx + x);
 			uint8_t check2 = memory->read(*cpu->getIndexRegister() + y) << x;
 			check2 >>= 7;
 			//printf("%d ", check2);

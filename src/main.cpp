@@ -26,7 +26,7 @@ int main(int argc, char** argv){
 		scanf("%d", &clockspeed);
 		printf("fps (default; 60fps): ");
 		scanf("%d", &fps);
-		printf("flicker offset (default; 0, however pong game requires 4): ");
+		printf("flicker offset (default; 0, pong game requires 4, -1(disable) for vbrix): ");
 		scanf("%d", &flickerOffset);
 		printf("\nLOAD.\n");
 
