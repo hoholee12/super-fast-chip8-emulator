@@ -19,6 +19,7 @@ public:
 	void init(uint32_t* input);	//for main
 	void init(uint32_t* input, uint32_t* secondaryInput);	//for sub
 	void updateTimer();
+	void updateTimer(uint32_t* secondaryInput);
 
 	uint32_t getCycleLimit(){ return cycleLimit + 1; } //for TimerSched
 
@@ -43,4 +44,9 @@ inline void Timer::updateTimer(){
 
 	cycleCount++;
 	if (cycleCount > cycleLimit) cycleCount = 0;
+}
+
+inline void Timer::updateTimer(uint32_t* secondaryInput){
+	cycleCount++;
+	if (cycleCount > ((*delayTimerPerFrame / *secondaryInput) - 1)) cycleCount = 0;
 }

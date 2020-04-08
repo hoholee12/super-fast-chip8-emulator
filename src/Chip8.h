@@ -159,7 +159,7 @@ inline void Chip8::update_lowerhalf(){
 
 	//frameskip
 	////user framerate most of the time indivisable by 60hz
-	if (scheduler->shouldOneRunThis()){
+	if (scheduler->subCheck()){
 
 		fskip->endTime();			//end timer
 		fskip->calculateSkip();		//calculate
@@ -172,13 +172,13 @@ inline void Chip8::update_lowerhalf(){
 
 
 	//video - loop based on fskip hz value, may skip a bit more if indivisable
-	if (scheduler->shouldOneRunThis()){
+	if (scheduler->subCheck()){
 		video->draw(mainwindow);	//draw
 
 	}
 
 	//delay timer - 60hz
-	if (scheduler->shouldOneRunThis()){
+	if (scheduler->subCheck()){
 		if (delayRegister > 0x0) delayRegister--;
 
 		//audio - 60hz
@@ -190,13 +190,13 @@ inline void Chip8::update_lowerhalf(){
 	}
 
 	//window - 1hz
-	if (scheduler->shouldOneRunThis()){
+	if (scheduler->subCheck()){
 		mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
 	}
 
 
 	//120hz for extra cycle optimization
-	if (scheduler->shouldOneRunThis()){
+	if (scheduler->subCheck()){
 		//cycle optimizations - 120hz
 		optimizations();
 		//useSpeedHack(); //quite buggy atm
