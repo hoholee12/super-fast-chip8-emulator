@@ -25,12 +25,11 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 	scheduler = new TimeSched();
 
 	initSpeed(cpuspeed, fps);
-	scheduler->addTimeQueue(fsbInstance);
 	scheduler->addTimeQueue(videoTimerInstance);
 	scheduler->addTimeQueue(fskipTimerInstance);
 	scheduler->addTimeQueue(delayTimerInstance);
 	scheduler->addTimeQueue(windowTimerInstance);
-
+	scheduler->addTimeQueue(fsbInstance);
 
 	
 	//init components

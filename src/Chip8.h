@@ -155,12 +155,7 @@ inline void Chip8::update_controller(){
 inline void Chip8::update_lowerhalf(){
 	
 
-	//120hz for extra cycle optimization
-	if (scheduler->shouldOneRunThis()){
-		//cycle optimizations - 120hz
-		optimizations();
-		useSpeedHack(); //quite buggy atm
-	}
+
 
 	//frameskip
 	////user framerate most of the time indivisable by 60hz
@@ -197,6 +192,14 @@ inline void Chip8::update_lowerhalf(){
 	//window - 1hz
 	if (scheduler->shouldOneRunThis()){
 		mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
+	}
+
+
+	//120hz for extra cycle optimization
+	if (scheduler->shouldOneRunThis()){
+		//cycle optimizations - 120hz
+		optimizations();
+		//useSpeedHack(); //quite buggy atm
 	}
 
 	if (keyinput == 0xff) running = false;	//shutdown emulator

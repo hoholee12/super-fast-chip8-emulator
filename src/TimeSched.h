@@ -26,7 +26,7 @@ private:
 	}	//check which clock is the biggest and store that one as base. selection
 
 	uint32_t pointerWrap(uint32_t queuePointer){
-		return queuePointer % queueSize;
+		return (queuePointer > queueSize - 1) ? 0 : queuePointer;
 	}
 
 public:
