@@ -204,7 +204,7 @@ void CPU::opcodebnnn(){
 	programCounter = NNN + v[0]; flag = 1; //(dont increment pc)
 }
 void CPU::opcodecxnn(){
-	VX = (rand() % 0xff) & NN;	//random
+	VX = (rand() % 0x100) & NN;	//random
 }
 void CPU::opcodedxyn(){
 	controllerOp = 0x2;

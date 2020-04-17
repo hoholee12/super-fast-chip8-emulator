@@ -246,7 +246,7 @@ inline uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t cur
 	//first nibble
 	switch (currentOpcode >> 12){
 	case 0x0:
-		switch (currentOpcode & 0x00ff){
+		switch (SUB_DUAL){
 		case 0xe0:	controllerOp = 0x1;
 			break;
 		case 0xee:	programCounter = stack[--stackPointer]; //return from SUBroutine	(and increment pc after to get out of loop)
@@ -270,7 +270,7 @@ inline uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t cur
 	case 0x7:	VX += NN;
 		break;
 	case 0x8:
-		switch (currentOpcode & 0x000f){
+		switch (SUB){
 		case 0x0:	VX = VY;
 			break;
 		case 0x1:	VX |= VY;
@@ -299,12 +299,12 @@ inline uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t cur
 		break;
 	case 0xb:	programCounter = NNN + v[0]; flag = 1; //(dont increment pc)
 		break;
-	case 0xc:	VX = (rand() % 0xff) & NN;	//random
+	case 0xc:	VX = (rand() % 0x100) & NN;	//random
 		break;
 	case 0xd:	controllerOp = 0x2;
 		break;
 	case 0xe:
-		switch (currentOpcode & 0x00ff){
+		switch (SUB_DUAL){
 		case 0x9e:
 			if (pressedKey == VX) programCounter += 2;
 			break;
@@ -316,7 +316,7 @@ inline uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t cur
 		}
 		break;
 	case 0xf:
-		switch (currentOpcode & 0x00ff){
+		switch (SUB_DUAL){
 		case 0x07:	VX = *delayRegister;
 			break;
 		case 0x0a:	if (Input::isKeyPressed(pressedKey) == true) VX = pressedKey; else flag = 1; //wait again	(dont increment pc)
