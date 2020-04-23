@@ -10,7 +10,7 @@ interpreter is done. recompiler is in the works
 
 -auto frameskip, auto reduce cycles(because why not)
 
--video deflicker!
+-video deflicker! - new method to parse opcode patterns. all games ive tested have *zero* flickering now.
 
 -upto 4mhz(4000000hz) in 60fps for intel 5th gen 3.1ghz cpu(msvc2013-debug)
 
