@@ -88,6 +88,8 @@ private:
 	uint8_t* delayRegister;
 	uint8_t* pressedKey;
 
+	bool jmpHint = false;
+
 public:
 	//inline getters
 	uint16_t* getProgramCounter(){ return &programCounter; }
@@ -96,6 +98,13 @@ public:
 	uint16_t* getStack(uint8_t input){ return &stack[input]; }
 	uint8_t* getV(uint8_t input){ return &v[input]; }
 
+
+	//return previous jmp state and reset
+	bool prevJmpHint(){ 
+		bool temp = jmpHint;
+		jmpHint = false;	//reset
+		return temp;
+	}
 
 	//interpreter needs memory to access, a 60hz delay register(not implemented in cpu), a fetched opcode, and input key
 	uint16_t decode(); //current opcode decoder
@@ -256,6 +265,7 @@ inline uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t cur
 		}
 		break;
 	case 0x1:	programCounter = NNN; flag = 1;//jump to nnn	(dont increment pc)
+				jmpHint = true; //hint for video flicker loop
 		break;
 	case 0x2:	stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 		break;

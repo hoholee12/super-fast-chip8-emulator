@@ -22,11 +22,6 @@ void Video::draw(defaults* mainwindow){
 
 }
 
-//clone to fbuffer
-void Video::copyToFbuffer(){
-	for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) frameBuffer[i] = videoBuffer[i];
-
-}
 
 //also does fbuffer
 void Video::clearVBuffer(){
@@ -37,7 +32,7 @@ void Video::clearVBuffer(){
 void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory){
 	//?x??
 	uint8_t *vx = cpu->getV((opcode & 0x0f00) >> 8);
-
+	
 	//??y?
 	uint8_t *vy = cpu->getV((opcode & 0x00f0) >> 4);
 
@@ -48,12 +43,19 @@ void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory){
 	uint8_t n = opcode & 0x000f;
 	*vf = 0x0; //default
 
+	//index register
+	uint16_t indexReg = *cpu->getIndexRegister();
+
+	uint8_t wrapX = *vx % SCREEN_WIDTH;
+	uint8_t wrapY = *vy % SCREEN_HEIGHT;
+
+
 #ifdef DEBUG_ME
-	printf("indexReg = %x, x = %x, y = %x, n = %x\n", *cpu->getIndexRegister(), *vx, *vy, n);
+	printf("indexReg = %x, x = %x, y = %x, f = %x, n = %x\n", *cpu->getIndexRegister(), *vx, *vy, *vf, n);
 #endif
 	for (int y = 0; y < n; y++){
 		for (int x = 0; x < 8; x++){
-			int check1 = SCREEN_WIDTH * (*vy + y) + (*vx + x);
+			int check1 = SCREEN_WIDTH * (wrapY + y) + (wrapX + x);
 			uint8_t check2 = memory->read(*cpu->getIndexRegister() + y) << x;
 			check2 >>= 7;
 			//printf("%d ", check2);
@@ -63,6 +65,6 @@ void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory){
 		//printf("\n");
 	}
 
-	optimizations(opcode);
+	optimizations(new QueueType{ opcode, cpu->prevJmpHint() });
 }
 

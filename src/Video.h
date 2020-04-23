@@ -12,25 +12,53 @@
 //queue offset
 #define QUEUE_OFFSET 0
 
+typedef struct _QueueType{
+	//uint16_t indexReg;
+	uint16_t opcode;
+	//uint8_t vx;
+	//uint8_t vy;
+	//uint8_t vf;
+	bool jmpState;
+
+	const bool operator==(const _QueueType& queueOp){
+		return //(indexReg == queueOp.indexReg)
+			(opcode == queueOp.opcode)
+			//&& (vx == queueOp.vx)
+			//&& (vy == queueOp.vy)
+			//&& (vf == queueOp.vf)
+			&& (jmpState == queueOp.jmpState)
+			;
+	}
+} QueueType;
+
+
+
 class Video final{
 private:
 
 	uint8_t videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
 	uint8_t frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //one for real display
 
+	
+
 	//simple queue
 	int offset_count = 0;
 	int offset_limit = QUEUE_OFFSET; //how much loops to ignore before flush, disable deflicker if -1
 	bool copyFlag = false; //signal to copy to fbuffer
-	uint16_t opcodeQueue[QUEUE_SIZE];
+	QueueType opcodeQueue[QUEUE_SIZE];
 	uint32_t queuePointer = 0;	//first
-	void enqueue(uint16_t opcode){ opcodeQueue[queueMask(queuePointer++)] = opcode; }
+
+	void enqueue(QueueType* inputQueue){ opcodeQueue[queueMask(queuePointer++)] = *inputQueue; }
+	
 	void emptyqueue(){ queuePointer = 0; }
+	
 	//either copy when loop found
-	void findOpcodefromQueue(uint16_t opcode){
+	void findOpcodefromQueue(QueueType* inputQueue){
 		for(uint32_t i = 0; i < queuePointer; i++){
 			//detect loop
-			if(opcode == opcodeQueue[queueMask(i)]){
+			if (*inputQueue == opcodeQueue[queueMask(i)]){
+
+				//offset cycle delay
 				if (++offset_count > offset_limit){
 					copyFlag = true;
 					offset_count = 0;
@@ -40,18 +68,22 @@ private:
 		}
 
 	}
+
 	//or copy when limit exceeded
 	int queueMask(int i){
 		if(i > QUEUE_SIZE - 1){
+			i = 0;
 			copyFlag = true;
 		}
-		return i % QUEUE_SIZE;
+		return i;
 	}
 
 
 public:
 
-	void copyToFbuffer(); //clone to fbuffer
+
+	//clone to fbuffer
+	void copyToFbuffer(){ for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) frameBuffer[i] = videoBuffer[i]; }
 
 	void clearVBuffer();
 
@@ -61,17 +93,23 @@ public:
 	
 	void init(char* str, defaults* mainwindow, int queue_offset = QUEUE_OFFSET); //i do this only to display filename on window bar
 
-	void optimizations(uint16_t opcode);	//separate optimizations for video
+	void optimizations(QueueType* inputQueue);	//separate optimizations for video
 
 };
 
-inline void Video::optimizations(uint16_t opcode){
+inline void Video::optimizations(QueueType* inputQueue){
 	//deflicker
-	findOpcodefromQueue(opcode);
+	findOpcodefromQueue(inputQueue);
 	if(copyFlag || offset_limit < 0){
+#ifdef DEBUG_ME
+		printf(">>flush queue\n");
+#endif
 		emptyqueue();
 		copyToFbuffer();
 		copyFlag = false;
 	}
-	enqueue(opcode);
+#ifdef DEBUG_ME
+	printf(">>insert queue\n");
+#endif
+	enqueue(inputQueue);
 }

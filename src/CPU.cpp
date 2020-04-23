@@ -148,6 +148,7 @@ void CPU::opcode0nnn(){
 }
 void CPU::opcode1nnn(){
 	programCounter = NNN; flag = 1;//jump to nnn	(dont increment pc)
+	jmpHint = true; //hint for video flicker loop
 }
 void CPU::opcode2nnn(){
 	stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)

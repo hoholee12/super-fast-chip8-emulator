@@ -185,7 +185,7 @@ void Chip8::debugMe(){
 	static bool doOnce = false;
 	if (!isEndlessLoop){
 		doOnce = false;
-		Debug::printDebug(*cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode);
+		Debug::printDebug(*cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode, mainwindow);
 	}
 	else{
 		if (doOnce == false){

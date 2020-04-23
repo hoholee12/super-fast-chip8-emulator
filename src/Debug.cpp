@@ -1,8 +1,10 @@
 #include"Debug.h"
 
-void Debug::printDebug(uint16_t pc, uint16_t stack, uint16_t input){
+void Debug::printDebug(uint16_t pc, uint16_t stack, uint16_t input, defaults* mainwindow){
 	static int count = 0;
 	static bool inCall = false;
+
+	mainwindow->delayTime(DEBUG_TIME);
 
 	if (inCall) printf("(call)\t");
 	printf("%d:\tpc: %x\t\tstack: %x\topcode: %x\t", ++count, pc, stack, input);
