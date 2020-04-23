@@ -23,7 +23,7 @@ defaults.h
 
 
 //#define DEBUG_ME
-//#define DEBUG_TIME 0
+#define DEBUG_TIME 0
 
 
 class defaults{

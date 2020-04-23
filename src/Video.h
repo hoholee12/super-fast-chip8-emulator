@@ -49,9 +49,20 @@ private:
 	QueueType opcodeQueue[QUEUE_SIZE];
 	uint32_t queuePointer = 0;	//first
 
-	void enqueue(QueueType* inputQueue){ opcodeQueue[queueMask(queuePointer++)] = *inputQueue; }
+	uint32_t prevOp = 0;
+
+	void enqueue(QueueType* inputQueue){ 
+#ifdef DEBUG_ME
+		printf(">>insert queue\n");
+#endif
+		prevOp = inputQueue->opcode;
+		opcodeQueue[queueMask(queuePointer++)] = *inputQueue; }
 	
-	void emptyqueue(){ queuePointer = 0; }
+	void empty_queue(){ 
+#ifdef DEBUG_ME
+		printf(">>flush queue\n");
+#endif
+		queuePointer = 0; }
 	
 	
 	void findOpcodefromQueue(QueueType* inputQueue){
@@ -99,6 +110,7 @@ public:
 
 	//for chip8 endless looop
 	void forceFlush(){
+		empty_queue();
 		copyToFbuffer();
 	}
 
@@ -106,24 +118,28 @@ public:
 	
 	void init(char* str, defaults* mainwindow, int queue_offset = QUEUE_OFFSET); //i do this only to display filename on window bar
 
-	void optimizations(QueueType* inputQueue);	//separate optimizations for video
+	void pre_optimizations(QueueType* inputQueue);	//separate optimizations for video
+	void post_optimizations();
 
 };
 
-inline void Video::optimizations(QueueType* inputQueue){
+inline void Video::pre_optimizations(QueueType* inputQueue){
 
 	//deflicker
 	findOpcodefromQueue(inputQueue);
-	if(copyFlag || offset_limit < 0){
-#ifdef DEBUG_ME
-		printf(">>flush queue\n");
-#endif
-		emptyqueue();
-		copyToFbuffer();
+	if(copyFlag){
+		if (queuePointer < 2) offset_limit = -1;	//hax for tetris
+		if (prevOp == inputQueue->opcode) offset_limit = -1;	//hax for random
+		forceFlush();
 		copyFlag = false;
 	}
-#ifdef DEBUG_ME
-	printf(">>insert queue\n");
-#endif
+
 	enqueue(inputQueue);
+}
+
+inline void Video::post_optimizations(){
+	if( offset_limit < 0){
+		forceFlush();
+		copyFlag = false;
+	}
 }

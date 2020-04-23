@@ -170,7 +170,6 @@ inline void Chip8::update_lowerhalf(){
 	if (scheduler->subCheck()){
 		if (isEndlessLoop) video->forceFlush(); //force flush if endlessloop
 		video->draw(mainwindow);	//draw
-
 	}
 
 	//window - 1hz
