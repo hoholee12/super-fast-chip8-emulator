@@ -1,4 +1,4 @@
-# chip8-emulator
+# super-fast-chip8-emulator
 
 ## Info
 
