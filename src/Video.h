@@ -26,7 +26,8 @@ typedef struct _QueueType{
 			//&& (vx == queueOp.vx)
 			//&& (vy == queueOp.vy)
 			//&& (vf == queueOp.vf)
-			&& (jmpState == queueOp.jmpState)
+			&& (jmpState == true)
+			&& (queueOp.jmpState == true)
 			;
 	}
 } QueueType;
@@ -52,7 +53,7 @@ private:
 	
 	void emptyqueue(){ queuePointer = 0; }
 	
-	//either copy when loop found
+	
 	void findOpcodefromQueue(QueueType* inputQueue){
 		for(uint32_t i = 0; i < queuePointer; i++){
 			//detect loop
@@ -60,6 +61,8 @@ private:
 
 				//offset cycle delay
 				if (++offset_count > offset_limit){
+
+					//>>>>>either copy when loop found
 					copyFlag = true;
 					offset_count = 0;
 					return;
@@ -69,11 +72,16 @@ private:
 
 	}
 
-	//or copy when limit exceeded
+
 	int queueMask(int i){
-		if(i > QUEUE_SIZE - 1){
+		if(i > queuePointer - 1){
 			i = 0;
+
+			//>>>>>or copy when limit exceeded
 			copyFlag = true;
+		}
+		else if (i < 0){
+			i = queuePointer - 1;
 		}
 		return i;
 	}
@@ -89,6 +97,11 @@ public:
 
 	void copySprite(uint16_t opcode, CPU* cpu, Memory* memory);
 
+	//for chip8 endless looop
+	void forceFlush(){
+		copyToFbuffer();
+	}
+
 	void draw(defaults* mainwindow); //updates screen
 	
 	void init(char* str, defaults* mainwindow, int queue_offset = QUEUE_OFFSET); //i do this only to display filename on window bar
@@ -98,6 +111,7 @@ public:
 };
 
 inline void Video::optimizations(QueueType* inputQueue){
+
 	//deflicker
 	findOpcodefromQueue(inputQueue);
 	if(copyFlag || offset_limit < 0){

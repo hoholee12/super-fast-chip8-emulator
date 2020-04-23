@@ -46,9 +46,11 @@ void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory){
 	//index register
 	uint16_t indexReg = *cpu->getIndexRegister();
 
-	uint8_t wrapX = *vx % SCREEN_WIDTH;
-	uint8_t wrapY = *vy % SCREEN_HEIGHT;
+	uint8_t wrapX = *vx;// % SCREEN_WIDTH;
+	uint8_t wrapY = *vy;// % SCREEN_HEIGHT;
 
+	//draw to fbuffer before jmp
+	optimizations(new QueueType{ opcode, cpu->prevJmpHint() });
 
 #ifdef DEBUG_ME
 	printf("indexReg = %x, x = %x, y = %x, f = %x, n = %x\n", *cpu->getIndexRegister(), *vx, *vy, *vf, n);
@@ -65,6 +67,6 @@ void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory){
 		//printf("\n");
 	}
 
-	optimizations(new QueueType{ opcode, cpu->prevJmpHint() });
+	
 }
 

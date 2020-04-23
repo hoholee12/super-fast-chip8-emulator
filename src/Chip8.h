@@ -168,6 +168,7 @@ inline void Chip8::update_lowerhalf(){
 
 	//video - loop based on fskip hz value, may skip a bit more if indivisable
 	if (scheduler->subCheck()){
+		if (isEndlessLoop) video->forceFlush(); //force flush if endlessloop
 		video->draw(mainwindow);	//draw
 
 	}
