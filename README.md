@@ -54,7 +54,7 @@ you can change these options when loading the game.
 
 ### Demonstration:
 
-[![](http://img.youtube.com/vi/smC-RAgf5yA/0.jpg)](http://www.youtube.com/watch?v=smC-RAgf5yA "https://i9.ytimg.com/vi/5feeAfAG0w8/mqdefault.jpg?time=1586088267181&sqp=CMCQp_QF&rs=AOn4CLCtqFvyLYqW0Ur1FKyLRmdaO-miRQ")
+[![](http://img.youtube.com/vi/dMV2lnNoxGg/0.jpg)](http://www.youtube.com/watch?v=dMV2lnNoxGg "https://i9.ytimg.com/vi/dMV2lnNoxGg/mq2.jpg?sqp=CKX-hfUF&rs=AOn4CLByAtLQyftORU5wL503Yl857I1f5A")
 
 #### Have fun!
 
