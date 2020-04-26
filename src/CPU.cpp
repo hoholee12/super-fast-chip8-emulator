@@ -10,7 +10,6 @@ void CPU::init(Memory* memory, uint8_t* delayRegister, uint8_t* pressedKey){
 	this->memory = memory;
 	this->delayRegister = delayRegister;
 	this->pressedKey = pressedKey;
-	
 
 	//create opcode table
 	//main table
@@ -113,7 +112,7 @@ void CPU::init(Memory* memory, uint8_t* delayRegister, uint8_t* pressedKey){
 	programCounter = 0x200; //start at 0x200
 	stackPointer = 0x0;
 	indexRegister = 0x0;
-	controllerOp = 0x0;
+	controllerOp = ControllerOp::none;
 	//TODO
 	throwError = false; //if illegal instruction
 
@@ -138,7 +137,7 @@ void CPU::opcodetoTablef(){
 
 //opcodes
 void CPU::opcode00e0(){ 
-	controllerOp = 0x1;
+	controllerOp = ControllerOp::clearScreen;
 }
 void CPU::opcode00ee(){
 	programCounter = stack[--stackPointer]; //return from SUBroutine	(and increment pc after to get out of loop)
@@ -208,7 +207,7 @@ void CPU::opcodecxnn(){
 	VX = (rand() % 0x100) & NN;	//random
 }
 void CPU::opcodedxyn(){
-	controllerOp = 0x2;
+	controllerOp = ControllerOp::drawVideo;
 }
 void CPU::opcodeex9e(){
 	if (*pressedKey == VX) programCounter += 2;
@@ -226,7 +225,7 @@ void CPU::opcodefx15(){
 	*delayRegister = VX;
 }
 void CPU::opcodefx18(){
-	controllerOp = 0x3;
+	controllerOp = ControllerOp::setSoundTimer;
 }
 void CPU::opcodefx1e(){
 	indexRegister += VX;

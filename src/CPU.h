@@ -8,6 +8,9 @@
 #include"defaults.h"
 #include"Timer.h"
 
+//for chip8 controller
+enum ControllerOp{ none, clearScreen, drawVideo, setSoundTimer };
+
 //opcode parser
 #define HEAD (currentOpcode >> 12)
 #define SUB (currentOpcode & 0x000f)
@@ -36,8 +39,9 @@
 #define V_REGISTER_SIZE 0x10
 
 class CPU;	//forward declaration for cputable
-typedef void (CPU::*       CPUTable)();
-
+//pointer to function.
+typedef void			(CPU::*CPUTable)	(void);
+//		^return type	^function name		^dont take parameter
 
 class CPU final: public Input{
 private:
@@ -65,7 +69,7 @@ private:
 #define JUMBO_TABLE_SIZE 0x10000
 	CPUTable jumbo_table[JUMBO_TABLE_SIZE];
 	
-	uint16_t controllerOp = 0x0;
+	ControllerOp controllerOp;
 	//TODO
 	bool throwError;
 
@@ -107,13 +111,13 @@ public:
 	}
 
 	//interpreter needs memory to access, a 60hz delay register(not implemented in cpu), a fetched opcode, and input key
-	uint16_t decode(); //current opcode decoder
+	ControllerOp decode(); //current opcode decoder
 	uint16_t fetch();
 
-	uint16_t decode_jumboLUT(); //even more sparsely populated table
+	ControllerOp decode_jumboLUT(); //even more sparsely populated table
 
 	//for switch method
-	uint16_t decode(Memory* memory, uint8_t *delayRegister, uint16_t currentOpcode, uint8_t pressedKey); //current opcode decoder
+	ControllerOp decode(Memory* memory, uint8_t *delayRegister, uint16_t currentOpcode, uint8_t pressedKey); //current opcode decoder
 	uint16_t fetch(Memory* memory);
 	
 	//opcodes
@@ -201,12 +205,13 @@ inline uint16_t CPU::fetch(){
 	return currentOpcode;
 }
 
-inline uint16_t CPU::decode_jumboLUT(){
+inline ControllerOp CPU::decode_jumboLUT(){
 	throwError = false;
-	controllerOp = 0x0; //this motherfucker
+	controllerOp = ControllerOp::none; //this motherfucker
 
 	//opcode table
-	(this->*(jumbo_table[currentOpcode]))();
+	(this->*								(jumbo_table[currentOpcode]))	();
+	//^needed to modify chip8 variables		^specific function name			^no parameter
 
 	if (throwError == true)
 		fprintf(stderr, "unsupported opcode!: %x\n", currentOpcode);
@@ -218,9 +223,9 @@ inline uint16_t CPU::decode_jumboLUT(){
 
 }
 
-inline uint16_t CPU::decode(){
+inline ControllerOp CPU::decode(){
 	throwError = false;
-	controllerOp = 0x0; //this motherfucker
+	controllerOp = ControllerOp::none; //this motherfucker
 
 	//opcode table
 	(this->*(opcode_table[HEAD]))();
@@ -237,8 +242,8 @@ inline uint16_t CPU::decode(){
 
 
 //for switch method
-inline uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t currentOpcode, uint8_t pressedKey){
-	uint16_t controllerOp = 0x0;
+inline ControllerOp CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t currentOpcode, uint8_t pressedKey){
+	controllerOp = ControllerOp::none;
 
 	//TODO
 	bool throwError = false; //if illegal instruction
@@ -256,7 +261,7 @@ inline uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t cur
 	switch (currentOpcode >> 12){
 	case 0x0:
 		switch (SUB_DUAL){
-		case 0xe0:	controllerOp = 0x1;
+		case 0xe0:	controllerOp = ControllerOp::clearScreen;
 			break;
 		case 0xee:	programCounter = stack[--stackPointer]; //return from SUBroutine	(and increment pc after to get out of loop)
 			break;
@@ -311,7 +316,7 @@ inline uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t cur
 		break;
 	case 0xc:	VX = (rand() % 0x100) & NN;	//random
 		break;
-	case 0xd:	controllerOp = 0x2;
+	case 0xd:	controllerOp = ControllerOp::drawVideo;
 		break;
 	case 0xe:
 		switch (SUB_DUAL){
@@ -333,7 +338,7 @@ inline uint16_t CPU::decode(Memory* memory, uint8_t* delayRegister, uint16_t cur
 			break;
 		case 0x15:	*delayRegister = VX;
 			break;
-		case 0x18:	controllerOp = 0x3;
+		case 0x18:	controllerOp = ControllerOp::setSoundTimer;
 			break;
 		case 0x1e:	indexRegister += VX;
 			break;

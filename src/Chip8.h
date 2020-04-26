@@ -30,7 +30,8 @@ private:
 	bool running;
 	uint16_t currentOpcode;
 	uint16_t previousOpcode;	//for some optimization
-	uint16_t controllerOp;	//after cpu processes its stuff, next is chip8 controller output job
+	
+	ControllerOp controllerOp;	//after cpu processes its stuff, next is chip8 controller output job
 
 	uint8_t keyinput;
 	uint8_t delayRegister; //delay register
@@ -72,7 +73,7 @@ public:
 //experimental loop inlining
 //always be cautious on this function - it needs to loop a million times
 inline void Chip8::updateInterpreter_switch(){
-	controllerOp = 0x0; //safe measure
+	controllerOp = ControllerOp::none; //safe measure
 
 	//fetch
 	previousOpcode = currentOpcode;
@@ -92,7 +93,7 @@ inline void Chip8::updateInterpreter_switch(){
 }
 //always be cautious on this function - it needs to loop a million times
 inline void Chip8::updateInterpreter_LUT(){
-	controllerOp = 0x0; //safe measure
+	controllerOp = ControllerOp::none; //safe measure
 
 	//fetch
 	previousOpcode = currentOpcode;
@@ -113,7 +114,7 @@ inline void Chip8::updateInterpreter_LUT(){
 
 //always be cautious on this function - it needs to loop a million times
 inline void Chip8::updateInterpreter_jumboLUT(){
-	controllerOp = 0x0; //safe measure
+	controllerOp = ControllerOp::none; //safe measure
 
 	//fetch
 	previousOpcode = currentOpcode;
@@ -133,19 +134,19 @@ inline void Chip8::updateInterpreter_jumboLUT(){
 
 inline void Chip8::update_controller(){
 	//controller
-	if (controllerOp != 0x0)		//optimization
+	if (controllerOp != ControllerOp::none)		//optimization
 		switch (controllerOp){
-		case 0x1:
+		case ControllerOp::clearScreen:
 			drawFlag = true;
 			break;
-		case 0x2:
+		case ControllerOp::drawVideo:
 			if (drawFlag){
 				video->clearVBuffer();
 				drawFlag = false;
 			}
 			video->copySprite(currentOpcode, cpu, memory);
 			break;
-		case 0x3:
+		case ControllerOp::setSoundTimer:
 			audio->setSoundTimer(currentOpcode, cpu);
 			break;
 	}
