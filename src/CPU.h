@@ -44,7 +44,7 @@ typedef void			(CPU::*CPUTable)	(void);
 //		^return type	^function name		^dont take parameter
 
 class CPU final: public Input{
-private:
+public:
 	uint16_t currentOpcode;
 	uint16_t programCounter;
 	uint8_t stackPointer;
@@ -104,7 +104,7 @@ public:
 
 
 	//return previous jmp state and reset
-	bool prevJmpHint(){ 
+	bool prevJmpHint(){
 		bool temp = jmpHint;
 		jmpHint = false;	//reset
 		return temp;
