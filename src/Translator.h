@@ -4,7 +4,7 @@
 	Dynarec chip8 translator
 
 */
-#include "CPU.h"
+
 #include "X86Emitter.h"
 
 class Translator: public X86Emitter{
