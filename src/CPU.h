@@ -52,6 +52,9 @@ public:
 	uint16_t stack[STACK_SIZE];
 	uint8_t v[V_REGISTER_SIZE];
 
+	//for interpreter fallback
+	bool interpreterSwitch = true;
+
 
 #define OPCODE_TABLE_SIZE 0x10
 #define OPCODE_TABLE_0_SIZE 0x100

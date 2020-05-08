@@ -6,71 +6,108 @@
 */
 
 #include "X86Emitter.h"
+#include"CPU.h"
 
 class Translator: public X86Emitter{
 
 private:
 	//big endians(will be converted automatically on X86Emitter.h)
 	//original interpreter registers(will still be used for other parts of the emulator not covered by dynarec)
-	uint32_t controllerOp;
-	uint16_t programCounter;
-	uint16_t stack;
-	uint8_t stackPointer;
-	uint32_t flag;
-	uint8_t jmpHint;
-	uint8_t v;
-	uint16_t indexRegister;
-	uint8_t pressedKey;
-	uint8_t delayRegister;
-	uint8_t throwError;
-	uint8_t mem;
+	uint32_t controllerOp;		//dword
+	uint32_t programCounter;	//word
+	uint32_t stack;				//word
+	uint32_t stackPointer;		//byte
+	uint32_t flag;				//dword
+	uint32_t jmpHint;			//byte
+	uint32_t v;					//byte
+	uint32_t indexRegister;		//word
+	uint32_t pressedKey;		//byte
+	uint32_t delayRegister;		//byte
+	uint32_t throwError;		//byte
+	uint32_t mem;				//byte
+	uint32_t currentOpcode;		//word
 
-	uint16_t currentOpcode;
+	uint32_t interpreterSwitch;	//byte
 
-	uint32_t temp;
+	uint32_t tempx;				//dword
+	uint32_t temp;				//dword
 
-	void init(CPU* cpu){
-		controllerOp = (uint32_t)&cpu->controllerOp;
-		programCounter = (uint16_t)&cpu->programCounter;
-		stack = (uint16_t)&cpu->stack;
-		stackPointer = (uint8_t)&cpu->stackPointer;
-		flag = (uint32_t)&cpu->flag;
-		jmpHint = (uint8_t)&cpu->jmpHint;
-		v = (uint8_t)&cpu->v;
-		indexRegister = (uint16_t)&cpu->indexRegister;
-		pressedKey = (uint8_t)&cpu->pressedKey;
-		delayRegister = (uint8_t)&cpu->delayRegister;
-		throwError = (uint8_t)&cpu->throwError;
-		mem = (uint8_t)&cpu->memory->mem;
+	uint16_t nx;
+	uint32_t n;					//word
+	uint16_t nnx;
+	uint32_t nn;				//word
+	uint16_t nnnx;
+	uint32_t nnn;				//word
 
-		currentOpcode = (uint16_t)&cpu->currentOpcode;
-
-		temp = 0;
-		temp = (uint32_t)&temp;
-	}
+	bool endMemoryBlock = false;
 
 	int* index;
-	uint8_t* memoryBlock;
+	std::vector<uint8_t>* memoryBlock;
 
-	void init(uint8_t* memoryBlock, int* index){
-		this->index = index;
+	//internal: do not use
+	void init(std::vector<uint8_t>* memoryBlock){
 		this->memoryBlock = memoryBlock;
-	}
-
-
-	void incrementPC(){
-		X86Emitter::mov_memoryval_to_eax(memoryBlock, programCounter, index);
-		//+2
-		X86Emitter::add_immediate_to_eax(memoryBlock, 0x00000002, index);
-		X86Emitter::mov_eax_to_memoryval(memoryBlock, programCounter, index);
+		endMemoryBlock = false;
 	}
 
 public:
 
+	//constructor
+	Translator(CPU* cpu){
+		controllerOp = (uint32_t)&cpu->controllerOp;
+		programCounter = (uint32_t)&cpu->programCounter;
+		stack = (uint32_t)&cpu->stack;
+		stackPointer = (uint32_t)&cpu->stackPointer;
+		flag = (uint32_t)&cpu->flag;
+		jmpHint = (uint32_t)&cpu->jmpHint;
+		v = (uint32_t)&cpu->v;
+		indexRegister = (uint32_t)&cpu->indexRegister;
+		pressedKey = (uint32_t)&cpu->pressedKey;
+		delayRegister = (uint32_t)&cpu->delayRegister;
+		throwError = (uint32_t)&cpu->throwError;
+		mem = (uint32_t)&cpu->memory->mem;
+		currentOpcode = (uint32_t)&cpu->currentOpcode;
+
+		cpu->interpreterSwitch = false;
+		interpreterSwitch = (uint32_t)&cpu->interpreterSwitch;
+
+		tempx = 0;
+		temp = (uint32_t)&tempx;
+		nx = cpu->currentOpcode & 0x000F;
+		nnx = cpu->currentOpcode & 0x00FF;
+		nnnx = cpu->currentOpcode & 0x0FFF;
+		n = (uint32_t)&nx;
+		nn = (uint32_t)&nnx;
+		nnn = (uint32_t)&nnnx;
+		
+	}
+
+	//memoryblock status
+	//check to see if it should end append job
+	bool getEndMemoryBlock(){ return endMemoryBlock; }
+
+	//increment program counter by 2
+	void incrementPC(){
+		X86Emitter::loadWordToDwordRegA(memoryBlock, programCounter);
+		//+2
+		X86Emitter::add_imm_to_eax(memoryBlock, 0x00000002);
+		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
+	}
+
+	//interpreterSwitch = true;
+	//fallback to interpreter, switch back whenever its done. but not here
+	//some opcodes are just too complicated to recreate in jit
+	//...or jump
+	void switchToInterpreter(){
+		X86Emitter::mov_imm_to_eax(memoryBlock, 0x00000001);
+		X86Emitter::mov_al_to_memoryaddr(memoryBlock, interpreterSwitch);
+		endMemoryBlock = true;	//end block
+	}
+
 	//opcodes
 	void opcode00e0(){
-		X86Emitter::mov_immediate_to_eax(memoryBlock, (uint32_t)ControllerOp::clearScreen, index);
-		X86Emitter::mov_eax_to_memoryval(memoryBlock, controllerOp, index);
+		X86Emitter::mov_imm_to_eax(memoryBlock, (uint32_t)ControllerOp::clearScreen);
+		X86Emitter::mov_eax_to_memoryaddr(memoryBlock, controllerOp);
 
 		incrementPC();
 		//original
@@ -78,54 +115,75 @@ public:
 	}
 
 	void opcode00ee(){
+		//stack = ebx, stackptr = eax, pc = ecx
 		//--stackPointer
-		X86Emitter::mov_memoryval_to_eax(memoryBlock, stackPointer, index);
-		X86Emitter::dec_eax(memoryBlock, index);
-		X86Emitter::mov_eax_to_memoryval(memoryBlock, stackPointer, index);
+		X86Emitter::loadByteToDwordRegA(memoryBlock, stackPointer);
+		X86Emitter::dec_eax(memoryBlock);
+		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, stackPointer);
 		//stack[stackPointer] (DO NOT DO stack + stackPointer!!!! stackPointer is not fixed)
-		X86Emitter::mov_immediate_to_ebx(memoryBlock, stack, index);
-		X86Emitter::add_eax_to_ebx(memoryBlock, index);
-		X86Emitter::mov_ebx_to_memoryval(memoryBlock, temp, index);
+		X86Emitter::mov_imm_to_ebx(memoryBlock, stack);
+		X86Emitter::add_eax_to_ebx(memoryBlock);
+		X86Emitter::mov_ebxaddr_to_ax(memoryBlock);
+		X86Emitter::movzx_ax_to_eax(memoryBlock);
 		//to programCounter
-		X86Emitter::mov_memoryval_to_eax(memoryBlock, temp, index);
-		X86Emitter::mov_eax_to_memoryval(memoryBlock, programCounter, index);
+		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
 
 		incrementPC();
-		//original
+		switchToInterpreter();
 		//programCounter = stack[--stackPointer]; //return from SUBroutine	(and increment pc after to get out of loop)
 	}
 	void opcode0nnn(){
 		
-		//stack[stackPointer]
-		X86Emitter::mov_memoryval_to_eax(memoryBlock, stackPointer, index);
-		X86Emitter::mov_immediate_to_ebx(memoryBlock, stack, index);
-		X86Emitter::add_eax_to_ebx(memoryBlock, index);
-		//addr is on ebx
-		//programCounter to stack[stackPointer]
-		X86Emitter::mov_memoryval_to_eax(memoryBlock, programCounter, index);
-		X86Emitter::mov_eax_to_ebxaddr(memoryBlock, index);
-		//0x0FFF for NNN to ebx, opcode to eax
-		X86Emitter::mov_immediate_to_ebx(memoryBlock, 0x00000FFF, index);
-		X86Emitter::mov_memoryval_to_eax(memoryBlock, currentOpcode, index);
-		X86Emitter::and_ebx_to_eax(memoryBlock, index);
-		//NNN to programCounter
-		X86Emitter::mov_eax_to_memoryval(memoryBlock, programCounter, index);
+		//stack = eax, stackptr = ebx, pc = ecx
+		//stack[stackpointer]
+		X86Emitter::mov_imm_to_eax(memoryBlock, stack);
+		X86Emitter::loadByteToDwordRegB(memoryBlock, stackPointer);
+		X86Emitter::add_ebx_to_eax(memoryBlock);
+		//= programCounter
+		X86Emitter::loadWordToDwordRegC(memoryBlock, programCounter);
+		X86Emitter::mov_cx_to_eaxaddr(memoryBlock);
+		//stackPointer++
+		X86Emitter::inc_ebx(memoryBlock);
+		X86Emitter::mov_bl_to_memoryaddr(memoryBlock, stackPointer);
 
-		//original
+		//NNN to programCounter
+		X86Emitter::loadWordToDwordRegA(memoryBlock, nnn);
+		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
+
+		switchToInterpreter();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 	}
 	void opcode1nnn(){
-		//0x0FFF for NNN to ebx, opcode to eax
-		X86Emitter::mov_immediate_to_ebx(memoryBlock, 0x00000FFF, index);
-		X86Emitter::mov_memoryval_to_eax(memoryBlock, currentOpcode, index);
-		X86Emitter::and_ebx_to_eax(memoryBlock, index);
 		//NNN to programCounter
-		X86Emitter::mov_eax_to_memoryval(memoryBlock, programCounter, index);
+		X86Emitter::loadWordToDwordRegA(memoryBlock, nnn);
+		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
 
+		//jmpHint = true
+		X86Emitter::mov_imm_to_eax(memoryBlock, 0x00000001);
+		X86Emitter::mov_al_to_memoryaddr(memoryBlock, jmpHint);
+
+		switchToInterpreter();
 		//programCounter = NNN; flag = 1;//jump to nnn	(dont increment pc)
 		//jmpHint = true; //hint for video flicker loop
 	}
 	void opcode2nnn(){
+		//stack = eax, stackptr = ebx, pc = ecx
+		//stack[stackpointer]
+		X86Emitter::mov_imm_to_eax(memoryBlock, stack);
+		X86Emitter::loadByteToDwordRegB(memoryBlock, stackPointer);
+		X86Emitter::add_ebx_to_eax(memoryBlock);
+		//= programCounter
+		X86Emitter::loadWordToDwordRegC(memoryBlock, programCounter);
+		X86Emitter::mov_cx_to_eaxaddr(memoryBlock);
+		//stackPointer++
+		X86Emitter::inc_ebx(memoryBlock);
+		X86Emitter::mov_bl_to_memoryaddr(memoryBlock, stackPointer);
+
+		//NNN to programCounter
+		X86Emitter::loadWordToDwordRegA(memoryBlock, nnn);
+		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
+
+		switchToInterpreter();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 	}
 	void opcode3xnn(){
