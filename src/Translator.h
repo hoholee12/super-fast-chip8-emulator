@@ -112,7 +112,7 @@ public:
 	void opcode00ee(){
 		//stack = ebx, stackptr = eax, pc = ecx
 		//--stackPointer
-		X86Emitter::subByteToMemaddr(memoryBlock, stackPointer, 1);
+		X86Emitter::dec_byte_memaddr(memoryBlock, stackPointer);
 
 		//stack[stackPointer]
 		X86Emitter::loadWordArray_AregAsResult(memoryBlock, stack, stackPointer);
@@ -133,7 +133,7 @@ public:
 		X86Emitter::storeWordArray_AregAsInput(memoryBlock, stack, stackPointer);
 
 		//stackPointer++
-		X86Emitter::addByteToMemaddr(memoryBlock, stackPointer, 1);
+		X86Emitter::inc_byte_memaddr(memoryBlock, stackPointer);
 
 		//NNN(is an immediate) to programCounter
 		X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);
@@ -160,7 +160,7 @@ public:
 		X86Emitter::storeWordArray_AregAsInput(memoryBlock, stack, stackPointer);
 
 		//stackPointer++
-		X86Emitter::addByteToMemaddr(memoryBlock, stackPointer, 1);
+		X86Emitter::inc_byte_memaddr(memoryBlock, stackPointer);
 
 		//NNN(is an immediate) to programCounter
 		X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);

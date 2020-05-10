@@ -282,6 +282,15 @@ public:
 		byteRelJbeSize = 2,
 		leaWithDispSize = 7,
 		leaWithoutDispSize = 3,
+		incByteMemaddrSize = 6,
+		incWordMemaddrSize = 7,
+		incDwordMemaddrSize = 6,
+		decByteMemaddrSize = incByteMemaddrSize,
+		decWordMemaddrSize = incWordMemaddrSize,
+		decDwordMemaddrSize = incDwordMemaddrSize,
+
+		retSize = 1,
+		nopSize = 1,
 
 		/*shortcuts!*/
 		//one thing to note - memaddr->reg is movXXSize, not movMemaddrXXSize
@@ -297,9 +306,6 @@ public:
 		addByteToMemaddrSize = loadByteShortcutSize + dwordAddImmSize + movMemaddrByteSize,
 		addWordToMemaddrSize = loadWordShortcutSize + dwordAddImmSize + movMemaddrWordSize,
 		addDwordToMemaddrSize = loadDwordShortcutSize + dwordAddImmSize + movMemaddrDwordSize,
-		subByteToMemaddrSize = loadByteShortcutSize + dwordAddImmSize + movMemaddrByteSize,
-		subWordToMemaddrSize = loadWordShortcutSize + dwordAddImmSize + movMemaddrWordSize,
-		subDwordToMemaddrSize = loadDwordShortcutSize + dwordAddImmSize + movMemaddrDwordSize,
 		setByteToMemaddrSize = dwordMovImmSize + movMemaddrByteSize,
 		setWordToMemaddrSize = dwordMovImmSize + movMemaddrWordSize,
 		setDwordToMemaddrSize = dwordMovImmSize + movMemaddrDwordSize,
@@ -560,17 +566,35 @@ public:
 	void add_imm_to_ecx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_add_imm(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Creg); }
 	void add_imm_to_edx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_add_imm(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Dreg); }
 
-	//dword inc
-	void inc(vect8* memoryBlock, Direction direction, Bitsize bitsize){
+	//dword inc reg
+	void inc_reg(vect8* memoryBlock, Direction direction, Bitsize bitsize){
 		init(memoryBlock, incSize);
 		addOpcode(0x40, direction, bitsize);
 	}
 	//inc dword
 	//010000 0 0
-	void inc_eax(vect8* memoryBlock){ inc(memoryBlock, srcToDest, byteOnly); }
-	void inc_ebx(vect8* memoryBlock){ inc(memoryBlock, destToSrc, wordAndDword); }
-	void inc_ecx(vect8* memoryBlock){ inc(memoryBlock, srcToDest, wordAndDword); }
-	void inc_edx(vect8* memoryBlock){ inc(memoryBlock, destToSrc, byteOnly); }
+	void inc_eax(vect8* memoryBlock){ inc_reg(memoryBlock, srcToDest, byteOnly); }
+	void inc_ebx(vect8* memoryBlock){ inc_reg(memoryBlock, destToSrc, wordAndDword); }
+	void inc_ecx(vect8* memoryBlock){ inc_reg(memoryBlock, srcToDest, wordAndDword); }
+	void inc_edx(vect8* memoryBlock){ inc_reg(memoryBlock, destToSrc, byteOnly); }
+
+	//inc mem
+	void inc_memaddr(vect8* memoryBlock, Movsize getMovsize, Direction direction, Bitsize bitsize, Mod mod, X86Regs src ,X86Regs dest){
+		if (getMovsize == movByte) init(memoryBlock, incByteMemaddrSize);
+		else if (getMovsize == movWord){ addPrefix(); init(memoryBlock, incWordMemaddrSize); }
+		else init(memoryBlock, incDwordMemaddrSize);
+		addOpcode(0xFC, direction, bitsize);
+		addModrm(mod, src, dest);
+		addDword(disp.dword);
+	}
+
+	//111111 1 0 00 000 101
+	void inc_byte_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Areg, memaddr); }
+	void inc_word_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Areg, memaddr); }
+	void inc_dword_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Areg, memaddr); }
+	void dec_byte_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Creg, memaddr); }
+	void dec_word_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Creg, memaddr); }
+	void dec_dword_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Creg, memaddr); }
 
 	//dword sub
 	void dword_sub(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
@@ -762,7 +786,10 @@ public:
 	
 
 	//return from eax
-	void ret(vect8* memoryBlock){ init(memoryBlock, 1); addByte(0xC3); }
+	void ret(vect8* memoryBlock){ init(memoryBlock, retSize); addByte(0xC3); }
+
+	//nop
+	void nop(vect8* memoryBlock){ init(memoryBlock, nopSize); addByte(0x90); }
 
 	//load effective address - lea <- shift + add
 	//bse -> memaddr: some dword immediate(disp32) you can add along with main(multiplcation)
@@ -901,25 +928,6 @@ public:
 	void addDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
 		loadDwordToDwordRegA(memoryBlock, memvar);
 		add_imm_to_eax(memoryBlock, immval);
-		mov_eax_to_memoryaddr(memoryBlock, memvar);
-	}
-
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	void subByteToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		loadByteToDwordRegA(memoryBlock, memvar);
-		sub_imm_to_eax(memoryBlock, immval);
-		mov_al_to_memoryaddr(memoryBlock, memvar);
-	}
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	void subWordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		loadWordToDwordRegA(memoryBlock, memvar);
-		sub_imm_to_eax(memoryBlock, immval);
-		mov_ax_to_memoryaddr(memoryBlock, memvar);
-	}
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	void subDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		loadDwordToDwordRegA(memoryBlock, memvar);
-		sub_imm_to_eax(memoryBlock, immval);
 		mov_eax_to_memoryaddr(memoryBlock, memvar);
 	}
 
