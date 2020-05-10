@@ -300,7 +300,9 @@ public:
 		subByteToMemaddrSize = loadByteShortcutSize + dwordAddImmSize + movMemaddrByteSize,
 		subWordToMemaddrSize = loadWordShortcutSize + dwordAddImmSize + movMemaddrWordSize,
 		subDwordToMemaddrSize = loadDwordShortcutSize + dwordAddImmSize + movMemaddrDwordSize,
-
+		setByteToMemaddrSize = dwordMovImmSize + movMemaddrByteSize,
+		setWordToMemaddrSize = dwordMovImmSize + movMemaddrWordSize,
+		setDwordToMemaddrSize = dwordMovImmSize + movMemaddrDwordSize,
 	};
 
 	//no need for the opposite(use only for zeroing out high area)
@@ -918,6 +920,22 @@ public:
 	void subDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
 		loadDwordToDwordRegA(memoryBlock, memvar);
 		sub_imm_to_eax(memoryBlock, immval);
+		mov_eax_to_memoryaddr(memoryBlock, memvar);
+	}
+
+	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
+	void setByteToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
+		mov_imm_to_eax(memoryBlock, immval);
+		mov_al_to_memoryaddr(memoryBlock, memvar);
+	}
+	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
+	void setWordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
+		mov_imm_to_eax(memoryBlock, immval);
+		mov_ax_to_memoryaddr(memoryBlock, memvar);
+	}
+	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
+	void setDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
+		mov_imm_to_eax(memoryBlock, immval);
 		mov_eax_to_memoryaddr(memoryBlock, memvar);
 	}
 };

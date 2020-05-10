@@ -29,8 +29,8 @@ private:
 
 	uint32_t interpreterSwitch;	//byte
 
-	uint32_t tempx;				//dword
-	uint32_t temp;				//dword
+	uint32_t vxPointer;			//byte
+	uint32_t vyPointer;			//byte
 
 	uint16_t nx;
 	uint32_t n;					//word
@@ -71,8 +71,8 @@ public:
 		cpu->interpreterSwitch = false;
 		interpreterSwitch = (uint32_t)&cpu->interpreterSwitch;
 
-		tempx = 0;
-		temp = (uint32_t)&tempx;
+		vxPointer = (uint32_t)&cpu->x_val;
+		vyPointer = (uint32_t)&cpu->y_val;
 		nx = cpu->currentOpcode & 0x000F;
 		nnx = cpu->currentOpcode & 0x00FF;
 		nnnx = cpu->currentOpcode & 0x0FFF;
@@ -88,10 +88,7 @@ public:
 
 	//increment program counter by 2
 	void incrementPC(){
-		X86Emitter::loadWordToDwordRegA(memoryBlock, programCounter);
-		//+2
-		X86Emitter::add_imm_to_eax(memoryBlock, 0x00000002);
-		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
+		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
 	}
 
 	//interpreterSwitch = true;
@@ -99,15 +96,13 @@ public:
 	//some opcodes are just too complicated to recreate in jit
 	//...or jump
 	void switchToInterpreter(){
-		X86Emitter::mov_imm_to_eax(memoryBlock, 0x00000001);
-		X86Emitter::mov_al_to_memoryaddr(memoryBlock, interpreterSwitch);
+		X86Emitter::setByteToMemaddr(memoryBlock, interpreterSwitch, 0x1);
 		endMemoryBlock = true;	//end block
 	}
 
 	//opcodes
 	void opcode00e0(){
-		X86Emitter::mov_imm_to_eax(memoryBlock, (uint32_t)ControllerOp::clearScreen);
-		X86Emitter::mov_eax_to_memoryaddr(memoryBlock, controllerOp);
+		X86Emitter::setDwordToMemaddr(memoryBlock, controllerOp, (uint32_t)ControllerOp::clearScreen);
 
 		incrementPC();
 		//original
@@ -117,14 +112,11 @@ public:
 	void opcode00ee(){
 		//stack = ebx, stackptr = eax, pc = ecx
 		//--stackPointer
-		X86Emitter::loadByteToDwordRegA(memoryBlock, stackPointer);
-		X86Emitter::dec_eax(memoryBlock);
-		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, stackPointer);
-		//stack[stackPointer] (DO NOT DO stack + stackPointer!!!! stackPointer is not fixed)
-		X86Emitter::mov_imm_to_ebx(memoryBlock, stack);
-		X86Emitter::add_eax_to_ebx(memoryBlock);
-		X86Emitter::mov_ebxaddr_to_ax(memoryBlock);
-		X86Emitter::movzx_ax_to_eax(memoryBlock);
+		X86Emitter::subByteToMemaddr(memoryBlock, stackPointer, 1);
+
+		//stack[stackPointer]
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, stack, stackPointer);
+
 		//to programCounter
 		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
 
@@ -134,99 +126,146 @@ public:
 	}
 	void opcode0nnn(){
 		
-		//stack = eax, stackptr = ebx, pc = ecx
-		//stack[stackpointer]
-		X86Emitter::mov_imm_to_eax(memoryBlock, stack);
-		X86Emitter::loadByteToDwordRegB(memoryBlock, stackPointer);
-		X86Emitter::add_ebx_to_eax(memoryBlock);
 		//= programCounter
-		X86Emitter::loadWordToDwordRegC(memoryBlock, programCounter);
-		X86Emitter::mov_cx_to_eaxaddr(memoryBlock);
-		//stackPointer++
-		X86Emitter::inc_ebx(memoryBlock);
-		X86Emitter::mov_bl_to_memoryaddr(memoryBlock, stackPointer);
+		X86Emitter::loadWordToDwordRegA(memoryBlock, programCounter);
 
-		//NNN to programCounter
-		X86Emitter::loadWordToDwordRegA(memoryBlock, nnn);
-		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
+		//stack[stackpointer]
+		X86Emitter::storeWordArray_AregAsInput(memoryBlock, stack, stackPointer);
+
+		//stackPointer++
+		X86Emitter::addByteToMemaddr(memoryBlock, stackPointer, 1);
+
+		//NNN(is an immediate) to programCounter
+		X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);
 
 		switchToInterpreter();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 	}
 	void opcode1nnn(){
 		//NNN to programCounter
-		X86Emitter::loadWordToDwordRegA(memoryBlock, nnn);
-		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
+		X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);
 
 		//jmpHint = true
-		X86Emitter::mov_imm_to_eax(memoryBlock, 0x00000001);
-		X86Emitter::mov_al_to_memoryaddr(memoryBlock, jmpHint);
+		X86Emitter::setByteToMemaddr(memoryBlock, jmpHint, 1);
 
 		switchToInterpreter();
 		//programCounter = NNN; flag = 1;//jump to nnn	(dont increment pc)
 		//jmpHint = true; //hint for video flicker loop
 	}
 	void opcode2nnn(){
-		//stack = eax, stackptr = ebx, pc = ecx
-		//stack[stackpointer]
-		X86Emitter::mov_imm_to_eax(memoryBlock, stack);
-		X86Emitter::loadByteToDwordRegB(memoryBlock, stackPointer);
-		X86Emitter::add_ebx_to_eax(memoryBlock);
 		//= programCounter
-		X86Emitter::loadWordToDwordRegC(memoryBlock, programCounter);
-		X86Emitter::mov_cx_to_eaxaddr(memoryBlock);
-		//stackPointer++
-		X86Emitter::inc_ebx(memoryBlock);
-		X86Emitter::mov_bl_to_memoryaddr(memoryBlock, stackPointer);
+		X86Emitter::loadWordToDwordRegA(memoryBlock, programCounter);
 
-		//NNN to programCounter
-		X86Emitter::loadWordToDwordRegA(memoryBlock, nnn);
-		X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
+		//stack[stackpointer]
+		X86Emitter::storeWordArray_AregAsInput(memoryBlock, stack, stackPointer);
+
+		//stackPointer++
+		X86Emitter::addByteToMemaddr(memoryBlock, stackPointer, 1);
+
+		//NNN(is an immediate) to programCounter
+		X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);
 
 		switchToInterpreter();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 	}
+
 	void opcode3xnn(){
+		//vx = eax, nn = ebx
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vxPointer);
+		X86Emitter::loadWordToDwordRegB(memoryBlock, nn);
+
+		X86Emitter::cmp_eax_to_ebx(memoryBlock);
+		X86Emitter::short_jne(memoryBlock, addWordToMemaddrSize);
+		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
 
 		incrementPC();
 		//if (VX == NN) programCounter += 2; //skip if ==
 	}
 	void opcode4xnn(){
+		//vx = eax, nn = ebx
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vxPointer);
+		X86Emitter::loadWordToDwordRegB(memoryBlock, nn);
+
+		X86Emitter::cmp_eax_to_ebx(memoryBlock);
+		X86Emitter::short_je(memoryBlock, addWordToMemaddrSize);
+		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
 
 		incrementPC();
 		//if (VX != NN) programCounter += 2; //skip if !=
 	}
 	void opcode5xy0(){
+		//vx = eax, vy = edx
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vyPointer);
+		X86Emitter::mov_eax_to_edx(memoryBlock);
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vxPointer);
+
+		X86Emitter::cmp_eax_to_edx(memoryBlock);
+		X86Emitter::short_jne(memoryBlock, addWordToMemaddrSize);
+		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
 
 		incrementPC();
 		//if (VX == VY) programCounter += 2; //skip if vx == vy
 	}
 	void opcode6xnn(){
 
+		X86Emitter::loadWordToDwordRegA(memoryBlock, nn);
+		X86Emitter::storeWordArray_AregAsInput(memoryBlock, v, vxPointer);
+
 		incrementPC();
 		//VX = NN; //into
 	}
 	void opcode7xnn(){
+
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vxPointer);
+		X86Emitter::loadWordToDwordRegB(memoryBlock, nn);
+		X86Emitter::add_ebx_to_eax(memoryBlock);
+
+		X86Emitter::storeWordArray_AregAsInput(memoryBlock, v, vxPointer);
 
 		incrementPC();
 		//VX += NN;
 	}
 	void opcode8xy0(){
 
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vyPointer);
+
+		X86Emitter::storeWordArray_AregAsInput(memoryBlock, v, vxPointer);
+
 		incrementPC();
 		//VX = VY;
 	}
 	void opcode8xy1(){
+
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vyPointer);
+		X86Emitter::mov_eax_to_ebx(memoryBlock);
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vxPointer);
+		X86Emitter::or_ebx_to_eax(memoryBlock);
+
+		X86Emitter::storeWordArray_AregAsInput(memoryBlock, v, vxPointer);
 
 		incrementPC();
 		//VX |= VY;
 	}
 	void opcode8xy2(){
 
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vyPointer);
+		X86Emitter::mov_eax_to_ebx(memoryBlock);
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vxPointer);
+		X86Emitter::and_ebx_to_eax(memoryBlock);
+
+		X86Emitter::storeWordArray_AregAsInput(memoryBlock, v, vxPointer);
+
 		incrementPC();
 		//VX &= VY;
 	}
 	void opcode8xy3(){
+
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vyPointer);
+		X86Emitter::mov_eax_to_ebx(memoryBlock);
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vxPointer);
+		X86Emitter::xor_ebx_to_eax(memoryBlock);
+
+		X86Emitter::storeWordArray_AregAsInput(memoryBlock, v, vxPointer);
 
 		incrementPC();
 		//VX ^= VY;
@@ -257,6 +296,15 @@ public:
 		//VF = VX >> 7; VX <<= 1;
 	}
 	void opcode9xy0(){
+		//vx = eax, vy = edx
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vyPointer);
+		X86Emitter::mov_eax_to_edx(memoryBlock);
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, v, vxPointer);
+
+		X86Emitter::cmp_eax_to_edx(memoryBlock);
+		X86Emitter::short_je(memoryBlock, addWordToMemaddrSize);
+		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
+
 
 		incrementPC();
 		//if (VX != VY) programCounter += 2; //skip if vx != vy
