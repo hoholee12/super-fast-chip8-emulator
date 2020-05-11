@@ -192,6 +192,12 @@ public:
 
 	enum Movsize{ movByte, movWord, movDword }; //for mov only
 
+	//modrm
+	using Modrm = struct{
+		Mod mod;
+		X86Regs src;
+		X86Regs dest;
+	};
 
 	//displacement
 	using Disp = struct{
@@ -206,7 +212,10 @@ public:
 		void operator=(uint8_t byte){ this->byte = byte; }
 
 	};
-	Disp disp;
+
+	Disp insertDisp(int temp){ Disp disp; disp = (uint32_t)temp; return disp; }
+	Disp insertAddr(int temp){ Disp disp; disp = (uint32_t)temp; return disp; }
+
 
 	//sib
 	enum Scale{ x1 = 0x0, x2 = 0x1, x4 = 0x2, x8 = 0x3 };
@@ -218,7 +227,6 @@ public:
 		Base base;
 		void operator=(Scale scale){ this->scale = scale; }
 	};
-	Sib sib;
 
 	//byte
 	void addExtension(){ addByte(0x0F); }
@@ -253,23 +261,37 @@ public:
 
 	//use this template for jmp instructions
 	enum OperandSizes{
-		movzxSize = 3,
-		movMemaddrByteSize = 6,
-		movMemaddrDwordSize = 6,
-		movMemaddrWordSize = 7,
-		movByteSize = 2,
-		movDwordSize = 2,
-		movWordSize = 3,
-		dwordMovImmSize = 5,
+		none = 0,
+		movzxByteToDwordSize = 3,
+		movzxWordToDwordSize = 3,
+		movToMemaddrByteSize = 6,
+		movToMemaddrDwordSize = 6,
+		movToMemaddrWordSize = 7,
+		movFromMemaddrByteSize = 6,
+		movFromMemaddrDwordSize = 6,
+		movFromMemaddrWordSize = 7,
+		movDwordRegToRegSize = 2,
+		movByteRegToMemSize = 2,
+		movDwordRegToMemSize = 2,
+		movWordRegToMemSize = 3,
+		movByteMemToRegSize = 2,
+		movDwordMemToRegSize = 2,
+		movWordMemToRegSize = 3,
+		dwordMovImmToAregSize = 5,
+		dwordMovImmToBregSize = 5,
+		dwordMovImmToCregSize = 5,
+		dwordMovImmToDregSize = 5,
 		dwordAddSize = 2,
-		dwordAddImmSize = 6,
-		incSize = 1,
+		dwordAddImmToRegSize = 6,
+		byteAddImmToMemaddrSize = 7,
+		wordAddImmToMemaddrSize = 9,
+		dwordAddImmToMemaddrSize = 10,
 		dwordSubSize = 2,
-		decSize = 1,
 		dwordAndSize = 2,
 		dwordOrSize = 2,
 		dwordXorSize = 2,
-		dwordShiftSize = 3,
+		dwordShiftLeftSize = 3,
+		dwordShiftRightSize = 3,
 		cmpSize = 2,
 		byteRelJmpSize = 2,
 		wordRelJmpSize = 4,
@@ -282,530 +304,338 @@ public:
 		byteRelJbeSize = 2,
 		leaWithDispSize = 7,
 		leaWithoutDispSize = 3,
-		incByteMemaddrSize = 6,
-		incWordMemaddrSize = 7,
-		incDwordMemaddrSize = 6,
-		decByteMemaddrSize = incByteMemaddrSize,
-		decWordMemaddrSize = incWordMemaddrSize,
-		decDwordMemaddrSize = incDwordMemaddrSize,
 
 		retSize = 1,
 		nopSize = 1,
 
 		/*shortcuts!*/
-		//one thing to note - memaddr->reg is movXXSize, not movMemaddrXXSize
-		loadByteShortcutSize = movMemaddrByteSize + movzxSize,
-		loadWordShortcutSize = movMemaddrWordSize + movzxSize,
-		loadDwordShortcutSize = movMemaddrDwordSize,
-		loadByteArraySize = dwordMovImmSize + loadByteShortcutSize + dwordAddSize + movByteSize + movzxSize,
-		loadWordArraySize = dwordMovImmSize + loadByteShortcutSize + leaWithoutDispSize + movWordSize + movzxSize,
-		loadDwordArraySize = dwordMovImmSize + loadByteShortcutSize + leaWithoutDispSize + movDwordSize,
-		storeByteArraySize = dwordMovImmSize + loadByteShortcutSize + dwordAddSize + movByteSize,
-		storeWordArraySize = dwordMovImmSize + loadByteShortcutSize + leaWithoutDispSize + movWordSize,
-		storeDwordArraySize = dwordMovImmSize + loadByteShortcutSize + leaWithoutDispSize + movDwordSize,
-		addByteToMemaddrSize = loadByteShortcutSize + dwordAddImmSize + movMemaddrByteSize,
-		addWordToMemaddrSize = loadWordShortcutSize + dwordAddImmSize + movMemaddrWordSize,
-		addDwordToMemaddrSize = loadDwordShortcutSize + dwordAddImmSize + movMemaddrDwordSize,
-		setByteToMemaddrSize = dwordMovImmSize + movMemaddrByteSize,
-		setWordToMemaddrSize = dwordMovImmSize + movMemaddrWordSize,
-		setDwordToMemaddrSize = dwordMovImmSize + movMemaddrDwordSize,
+		loadByteShortcutSize = movFromMemaddrByteSize + movzxByteToDwordSize,
+		loadWordShortcutSize = movFromMemaddrWordSize + movzxWordToDwordSize,
+		loadDwordShortcutSize = movFromMemaddrDwordSize,
+		loadByteArraySize = dwordMovImmToAregSize + loadByteShortcutSize + dwordAddSize + movByteMemToRegSize + movzxByteToDwordSize,
+		loadWordArraySize = dwordMovImmToAregSize + loadByteShortcutSize + leaWithoutDispSize + movWordMemToRegSize + movzxWordToDwordSize,
+		loadDwordArraySize = dwordMovImmToAregSize + loadByteShortcutSize + leaWithoutDispSize + movDwordMemToRegSize,
+		storeByteArraySize = dwordMovImmToAregSize + loadByteShortcutSize + dwordAddSize + movByteRegToMemSize,
+		storeWordArraySize = dwordMovImmToAregSize + loadByteShortcutSize + leaWithoutDispSize + movWordRegToMemSize,
+		storeDwordArraySize = dwordMovImmToAregSize + loadByteShortcutSize + leaWithoutDispSize + movDwordRegToMemSize,
+		addByteToMemaddrSize = loadByteShortcutSize + dwordAddImmToRegSize + movToMemaddrByteSize,
+		addWordToMemaddrSize = loadWordShortcutSize + dwordAddImmToRegSize + movToMemaddrWordSize,
+		addDwordToMemaddrSize = loadDwordShortcutSize + dwordAddImmToRegSize + movToMemaddrDwordSize,
+		setByteToMemaddrSize = dwordMovImmToAregSize + movToMemaddrByteSize,
+		setWordToMemaddrSize = dwordMovImmToAregSize + movToMemaddrWordSize,
+		setDwordToMemaddrSize = dwordMovImmToAregSize + movToMemaddrDwordSize,
 	};
 
+	enum OperandModes{
+		movzxByteToDwordMode,
+		movzxWordToDwordMode,
+		movToMemaddrByteMode,
+		movToMemaddrDwordMode,
+		movToMemaddrWordMode,
+		movFromMemaddrByteMode,
+		movFromMemaddrDwordMode,
+		movFromMemaddrWordMode,
+		movDwordRegToRegMode,
+		movByteRegToMemMode,
+		movDwordRegToMemMode,
+		movWordRegToMemMode,
+		movByteMemToRegMode,
+		movDwordMemToRegMode,
+		movWordMemToRegMode,
+		dwordMovImmToAregMode,
+		dwordMovImmToBregMode,
+		dwordMovImmToCregMode,
+		dwordMovImmToDregMode,
+		dwordAddMode,
+		dwordAddImmToRegMode,
+		byteAddImmToMemaddrMode,
+		wordAddImmToMemaddrMode,
+		dwordAddImmToMemaddrMode,
+		dwordSubMode,
+		dwordAndMode,
+		dwordOrMode,
+		dwordXorMode,
+		dwordShiftLeftMode,
+		dwordShiftRightMode,
+		cmpMode,
+		byteRelJmpMode,
+		wordRelJmpMode,
+		dwordRelJmpMode,
+		byteRelJeMode,
+		byteRelJneMode,
+		byteRelJaMode,
+		byteRelJaeMode,
+		byteRelJbMode,
+		byteRelJbeMode,
+		leaWithDispMode,
+		leaWithoutDispMode,
+
+		retMode,
+		nopMode,
+
+		/*shortcuts!*/
+		loadByteShortcutMode,
+		loadWordShortcutMode,
+		loadDwordShortcutMode,
+		loadByteArrayMode,
+		loadWordArrayMode,
+		loadDwordArrayMode,
+		storeByteArrayMode,
+		storeWordArrayMode,
+		storeDwordArrayMode,
+		addByteToMemaddrMode,
+		addWordToMemaddrMode,
+		addDwordToMemaddrMode,
+		setByteToMemaddrMode,
+		setWordToMemaddrMode,
+		setDwordToMemaddrMode,
+	};
+
+	void opmodeError(const char* str){ fprintf(stderr, str); fprintf(stderr, ": incompatible opmode!"); exit(1); }
+
 	//no need for the opposite(use only for zeroing out high area)
-	void movzx(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		init(memoryBlock, movzxSize);
-		addExtension();
-		addOpcode(0xB4, direction, bitsize); //10110100
-		addModrm(mod, src, dest);
+	OperandSizes movzx(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+		uint8_t opcode = 0xB4; //10110100
+		switch (opmode){
+		case movzxByteToDwordMode: init(memoryBlock, movzxByteToDwordSize); addExtension(); addOpcode(opcode, destToSrc, byteOnly); addModrm(forReg, src, dest); return movzxByteToDwordSize;
+		case movzxWordToDwordMode: init(memoryBlock, movzxWordToDwordSize); addExtension(); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forReg, src, dest); return movzxWordToDwordSize;
+		default: opmodeError("movzx");
+		}
+		
+		return none;
 	}
-	//convert byte to dword
-	void movzx_al_to_eax(vect8* memoryBlock){ movzx(memoryBlock, destToSrc, byteOnly, forReg, Areg, Areg); }
-	void movzx_bl_to_ebx(vect8* memoryBlock){ movzx(memoryBlock, destToSrc, byteOnly, forReg, Breg, Breg); }
-	void movzx_cl_to_ecx(vect8* memoryBlock){ movzx(memoryBlock, destToSrc, byteOnly, forReg, Creg, Creg); }
-	void movzx_dl_to_edx(vect8* memoryBlock){ movzx(memoryBlock, destToSrc, byteOnly, forReg, Dreg, Dreg); }
-
-	//convert word to dword
-	void movzx_ax_to_eax(vect8* memoryBlock){ movzx(memoryBlock, destToSrc, wordAndDword, forReg, Areg, Areg); }
-	void movzx_bx_to_ebx(vect8* memoryBlock){ movzx(memoryBlock, destToSrc, wordAndDword, forReg, Breg, Breg); }
-	void movzx_cx_to_ecx(vect8* memoryBlock){ movzx(memoryBlock, destToSrc, wordAndDword, forReg, Creg, Creg); }
-	void movzx_dx_to_edx(vect8* memoryBlock){ movzx(memoryBlock, destToSrc, wordAndDword, forReg, Dreg, Dreg); }
-
+	//ex) convert byte to dword
+	//movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg);
+	
+	//ex) convert word to dword
+	//movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg);
+	
 
 	//memoryaddr must always be dword!
-	void mov(vect8* memoryBlock, Movsize getMovsize, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		if ((getMovsize == movByte || getMovsize == movDword) && dest == memaddr)
-			init(memoryBlock, movMemaddrByteSize);
-		else if ((getMovsize == movWord) && dest == memaddr){
-			init(memoryBlock, movMemaddrWordSize);
-			addPrefix();
+	OperandSizes mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest = memaddr, Disp disp = Disp()){
+		uint8_t opcode = 0x88; //10001000
+		switch (opmode){
+		case movToMemaddrByteMode: init(memoryBlock, movToMemaddrByteSize); addOpcode(opcode, srcToDest, byteOnly); addModrm(forDisp, src, memaddr); addDword(disp.dword); return movToMemaddrByteSize;
+		case movToMemaddrWordMode: init(memoryBlock, movToMemaddrWordSize); addPrefix(); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, src, memaddr); addDword(disp.dword); return movToMemaddrWordSize;
+		case movToMemaddrDwordMode: init(memoryBlock, movToMemaddrDwordSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, src, memaddr); addDword(disp.dword); return movToMemaddrDwordSize;
+		case movFromMemaddrByteMode: init(memoryBlock, movFromMemaddrByteSize); addOpcode(opcode, destToSrc, byteOnly); addModrm(forDisp, src, memaddr); addDword(disp.dword); return movFromMemaddrByteSize;
+		case movFromMemaddrWordMode: init(memoryBlock, movFromMemaddrWordSize); addPrefix(); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forDisp, src, memaddr); addDword(disp.dword); return movFromMemaddrWordSize;
+		case movFromMemaddrDwordMode: init(memoryBlock, movFromMemaddrDwordSize); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forDisp, src, memaddr); addDword(disp.dword); return movFromMemaddrDwordSize;
+		
+		case movByteMemToRegMode: init(memoryBlock, movByteMemToRegSize); addOpcode(opcode, destToSrc, byteOnly); addModrm(forDisp, dest, src); return movByteMemToRegSize;
+		case movWordMemToRegMode: init(memoryBlock, movWordMemToRegSize); addPrefix(); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forDisp, dest, src); return movWordMemToRegSize;
+		case movDwordMemToRegMode: init(memoryBlock, movDwordMemToRegSize); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forDisp, dest, src); return movDwordMemToRegSize;
+		case movByteRegToMemMode: init(memoryBlock, movByteRegToMemSize); addOpcode(opcode, srcToDest, byteOnly); addModrm(forDisp, src, dest); return movByteRegToMemSize;
+		case movWordRegToMemMode: init(memoryBlock, movWordRegToMemSize); addPrefix(); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, src, dest); return movWordRegToMemSize;
+		case movDwordRegToMemMode: init(memoryBlock, movDwordRegToMemSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, src, dest); return movDwordRegToMemSize;
+		case movDwordRegToRegMode: init(memoryBlock, movDwordRegToRegSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return movDwordRegToRegSize;
+		
+		default: opmodeError("mov");
 		}
-
-		else if (getMovsize == movByte || getMovsize == movDword)
-			init(memoryBlock, movByteSize);
-		else if (getMovsize == movWord){
-			init(memoryBlock, movWordSize);
-			addPrefix();
-		}
-
-		addOpcode(0x88, direction, bitsize); //10001000
-		addModrm(mod, src, dest);
-
-		if (dest == memaddr) addDword(disp.dword);
+		return none;
 	}
-	//load store byte
-	void mov_memoryaddr_to_al(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Areg, memaddr); }
-	void mov_al_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Areg, memaddr); }
-	void mov_memoryaddr_to_bl(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Breg, memaddr); }
-	void mov_bl_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Breg, memaddr); }
-	void mov_memoryaddr_to_cl(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Creg, memaddr); }
-	void mov_cl_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Creg, memaddr); }
-	void mov_memoryaddr_to_dl(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Dreg, memaddr); }
-	void mov_dl_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Dreg, memaddr); }
-
-	//load store word
-	void mov_memoryaddr_to_ax(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Areg, memaddr); }
-	void mov_ax_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Areg, memaddr); }
-	void mov_memoryaddr_to_bx(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Breg, memaddr); }
-	void mov_bx_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Breg, memaddr); }
-	void mov_memoryaddr_to_cx(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Creg, memaddr); }
-	void mov_cx_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Creg, memaddr); }
-	void mov_memoryaddr_to_dx(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Dreg, memaddr); }
-	void mov_dx_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Dreg, memaddr); }
-
-	//load store dword
-	void mov_memoryaddr_to_eax(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Areg, memaddr); }
-	void mov_eax_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Areg, memaddr); }
-	void mov_memoryaddr_to_ebx(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Breg, memaddr); }
-	void mov_ebx_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Breg, memaddr); }
-	void mov_memoryaddr_to_ecx(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Creg, memaddr); }
-	void mov_ecx_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Creg, memaddr); }
-	void mov_memoryaddr_to_edx(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Dreg, memaddr); }
-	void mov_edx_to_memoryaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Dreg, memaddr); }
-
-	//store to regaddr byte (AB <-> CD)
-
-	//100010 0 0 00 000 011
-	//opcode d s mod src dst
-	void mov_al_to_ebxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Areg, Breg); }
-	void mov_al_to_ecxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Areg, Creg); }
-	void mov_al_to_edxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Areg, Dreg); }
-
-	void mov_bl_to_eaxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Breg, Areg); }
-	void mov_bl_to_ecxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Breg, Creg); }
-	void mov_bl_to_edxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Breg, Dreg); }
-
-	void mov_cl_to_eaxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Creg, Areg); }
-	void mov_cl_to_ebxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Creg, Breg); }
-	void mov_cl_to_edxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Creg, Dreg); }
-
-	void mov_dl_to_eaxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Dreg, Areg); }
-	void mov_dl_to_ebxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Dreg, Breg); }
-	void mov_dl_to_ecxaddr(vect8* memoryBlock){ mov(memoryBlock, movByte, srcToDest, byteOnly, forDisp, Dreg, Creg); }
-
-	//store to regaddr word (AB <-> CD)
-	//prefix 100010 0 1 00 000 011
-	void mov_ax_to_ebxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Areg, Breg); }
-	void mov_ax_to_ecxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Areg, Creg); }
-	void mov_ax_to_edxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Areg, Dreg); }
-
-	void mov_bx_to_eaxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Breg, Areg); }
-	void mov_bx_to_ecxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Breg, Creg); }
-	void mov_bx_to_edxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Breg, Dreg); }
-
-	void mov_cx_to_eaxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Creg, Areg); }
-	void mov_cx_to_ebxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Creg, Breg); }
-	void mov_cx_to_edxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Creg, Dreg); }
-
-	void mov_dx_to_eaxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Dreg, Areg); }
-	void mov_dx_to_ebxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Dreg, Breg); }
-	void mov_dx_to_ecxaddr(vect8* memoryBlock){ mov(memoryBlock, movWord, srcToDest, wordAndDword, forDisp, Dreg, Creg); }
-
-	//store to regaddr dword (AB <-> CD)
-	//100010 0 1 00 000 011
-	void mov_eax_to_ebxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Areg, Breg); }
-	void mov_eax_to_ecxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Areg, Creg); }
-	void mov_eax_to_edxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Areg, Dreg); }
-
-	void mov_ebx_to_eaxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Breg, Areg); }
-	void mov_ebx_to_ecxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Breg, Creg); }
-	void mov_ebx_to_edxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Breg, Dreg); }
-
-	void mov_ecx_to_eaxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Creg, Areg); }
-	void mov_ecx_to_ebxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Creg, Breg); }
-	void mov_ecx_to_edxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Creg, Dreg); }
-
-	void mov_edx_to_eaxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Dreg, Areg); }
-	void mov_edx_to_ebxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Dreg, Breg); }
-	void mov_edx_to_ecxaddr(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forDisp, Dreg, Creg); }
-
-	//get from reg addr byte
-	//100010 1 0 00 011 000
-	void mov_eaxaddr_to_bl(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Breg, Areg); }
-	void mov_eaxaddr_to_cl(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Creg, Areg); }
-	void mov_eaxaddr_to_dl(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Dreg, Areg); }
-
-	void mov_ebxaddr_to_al(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Areg, Breg); }
-	void mov_ebxaddr_to_cl(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Creg, Breg); }
-	void mov_ebxaddr_to_dl(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Dreg, Breg); }
-
-	void mov_ecxaddr_to_al(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Areg, Creg); }
-	void mov_ecxaddr_to_bl(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Breg, Creg); }
-	void mov_ecxaddr_to_dl(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Dreg, Creg); }
-
-	void mov_edxaddr_to_al(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Areg, Dreg); }
-	void mov_edxaddr_to_bl(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Breg, Dreg); }
-	void mov_edxaddr_to_cl(vect8* memoryBlock){ mov(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Creg, Dreg); }
-
-
-	//get from reg addr word
-	//prefix 100010 1 1 00 011 000
-	void mov_eaxaddr_to_bx(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Breg, Areg); }
-	void mov_eaxaddr_to_cx(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Creg, Areg); }
-	void mov_eaxaddr_to_dx(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Dreg, Areg); }
-
-	void mov_ebxaddr_to_ax(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Areg, Breg); }
-	void mov_ebxaddr_to_cx(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Creg, Breg); }
-	void mov_ebxaddr_to_dx(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Dreg, Breg); }
-
-	void mov_ecxaddr_to_ax(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Areg, Creg); }
-	void mov_ecxaddr_to_bx(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Breg, Creg); }
-	void mov_ecxaddr_to_dx(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Dreg, Creg); }
-
-	void mov_edxaddr_to_ax(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Areg, Dreg); }
-	void mov_edxaddr_to_bx(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Breg, Dreg); }
-	void mov_edxaddr_to_cx(vect8* memoryBlock){ mov(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Creg, Dreg); }
-
-
-	//get from reg addr dword
-	//100010 1 1 00 011 000
-	void mov_eaxaddr_to_ebx(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Breg, Areg); }
-	void mov_eaxaddr_to_ecx(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Creg, Areg); }
-	void mov_eaxaddr_to_edx(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Dreg, Areg); }
-
-	void mov_ebxaddr_to_eax(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Areg, Breg); }
-	void mov_ebxaddr_to_ecx(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Creg, Breg); }
-	void mov_ebxaddr_to_edx(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Dreg, Breg); }
-
-	void mov_ecxaddr_to_eax(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Areg, Creg); }
-	void mov_ecxaddr_to_ebx(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Breg, Creg); }
-	void mov_ecxaddr_to_edx(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Dreg, Creg); }
-
-	void mov_edxaddr_to_eax(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Areg, Dreg); }
-	void mov_edxaddr_to_ebx(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Breg, Dreg); }
-	void mov_edxaddr_to_ecx(vect8* memoryBlock){ mov(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Creg, Dreg); }
-
-	//simple dword move
-	void mov_eax_to_ebx(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Areg, Breg); }
-	void mov_eax_to_ecx(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Areg, Creg); }
-	void mov_eax_to_edx(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Areg, Dreg); }
-
-	void mov_ebx_to_eax(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Breg, Areg); }
-	void mov_ebx_to_ecx(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Breg, Creg); }
-	void mov_ebx_to_edx(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Breg, Dreg); }
-
-	void mov_ecx_to_eax(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Creg, Areg); }
-	void mov_ecx_to_ebx(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Creg, Breg); }
-	void mov_ecx_to_edx(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Creg, Dreg); }
-
-	void mov_edx_to_eax(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Dreg, Areg); }
-	void mov_edx_to_ebx(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Dreg, Breg); }
-	void mov_edx_to_ecx(vect8* memoryBlock){ mov(memoryBlock, movDword, srcToDest, wordAndDword, forReg, Dreg, Creg); }
+	//override
+	OperandSizes mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, Disp disp = Disp()){ return mov(memoryBlock, opmode, src, Areg, disp); }
 
 
 
 	//kinda different - use Direction and Bitsize to point reg
-	void dword_mov_imm(vect8* memoryBlock, Direction direction, Bitsize bitsize){
-		init(memoryBlock, dwordMovImmSize);
-		addOpcode(0xB8, direction, bitsize);
-		addDword(disp.dword);
+	OperandSizes mov_imm(vect8* memoryBlock, OperandModes opmode, Disp disp){
+		uint8_t opcode = 0xB8;
+		switch (opmode){
+		case dwordMovImmToAregMode: init(memoryBlock, dwordMovImmToAregSize); addOpcode(opcode, srcToDest, byteOnly); addDword(disp.dword); return dwordMovImmToAregSize;
+		case dwordMovImmToBregMode: init(memoryBlock, dwordMovImmToBregSize); addOpcode(opcode, destToSrc, wordAndDword); addDword(disp.dword); return dwordMovImmToBregSize;
+		case dwordMovImmToCregMode: init(memoryBlock, dwordMovImmToCregSize); addOpcode(opcode, srcToDest, wordAndDword); addDword(disp.dword); return dwordMovImmToCregSize;
+		case dwordMovImmToDregMode: init(memoryBlock, dwordMovImmToDregSize); addOpcode(opcode, destToSrc, byteOnly); addDword(disp.dword); return dwordMovImmToDregSize;
+
+		default: opmodeError("mov_imm");
+		}
+		return none;
+		
 	}
-
-	//load immediate dword
-	void mov_imm_to_eax(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_mov_imm(memoryBlock, srcToDest, byteOnly); }
-	void mov_imm_to_ebx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_mov_imm(memoryBlock, destToSrc, wordAndDword); }
-	void mov_imm_to_ecx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_mov_imm(memoryBlock, srcToDest, wordAndDword); }
-	void mov_imm_to_edx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_mov_imm(memoryBlock, destToSrc, byteOnly); }
-
 
 	//dword add
-	void dword_add(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		init(memoryBlock, dwordAddSize);
-		addOpcode(0x00, direction, bitsize); //000000
-		addModrm(mod, src, dest);
+	OperandSizes add(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+		uint8_t opcode = 0x00;
+		switch (opmode){
+		case dwordAddMode: init(memoryBlock, dwordAddSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordAddSize;
+
+		default: opmodeError("add");
+		}
+		return none;
 	}
-	//add regs dword (AB <-> CD)
-
-	//000000 0 1 11 000 011
-	void add_eax_to_ebx(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Breg); }
-	void add_eax_to_ecx(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Creg); }
-	void add_eax_to_edx(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Dreg); }
-
-	void add_ebx_to_eax(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Areg); }
-	void add_ebx_to_ecx(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Creg); }
-	void add_ebx_to_edx(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Dreg); }
-
-	void add_ecx_to_eax(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Areg); }
-	void add_ecx_to_ebx(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Breg); }
-	void add_ecx_to_edx(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Dreg); }
-
-	void add_edx_to_eax(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Areg); }
-	void add_edx_to_ebx(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Breg); }
-	void add_edx_to_ecx(vect8* memoryBlock){ dword_add(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Creg); }
 
 	//dword imm add
-	void dword_add_imm(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		init(memoryBlock, dwordAddImmSize);
-		addOpcode(0x80, direction, bitsize);	//100000
-		addModrm(mod, src, dest);
-		addDword(disp.dword);
+	OperandSizes add_imm(vect8* memoryBlock, OperandModes opmode, Disp addr, Disp disp = Disp(), X86Regs dest = memaddr){
+		uint8_t opcode = 0x80;
+		switch (opmode){
+		case dwordAddImmToRegMode: init(memoryBlock, dwordAddImmToRegSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, Areg, dest); addDword(addr.dword); return dwordAddImmToRegSize;
+	
+		case byteAddImmToMemaddrMode: init(memoryBlock, byteAddImmToMemaddrSize); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addByte(disp.byte); return byteAddImmToMemaddrSize;
+		case wordAddImmToMemaddrMode: init(memoryBlock, wordAddImmToMemaddrSize); addPrefix(); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addWord(disp.word); return wordAddImmToMemaddrSize;
+		case dwordAddImmToMemaddrMode: init(memoryBlock, dwordAddImmToMemaddrSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addDword(disp.dword); return dwordAddImmToMemaddrSize;
+		default: opmodeError("add_imm");
+		}
+		return none;
 	}
+	//override
+	OperandSizes add_imm(vect8* memoryBlock, OperandModes opmode, Disp disp, X86Regs dest = memaddr){ return add_imm(memoryBlock, opmode, disp, insertDisp(0x0), dest); }
+
 	//add imm dword (AB <-> CD)
 	//100000 0 1 11 000(?) 000 disp32
-	void add_imm_to_eax(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_add_imm(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Areg); }
-	void add_imm_to_ebx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_add_imm(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Breg); }
-	void add_imm_to_ecx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_add_imm(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Creg); }
-	void add_imm_to_edx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_add_imm(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Dreg); }
+	/*
+	
+	TODO: add imm to MEMADDR too!!!!
+	100000 1 1 00 000 101(?) disp32 disp8
+	              areg
 
-	//dword inc reg
-	void inc_reg(vect8* memoryBlock, Direction direction, Bitsize bitsize){
-		init(memoryBlock, incSize);
-		addOpcode(0x40, direction, bitsize);
-	}
-	//inc dword
-	//010000 0 0
-	void inc_eax(vect8* memoryBlock){ inc_reg(memoryBlock, srcToDest, byteOnly); }
-	void inc_ebx(vect8* memoryBlock){ inc_reg(memoryBlock, destToSrc, wordAndDword); }
-	void inc_ecx(vect8* memoryBlock){ inc_reg(memoryBlock, srcToDest, wordAndDword); }
-	void inc_edx(vect8* memoryBlock){ inc_reg(memoryBlock, destToSrc, byteOnly); }
+	prefix 100000 0 1 00 000 101(?) disp32 disp16
 
-	//inc mem
-	void inc_memaddr(vect8* memoryBlock, Movsize getMovsize, Direction direction, Bitsize bitsize, Mod mod, X86Regs src ,X86Regs dest){
-		if (getMovsize == movByte) init(memoryBlock, incByteMemaddrSize);
-		else if (getMovsize == movWord){ addPrefix(); init(memoryBlock, incWordMemaddrSize); }
-		else init(memoryBlock, incDwordMemaddrSize);
-		addOpcode(0xFC, direction, bitsize);
-		addModrm(mod, src, dest);
-		addDword(disp.dword);
-	}
+	100000 0 1 00 000 101(?) disp32 disp32
+	*/
+	
+	
+	//sub
+	OperandSizes sub(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+		uint8_t opcode = 0x28;	//001010
+		switch (opmode){
+		case dwordSubMode: init(memoryBlock, dwordSubSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordSubSize;
 
-	//111111 1 0 00 000 101
-	void inc_byte_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Areg, memaddr); }
-	void inc_word_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Areg, memaddr); }
-	void inc_dword_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Areg, memaddr); }
-	void dec_byte_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movByte, destToSrc, byteOnly, forDisp, Creg, memaddr); }
-	void dec_word_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movWord, destToSrc, wordAndDword, forDisp, Creg, memaddr); }
-	void dec_dword_memaddr(vect8* memoryBlock, uint32_t dword){ disp = dword; inc_memaddr(memoryBlock, movDword, destToSrc, wordAndDword, forDisp, Creg, memaddr); }
-
-	//dword sub
-	void dword_sub(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		init(memoryBlock, dwordSubSize);
-		addOpcode(0x28, direction, bitsize); //001010
-		addModrm(mod, src, dest);
+		default: opmodeError("sub");
+		}
+		return none;
 	}
 	//sub dword (AB <-> CD)
 	//001010 0 1 11 000 011
-	void sub_eax_to_ebx(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Breg); }
-	void sub_eax_to_ecx(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Creg); }
-	void sub_eax_to_edx(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Dreg); }
-
-	void sub_ebx_to_eax(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Areg); }
-	void sub_ebx_to_ecx(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Creg); }
-	void sub_ebx_to_edx(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Dreg); }
-
-	void sub_ecx_to_eax(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Areg); }
-	void sub_ecx_to_ebx(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Breg); }
-	void sub_ecx_to_edx(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Dreg); }
-
-	void sub_edx_to_eax(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Areg); }
-	void sub_edx_to_ebx(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Breg); }
-	void sub_edx_to_ecx(vect8* memoryBlock){ dword_sub(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Creg); }
-
-	//100000 0 1 11 101 000 disp32
-	void sub_imm_to_eax(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_add_imm(memoryBlock, srcToDest, wordAndDword, forReg, memaddr, Areg); }
-	void sub_imm_to_ebx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_add_imm(memoryBlock, srcToDest, wordAndDword, forReg, memaddr, Breg); }
-	void sub_imm_to_ecx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_add_imm(memoryBlock, srcToDest, wordAndDword, forReg, memaddr, Creg); }
-	void sub_imm_to_edx(vect8* memoryBlock, uint32_t dword){ disp = dword; dword_add_imm(memoryBlock, srcToDest, wordAndDword, forReg, memaddr, Dreg); }
-
-	//dword dec
-	void dec(vect8* memoryBlock, Direction direction, Bitsize bitsize){
-		init(memoryBlock, decSize);
-		addOpcode(0x48, direction, bitsize);	//010010 0 0
-	}
-	//dec dword
-	void dec_eax(vect8* memoryBlock){ dec(memoryBlock, srcToDest, byteOnly); }
-	void dec_ebx(vect8* memoryBlock){ dec(memoryBlock, destToSrc, wordAndDword); }
-	void dec_ecx(vect8* memoryBlock){ dec(memoryBlock, srcToDest, wordAndDword); }
-	void dec_edx(vect8* memoryBlock){ dec(memoryBlock, destToSrc, byteOnly); }
 
 
 	//dword and
-	void dword_and(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		init(memoryBlock, dwordAndSize);
-		addOpcode(0x20, direction, bitsize); //001000
-		addModrm(mod, src, dest);
+	OperandSizes and(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+		uint8_t opcode = 0x20; //001000
+		switch (opmode){
+		case dwordAndMode: init(memoryBlock, dwordAndSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordAndSize;
+		default: opmodeError("and");
+		}
+		return none;
+		
 	}
-	//001000 0 1 11 000 011
-	void and_eax_to_ebx(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Breg); }
-	void and_eax_to_ecx(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Creg); }
-	void and_eax_to_edx(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Dreg); }
-	void and_ebx_to_eax(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Areg); }
-	void and_ebx_to_ecx(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Creg); }
-	void and_ebx_to_edx(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Dreg); }
-	void and_ecx_to_eax(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Areg); }
-	void and_ecx_to_ebx(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Breg); }
-	void and_ecx_to_edx(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Dreg); }
-	void and_edx_to_eax(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Areg); }
-	void and_edx_to_ebx(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Breg); }
-	void and_edx_to_ecx(vect8* memoryBlock){ dword_and(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Creg); }
-	//dword or
-	void dword_or(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		init(memoryBlock, dwordOrSize);
-		addOpcode(0x08, direction, bitsize); //000010
-		addModrm(mod, src, dest);
-	}
-	//000010 0 1 11 000 011
-	void or_eax_to_ebx(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Breg); }
-	void or_eax_to_ecx(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Creg); }
-	void or_eax_to_edx(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Dreg); }
-	void or_ebx_to_eax(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Areg); }
-	void or_ebx_to_ecx(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Creg); }
-	void or_ebx_to_edx(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Dreg); }
-	void or_ecx_to_eax(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Areg); }
-	void or_ecx_to_ebx(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Breg); }
-	void or_ecx_to_edx(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Dreg); }
-	void or_edx_to_eax(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Areg); }
-	void or_edx_to_ebx(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Breg); }
-	void or_edx_to_ecx(vect8* memoryBlock){ dword_or(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Creg); }
-	//dword xor
-	void dword_xor(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		init(memoryBlock, dwordXorSize);
-		addOpcode(0x30, direction, bitsize); //001100
-		addModrm(mod, src, dest);
-	}
-	//001100 0 1 11 000 011
-	void xor_eax_to_ebx(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Breg); }
-	void xor_eax_to_ecx(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Creg); }
-	void xor_eax_to_edx(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Dreg); }
-	void xor_ebx_to_eax(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Areg); }
-	void xor_ebx_to_ecx(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Creg); }
-	void xor_ebx_to_edx(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Dreg); }
-	void xor_ecx_to_eax(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Areg); }
-	void xor_ecx_to_ebx(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Breg); }
-	void xor_ecx_to_edx(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Dreg); }
-	void xor_edx_to_eax(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Areg); }
-	void xor_edx_to_ebx(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Breg); }
-	void xor_edx_to_ecx(vect8* memoryBlock){ dword_xor(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Creg); }
 
+	//dword or
+	OperandSizes or(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+		uint8_t opcode = 0x08; //000010
+		switch (opmode){
+		case dwordOrMode: init(memoryBlock, dwordOrSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordOrSize;
+		default: opmodeError("or");
+		}
+		return none;
+
+	}
+
+	//dword xor
+	OperandSizes xor(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+		uint8_t opcode = 0x30; //001100
+		switch (opmode){
+		case dwordXorMode: init(memoryBlock, dwordXorSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordXorSize;
+		default: opmodeError("xor");
+		}
+		return none;
+
+	}
 
 	//bitwise shl by immediate dword
 
-	void dword_shift(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		init(memoryBlock, dwordShiftSize);
-		addOpcode(0xC0, direction, bitsize); //110000
-		addModrm(mod, src, dest);
-		addByte(disp.byte);
+	OperandSizes shift(vect8* memoryBlock, OperandModes opmode, Disp disp, X86Regs dest){
+		uint8_t opcode = 0xC0;	//110000
+		switch (opmode){
+		case dwordShiftLeftMode: init(memoryBlock, dwordShiftLeftSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, illegal, dest); addByte(disp.byte); return dwordShiftLeftSize;
+		case dwordShiftRightMode: init(memoryBlock, dwordShiftRightSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, memaddr, dest); addByte(disp.byte); return dwordShiftRightSize;
+		default: opmodeError("shift");
+		}
+		return none;
+		
 	}
-	//110000 0 1 11 100 000
-	void shl_imm_eax(vect8* memoryBlock, uint8_t byte){ disp = byte; dword_shift(memoryBlock, srcToDest, wordAndDword, forReg, illegal, Areg); }
-	void shl_imm_ebx(vect8* memoryBlock, uint8_t byte){ disp = byte; dword_shift(memoryBlock, srcToDest, wordAndDword, forReg, illegal, Breg); }
-	void shl_imm_ecx(vect8* memoryBlock, uint8_t byte){ disp = byte; dword_shift(memoryBlock, srcToDest, wordAndDword, forReg, illegal, Creg); }
-	void shl_imm_edx(vect8* memoryBlock, uint8_t byte){ disp = byte; dword_shift(memoryBlock, srcToDest, wordAndDword, forReg, illegal, Dreg); }
-	//bitwise shr by immediate dword
-	//110000 0 1 11 101 000
-	void shr_imm_eax(vect8* memoryBlock, uint8_t byte){ disp = byte; dword_shift(memoryBlock, srcToDest, wordAndDword, forReg, memaddr, Areg); }
-	void shr_imm_ebx(vect8* memoryBlock, uint8_t byte){ disp = byte; dword_shift(memoryBlock, srcToDest, wordAndDword, forReg, memaddr, Breg); }
-	void shr_imm_ecx(vect8* memoryBlock, uint8_t byte){ disp = byte; dword_shift(memoryBlock, srcToDest, wordAndDword, forReg, memaddr, Creg); }
-	void shr_imm_edx(vect8* memoryBlock, uint8_t byte){ disp = byte; dword_shift(memoryBlock, srcToDest, wordAndDword, forReg, memaddr, Dreg); }
-
 
 	//cmp
-	void cmp(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		init(memoryBlock, cmpSize);
-		//cmp eax, ebx 001110 0 1 11 011 000
-		addOpcode(0x38, direction, bitsize);
-		addModrm(mod, src, dest);
+	OperandSizes cmp(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+		uint8_t opcode = 0x38; //001110
+		switch (opmode){
+		case cmpMode: init(memoryBlock, cmpSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, dest, src); return cmpSize;
+		default: opmodeError("cmp");
+		}
+		return none;
 	}
-	void cmp_eax_to_ebx(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Areg); }
-	void cmp_eax_to_ecx(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Areg); }
-	void cmp_eax_to_edx(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Areg); }
-
-	void cmp_ebx_to_eax(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Breg); }
-	void cmp_ebx_to_ecx(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Breg); }
-	void cmp_ebx_to_edx(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Breg); }
-
-	void cmp_ecx_to_eax(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Creg); }
-	void cmp_ecx_to_ebx(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Creg); }
-	void cmp_ecx_to_edx(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Dreg, Creg); }
-
-	void cmp_edx_to_eax(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Areg, Dreg); }
-	void cmp_edx_to_ebx(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Breg, Dreg); }
-	void cmp_edx_to_ecx(vect8* memoryBlock){ cmp(memoryBlock, srcToDest, wordAndDword, forReg, Creg, Dreg); }
 
 
 	//jmp	jump
-	void rel_jmp(vect8* memoryBlock, Movsize getMovsize, Direction direction, Bitsize bitsize){
-		if(direction == destToSrc) init(memoryBlock, byteRelJmpSize);
-		else if (getMovsize == movWord){ init(memoryBlock, wordRelJmpSize); addPrefix(); }
-		else init(memoryBlock, dwordRelJmpSize);
-
-		addOpcode(0xE8, direction, bitsize); //111010 0 0
-		if (direction == destToSrc) addByte(disp.byte);
-		else if (getMovsize == movWord) addWord(disp.word);
-		else addDword(disp.dword);
+	OperandSizes jmp(vect8* memoryBlock, OperandModes opmode, Disp disp){
+		uint8_t opcode = 0xE8; //111010
+		switch (opmode){
+		case byteRelJmpMode: init(memoryBlock, byteRelJmpSize); addOpcode(opcode, destToSrc, wordAndDword); addByte(disp.byte); return byteRelJmpSize;
+		case wordRelJmpMode: init(memoryBlock, wordRelJmpSize); addPrefix(); addOpcode(opcode, srcToDest, wordAndDword); addWord(disp.word); return wordRelJmpSize;
+		case dwordRelJmpMode: init(memoryBlock, dwordRelJmpSize); addOpcode(opcode, srcToDest, wordAndDword); addDword(disp.dword); return dwordRelJmpSize;
+		default: opmodeError("jmp");
+		}
+		return none;
 	}
-	//111010 1 1 disp8
-	void short_jmp(vect8* memoryBlock, uint8_t byte){ disp = byte; rel_jmp(memoryBlock, movByte, destToSrc, wordAndDword); }
-	void near16_jmp(vect8* memoryBlock, uint16_t word){ disp = word; rel_jmp(memoryBlock, movWord, srcToDest, wordAndDword); }
-	void near32_jmp(vect8* memoryBlock, uint32_t dword){ disp = dword; rel_jmp(memoryBlock, movDword, srcToDest, wordAndDword); }
 	//je	jump equals
 	//011101 0 0 11 001 011
-	void byte_rel_je(vect8* memoryBlock, Direction direction, Bitsize bitsize){
-		init(memoryBlock, byteRelJeSize);
-		addOpcode(0x74, direction, bitsize);
-		addByte(disp.byte);
+	OperandSizes jcc(vect8* memoryBlock, OperandModes opmode, Disp disp){
+		uint8_t opcode = 0x74;
+		switch (opmode){
+		case byteRelJeMode: init(memoryBlock, byteRelJeSize); addOpcode(opcode, srcToDest, byteOnly); addByte(disp.byte); return byteRelJeSize;
+		case byteRelJneMode: init(memoryBlock, byteRelJneSize); addOpcode(opcode, srcToDest, wordAndDword); addByte(disp.byte); return byteRelJneSize;
+		case byteRelJaMode: init(memoryBlock, byteRelJaSize); addOpcode(opcode, destToSrc, wordAndDword); addByte(disp.byte); return byteRelJaSize;
+		case byteRelJbeMode: init(memoryBlock, byteRelJbeSize); addOpcode(opcode, destToSrc, byteOnly); addByte(disp.byte); return byteRelJbeSize;
+		default: opmodeError("jcc");
+		}
+		return none;
+		
 	}
-	void short_je(vect8* memoryBlock, uint8_t byte){ disp = byte; byte_rel_je(memoryBlock, srcToDest, byteOnly); }
-	void short_jne(vect8* memoryBlock, uint8_t byte){ disp = byte; byte_rel_je(memoryBlock, srcToDest, wordAndDword); }
 	//jne	jump not equals
 
 	//jb	jump less unsigned
 	//jbe	jump less equals unsigned
-	void byte_rel_jb(vect8* memoryBlock, Direction direction, Bitsize bitsize){
-		init(memoryBlock, byteRelJbSize);
-		addOpcode(0x70, direction, bitsize);
-		addByte(disp.byte);
+	//jcc2
+	OperandSizes jcc2(vect8* memoryBlock, OperandModes opmode, Disp disp){
+		uint8_t opcode = 0x70;
+		switch (opmode){
+		case byteRelJbMode: init(memoryBlock, byteRelJbSize); addOpcode(opcode, destToSrc, byteOnly); addByte(disp.byte); return byteRelJbSize;
+		case byteRelJaeMode: init(memoryBlock, byteRelJaeSize); addOpcode(opcode, destToSrc, wordAndDword); addByte(disp.byte); return byteRelJaeSize;
+		default: opmodeError("jcc2");
+		}
+		return none;
 	}
-	void short_jb(vect8* memoryBlock, uint8_t byte){ disp = byte; byte_rel_jb(memoryBlock, destToSrc, byteOnly); }
-	void short_jbe(vect8* memoryBlock, uint8_t byte){ disp = byte; byte_rel_je(memoryBlock, destToSrc, byteOnly); }
-	
 
 	//ja	jump greater unsigned
 	//jae	jump greater equals unsigned
-	void short_ja(vect8* memoryBlock, uint8_t byte){ disp = byte; byte_rel_je(memoryBlock, destToSrc, wordAndDword); }
-	void short_jae(vect8* memoryBlock, uint8_t byte){ disp = byte; byte_rel_jb(memoryBlock, destToSrc, wordAndDword); }
+	
+	
 	
 
 	//return from eax
-	void ret(vect8* memoryBlock){ init(memoryBlock, retSize); addByte(0xC3); }
+	OperandSizes ret(vect8* memoryBlock){ init(memoryBlock, retSize); addByte(0xC3); return retSize; }
 
 	//nop
-	void nop(vect8* memoryBlock){ init(memoryBlock, nopSize); addByte(0x90); }
+	OperandSizes nop(vect8* memoryBlock){ init(memoryBlock, nopSize); addByte(0x90); return nopSize; }
 
 	//load effective address - lea <- shift + add
 	//bse -> memaddr: some dword immediate(disp32) you can add along with main(multiplcation)
 	//bse -> not memaddr: some reg(any reg) you can add along with main(multiplcation)
-	void lea_regToReg(vect8* memoryBlock, Direction direction, Bitsize bitsize, Mod mod, X86Regs src, X86Regs dest){
-		if (sib.base == memaddr) init(memoryBlock, leaWithDispSize);
-		else init(memoryBlock, leaWithoutDispSize);
-		addOpcode(0x8C, direction, bitsize);	//100011 0 1 00 011 100 01 000 000
+	OperandSizes lea(vect8* memoryBlock, OperandModes opmode, X86Regs src, Scale scale, X86Regs idx, X86Regs bse, Disp disp = Disp()){
+		uint8_t opcode = 0x8C;					//100011 0 1 00 011 100 01 000 001
 												//lea    d s md src dst sc idx bse
 												//              Brg ill x2 Arg Crg	->	lea ebx, [eax*2 + ecx]
-		addModrm(mod, src, dest);
-		addSib(sib.scale, sib.index, sib.base);
-		if (sib.base == memaddr) addDword(disp.dword);
 
+												//100011 0 1 00 000 100 01 000 101 disp32
+												//				Arg ill sc Arg mem disp32 -> lea eax, [eax*2 + disp32]
+		switch (opmode){
+		case leaWithoutDispMode: init(memoryBlock, leaWithoutDispSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, src, illegal); addSib(scale, idx, bse); return leaWithoutDispSize;
+		case leaWithDispMode: init(memoryBlock, leaWithDispSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, src, illegal); addSib(scale, idx, memaddr); addDword(disp.dword); return leaWithDispSize;
+
+		default: opmodeError("lea");
+		}
+		return none;
 	}
-
 
 
 
@@ -816,135 +646,125 @@ public:
 	
 	*/
 	//easy shortcut to load to register and expand
-	void loadByteToDwordRegA(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_al(memoryBlock, dword); movzx_al_to_eax(memoryBlock); }
-	void loadWordToDwordRegA(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_ax(memoryBlock, dword); movzx_ax_to_eax(memoryBlock); }
-	void loadDwordToDwordRegA(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_eax(memoryBlock, dword); }
+	OperandSizes loadByteToDwordRegA(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrByteMode, Areg, insertDisp(dword)); movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg); return loadByteShortcutSize; }
+	OperandSizes loadWordToDwordRegA(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrWordMode, Areg, insertDisp(dword)); movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg); return loadWordShortcutSize; }
+	OperandSizes loadDwordToDwordRegA(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrDwordMode, Areg, insertDisp(dword)); return loadDwordShortcutSize; }
 
-	void loadByteToDwordRegB(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_bl(memoryBlock, dword); movzx_bl_to_ebx(memoryBlock); }
-	void loadWordToDwordRegB(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_bx(memoryBlock, dword); movzx_bx_to_ebx(memoryBlock); }
-	void loadDwordToDwordRegB(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_ebx(memoryBlock, dword); }
+	OperandSizes loadByteToDwordRegB(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrByteMode, Breg, insertDisp(dword)); movzx(memoryBlock, movzxByteToDwordMode, Breg, Breg); return loadByteShortcutSize; }
+	OperandSizes loadWordToDwordRegB(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrWordMode, Breg, insertDisp(dword)); movzx(memoryBlock, movzxWordToDwordMode, Breg, Breg); return loadWordShortcutSize; }
+	OperandSizes loadDwordToDwordRegB(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrDwordMode, Breg, insertDisp(dword)); return loadDwordShortcutSize; }
 
-	void loadByteToDwordRegC(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_cl(memoryBlock, dword); movzx_cl_to_ecx(memoryBlock); }
-	void loadWordToDwordRegC(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_cx(memoryBlock, dword); movzx_cx_to_ecx(memoryBlock); }
-	void loadDwordToDwordRegC(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_ecx(memoryBlock, dword); }
+	OperandSizes loadByteToDwordRegC(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrByteMode, Creg, insertDisp(dword)); movzx(memoryBlock, movzxByteToDwordMode, Creg, Creg); return loadByteShortcutSize; }
+	OperandSizes loadWordToDwordRegC(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrWordMode, Creg, insertDisp(dword)); movzx(memoryBlock, movzxWordToDwordMode, Creg, Creg); return loadWordShortcutSize; }
+	OperandSizes loadDwordToDwordRegC(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrDwordMode, Creg, insertDisp(dword)); return loadDwordShortcutSize; }
 
-	void loadByteToDwordRegD(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_dl(memoryBlock, dword); movzx_dl_to_edx(memoryBlock); }
-	void loadWordToDwordRegD(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_dx(memoryBlock, dword); movzx_dx_to_edx(memoryBlock); }
-	void loadDwordToDwordRegD(vect8* memoryBlock, uint32_t dword){ mov_memoryaddr_to_edx(memoryBlock, dword); }
+	OperandSizes loadByteToDwordRegD(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrByteMode, Dreg, insertDisp(dword)); movzx(memoryBlock, movzxByteToDwordMode, Dreg, Dreg); return loadByteShortcutSize; }
+	OperandSizes loadWordToDwordRegD(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrWordMode, Dreg, insertDisp(dword)); movzx(memoryBlock, movzxWordToDwordMode, Dreg, Dreg); return loadWordShortcutSize; }
+	OperandSizes loadDwordToDwordRegD(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrDwordMode, Dreg, insertDisp(dword)); return loadDwordShortcutSize; }
 
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	void loadByteArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm_to_eax(memoryBlock, array);	//A for array
+	OperandSizes loadByteArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
+		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(array)); //A for array
 		loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
 		
-		//shl_imm_ebx(memoryBlock, 1);	//byte
-		add_eax_to_ebx(memoryBlock); //B as target element addr
+		add(memoryBlock, dwordAddMode, Areg, Breg); //B as target element addr
 		
-		mov_ebxaddr_to_al(memoryBlock);	//to Areg
-		movzx_al_to_eax(memoryBlock);	//expand
+		mov(memoryBlock, movByteMemToRegMode, Breg, Areg);  //to Areg
+		movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg);	//expand
+		return loadByteArraySize;
 	}
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	void loadWordArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm_to_eax(memoryBlock, array);	//A for array
+	OperandSizes loadWordArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
+		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(array)); //A for array
 		loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
 
-		sib.scale = x2;
-		sib.index = Breg;
-		sib.base = Areg;
-		lea_regToReg(memoryBlock, srcToDest, wordAndDword, forDisp, Breg, illegal);
-		//shl_imm_ebx(memoryBlock, 1);	//word
-		//add_eax_to_ebx(memoryBlock); //B as target element addr
+		lea(memoryBlock, leaWithoutDispMode, Breg, x2, Breg, Areg);
 
-		mov_ebxaddr_to_ax(memoryBlock);	//to Areg
-		movzx_ax_to_eax(memoryBlock);	//expand
+		mov(memoryBlock, movByteMemToRegMode, Breg, Areg);  //to Areg
+		movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg);	//expand
+		return loadWordArraySize;
 	}
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	void loadDwordArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm_to_eax(memoryBlock, array);	//A for array
+	OperandSizes loadDwordArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
+		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(array)); //A for array
 		loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
 
-		sib.scale = x4;
-		sib.index = Breg;
-		sib.base = Areg;
-		lea_regToReg(memoryBlock, srcToDest, wordAndDword, forDisp, Breg, illegal);
-		//shl_imm_ebx(memoryBlock, 2);	//dword
-		//add_eax_to_ebx(memoryBlock); //B as target element addr
+		lea(memoryBlock, leaWithoutDispMode, Breg, x4, Breg, Areg);
 
-		mov_ebxaddr_to_eax(memoryBlock);	//to Areg
-		//movzx_al_to_eax(memoryBlock);		//expand
+		mov(memoryBlock, movByteMemToRegMode, Breg, Areg);  //to Areg
+		return loadDwordArraySize;
 	}
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	void storeByteArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm_to_ebx(memoryBlock, array);	//B for array
-		loadByteToDwordRegC(memoryBlock, arrayptr); //C for arrayptr
+	OperandSizes storeByteArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
+		mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(array)); //B for array
+		loadByteToDwordRegC(memoryBlock, arrayptr);	//C for arrayptr
 
-		//shl_imm_ecx(memoryBlock, 1); //byte
-		add_ebx_to_ecx(memoryBlock); //C as target element addr
+		add(memoryBlock, dwordAddMode, Breg, Creg); //C as target element addr
 
-		mov_al_to_ecxaddr(memoryBlock);		//input to array
+		mov(memoryBlock, movByteRegToMemMode, Areg, Creg); //input to array
+		return storeByteArraySize;
 	}
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	void storeWordArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm_to_ebx(memoryBlock, array);	//B for array
-		loadByteToDwordRegC(memoryBlock, arrayptr); //C for arrayptr
+	OperandSizes storeWordArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
+		mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(array)); //B for array
+		loadByteToDwordRegC(memoryBlock, arrayptr);	//C for arrayptr
 
-		sib.scale = x2;
-		sib.index = Creg;
-		sib.base = Breg;
-		lea_regToReg(memoryBlock, srcToDest, wordAndDword, forDisp, Creg, illegal);
-		//shl_imm_ecx(memoryBlock, 1); //word
-		//add_ebx_to_ecx(memoryBlock); //C as target element addr
 
-		mov_ax_to_ecxaddr(memoryBlock);		//input to array
+		lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Breg);
+
+		mov(memoryBlock, movWordRegToMemMode, Areg, Creg); //input to array
+		return storeWordArraySize;
 	}
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	void storeDwordArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm_to_ebx(memoryBlock, array);	//B for array
+	OperandSizes storeDwordArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
+		mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(array)); //B for array
 		loadByteToDwordRegC(memoryBlock, arrayptr); //C for arrayptr
 
-		sib.scale = x4;
-		sib.index = Creg;
-		sib.base = Breg;
-		lea_regToReg(memoryBlock, srcToDest, wordAndDword, forDisp, Creg, illegal);
-		//shl_imm_ecx(memoryBlock, 2); //dword
-		//add_ebx_to_ecx(memoryBlock); //C as target element addr
+		lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Breg);
 
-		mov_eax_to_ecxaddr(memoryBlock);		//input to array
+		mov(memoryBlock, movDwordRegToMemMode, Areg, Creg); //input to array
+		return storeDwordArraySize;
 	}
 
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	void addByteToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
+	OperandSizes addByteToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
 		loadByteToDwordRegA(memoryBlock, memvar);
-		add_imm_to_eax(memoryBlock, immval);
-		mov_al_to_memoryaddr(memoryBlock, memvar);
+		add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);
+		mov(memoryBlock, movToMemaddrByteMode, Areg, insertDisp(memvar));
+		return addByteToMemaddrSize;
 	}
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	void addWordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
+	OperandSizes addWordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
 		loadWordToDwordRegA(memoryBlock, memvar);
-		add_imm_to_eax(memoryBlock, immval);
-		mov_ax_to_memoryaddr(memoryBlock, memvar);
+		add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);
+		mov(memoryBlock, movToMemaddrWordMode, Areg, insertDisp(memvar));
+		return addWordToMemaddrSize;
 	}
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	void addDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
+	OperandSizes addDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
 		loadDwordToDwordRegA(memoryBlock, memvar);
-		add_imm_to_eax(memoryBlock, immval);
-		mov_eax_to_memoryaddr(memoryBlock, memvar);
+		add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);
+		mov(memoryBlock, movToMemaddrDwordMode, Areg, insertDisp(memvar));
+		return addDwordToMemaddrSize;
 	}
 
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	void setByteToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		mov_imm_to_eax(memoryBlock, immval);
-		mov_al_to_memoryaddr(memoryBlock, memvar);
+	OperandSizes setByteToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
+		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));
+		mov(memoryBlock, movToMemaddrByteMode, Areg, insertDisp(memvar));
+		return setByteToMemaddrSize;
 	}
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	void setWordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		mov_imm_to_eax(memoryBlock, immval);
-		mov_ax_to_memoryaddr(memoryBlock, memvar);
+	OperandSizes setWordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
+		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));
+		mov(memoryBlock, movToMemaddrWordMode, Areg, insertDisp(memvar));
+		return setWordToMemaddrSize;
 	}
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	void setDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		mov_imm_to_eax(memoryBlock, immval);
-		mov_eax_to_memoryaddr(memoryBlock, memvar);
+	OperandSizes setDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
+		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));
+		mov(memoryBlock, movToMemaddrDwordMode, Areg, insertDisp(memvar));
+		return setDwordToMemaddrSize;
 	}
 };
 
