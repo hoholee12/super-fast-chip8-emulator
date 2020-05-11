@@ -139,43 +139,70 @@ class X86Emitter{
 private:
 
 	vect8* memoryBlock;
-	uint8_t byte0, byte1, byte2, byte3;
-	void convertEndianness(uint16_t word){
-		byte0 = (word & 0x00ff);
-		byte1 = (word & 0xff00) >> 8;
-	}
-	void convertEndianness(uint32_t dword){
-		byte0 = (dword & 0x000000ff);
-		byte1 = (dword & 0x0000ff00) >> 8;
-		byte2 = (dword & 0x00ff0000) >> 16;
-		byte3 = (dword & 0xff000000) >> 24;
-	}
 
-	void addByte(uint8_t byte){
-		memoryBlock->push_back(byte);
-	}
-	void addWord(uint16_t word){
-		convertEndianness(word);
-		memoryBlock->push_back(byte0);
-		memoryBlock->push_back(byte1);
-	}
-	void addDword(uint32_t dword){
-		convertEndianness(dword);
-		memoryBlock->push_back(byte0);
-		memoryBlock->push_back(byte1);
-		memoryBlock->push_back(byte2);
-		memoryBlock->push_back(byte3);
-	}
+	//inline little things
+#define UINT_WORD_0(x) ((x) & 0x00FF)
+#define UINT_WORD_1(x) ((x) >> 8u)
+
+#define UINT_DWORD_0(x) ((x) & 0x000000FF)
+#define UINT_DWORD_1(x) (((x) & 0x0000FF00) >> 8u)
+#define UINT_DWORD_2(x) (((x) & 0x00FF0000) >> 16u)
+#define UINT_DWORD_3(x) ((x) >> 24u)
+
+#define addByte(x) { memoryBlock->push_back(x); }
+#define addWord(x) {							\
+	memoryBlock->push_back(UINT_WORD_0(x));		\
+	memoryBlock->push_back(UINT_WORD_1(x)); }	\
+
+#define addDword(x) {							\
+	memoryBlock->push_back(UINT_DWORD_0(x));	\
+	memoryBlock->push_back(UINT_DWORD_1(x));	\
+	memoryBlock->push_back(UINT_DWORD_2(x));	\
+	memoryBlock->push_back(UINT_DWORD_3(x)); }	\
+
 
 	//get memoryBlock from outside
 	//memoryBlock optimization
-	void init(vect8* inputMemoryBlock, int index = 0){
-		memoryBlock = inputMemoryBlock;
-		memoryBlock->reserve(memoryBlock->capacity() + index);
-		byte0 = byte1 = byte2 = byte3 = 0;
-	}
+#define init(mb, index) {									\
+	memoryBlock = mb;										\
+	memoryBlock->reserve(memoryBlock->capacity() + index); }\
 
 
+#define opmodeError(err) {						\
+	fprintf(stderr, err);						\
+	fprintf(stderr, ": incompatible opmode!");	\
+	exit(1); }									\
+
+	//byte
+#define addPrefix() { addByte(0x66); }
+	//byte
+#define addExtension() { addByte(0x0F); }
+
+	//byte
+#define addOpcode(opcode, direction, bitsize) {	\
+	uint8_t d = 0x0;							\
+	uint8_t s = 0x0;							\
+	if (direction == 1) d = 0x2;				\
+	if (bitsize == 1) s = 0x1;					\
+	opcode |= d;								\
+	opcode |= s;								\
+	addByte(opcode); }							\
+
+	//byte
+#define addModrm(mod, src, dest) {	\
+	uint8_t opcode = 0x0;			\
+	opcode |= ((uint8_t)mod << 6);	\
+	opcode |= ((uint8_t)src << 3);	\
+	opcode |= (uint8_t)dest;		\
+	addByte(opcode);  }				\
+
+	//byte
+#define addSib(scale, index, base){		\
+	uint8_t opcode = 0x0;				\
+	opcode |= ((uint8_t)scale << 6);	\
+	opcode |= ((uint8_t)index << 3);	\
+	opcode |= (uint8_t)base;			\
+	addByte(opcode); }					\
 
 
 
@@ -228,36 +255,8 @@ public:
 		void operator=(Scale scale){ this->scale = scale; }
 	};
 
-	//byte
-	void addExtension(){ addByte(0x0F); }
-	//byte
-	void addPrefix(){ addByte(0x66); }
-	//byte
-	void addOpcode(uint8_t opcode, Direction direction, Bitsize bitsize){
-		uint8_t d = 0x0;
-		uint8_t s = 0x0;
-		if (direction == 1) d = 0x2;
-		if (bitsize == 1) s = 0x1;
-		opcode |= d;
-		opcode |= s;
-		addByte(opcode);
-	}
-	//byte
-	void addModrm(Mod mod, X86Regs src, X86Regs dest){
-		uint8_t opcode = 0x0;
-		opcode |= ((uint8_t)mod << 6);
-		opcode |= ((uint8_t)src << 3);
-		opcode |= (uint8_t)dest;
-		addByte(opcode);
-	}
-	//byte
-	void addSib(Scale scale, Index index, Base base){
-		uint8_t opcode = 0x0;
-		opcode |= ((uint8_t)scale << 6);
-		opcode |= ((uint8_t)index << 3);
-		opcode |= (uint8_t)base;
-		addByte(opcode);
-	}
+
+	
 
 	//use this template for jmp instructions
 	enum OperandSizes{
@@ -391,7 +390,7 @@ public:
 		setDwordToMemaddrMode,
 	};
 
-	void opmodeError(const char* str){ fprintf(stderr, str); fprintf(stderr, ": incompatible opmode!"); exit(1); }
+	
 
 	//no need for the opposite(use only for zeroing out high area)
 	OperandSizes movzx(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
