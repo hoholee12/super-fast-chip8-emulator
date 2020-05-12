@@ -778,29 +778,6 @@ public:
 
 
 
-	enum Operands{
-		movzxOp,
-		movOp,
-		addOp,
-		subOp,
-		andOp,
-		orOp,
-		xorOp,
-		shlOp,
-		shrOp,
-		cmpOp,
-		jmpOp,
-		jeOp,
-		jneOp,
-		jaOp,
-		jbOp,
-		jaeOp,
-		jbeOp,
-		retOp,
-		nopOp,
-		leaOp,
-
-	};
 
 
 	using string = std::string;
@@ -815,7 +792,6 @@ public:
 
 
 	using Asstype = struct{
-		Operands op;
 		OperandModes opmode;
 		Modrm modrm;
 		Sib sib;
@@ -823,37 +799,11 @@ public:
 		int opusage;
 	};
 
-	
-	
-	void parse_op(Asstype* asstype, string* op_str){
-		if(!op_str->compare("movzx")) asstype->op = movzxOp;
-		else if(!op_str->compare("mov")) asstype->op = movOp;
-		else if(!op_str->compare("add")) asstype->op = addOp;
-		else if(!op_str->compare("sub")) asstype->op = subOp;
-		else if(!op_str->compare("and")) asstype->op = andOp;
-		else if(!op_str->compare("or")) asstype->op = orOp;
-		else if(!op_str->compare("xor")) asstype->op = xorOp;
-		else if(!op_str->compare("shl")) asstype->op = shlOp;
-		else if (!op_str->compare("shr")) asstype->op = shrOp;
-		else if(!op_str->compare("cmp")) asstype->op = cmpOp;
-		else if(!op_str->compare("jmp")) asstype->op = jmpOp;
-		else if(!op_str->compare("je")) asstype->op = jeOp;
-		else if (!op_str->compare("jne")) asstype->op = jneOp;
-		else if (!op_str->compare("ja")) asstype->op = jaOp;
-		else if (!op_str->compare("jb")) asstype->op = jbOp;
-		else if (!op_str->compare("jae")) asstype->op = jaeOp;
-		else if (!op_str->compare("jbe")) asstype->op = jbeOp;
-		else if(!op_str->compare("ret")) asstype->op = retOp;
-		else if(!op_str->compare("nop")) asstype->op = nopOp;
-		else if(!op_str->compare("lea")) asstype->op = leaOp;
-
-	}
-
 	bool isByte(string* str){ if ((str->find("byte") != string::npos) || (str->find("l") != string::npos)) return true; else return false; }
 	bool isWord(string* str){ if ((str->find("word") != string::npos) || ((str->find("x") != string::npos) && (str->find("e") == string::npos))) return true; else return false; }
 	bool isDword(string* str){ if ((str->find("dword") != string::npos) || (str->find("x") != string::npos)) return true; else return false; }
 	bool isPtr(string* str){ if ((str->find("ptr") != string::npos) || (str->find("[") != string::npos)) return true; else return false; }
-	bool isImm(string* str){ 
+	bool isImm(string* str){
 		string regNames[12] = { "al", "bl", "cl", "dl", "ax", "bx", "cx", "dx", "eax", "ebx", "ecx", "edx" };
 		size_t shit = string::npos;
 		for (int i = 0; i < 12; i++){
@@ -880,37 +830,89 @@ public:
 		else if (to_str->find("d") != string::npos) asstype->modrm.dest = Dreg;
 	}
 
-	OperandSizes run_op(vect8* memoryBlock, Asstype* asstype, string* to_str, string* from_str){
-		switch (asstype->op){
-		case movzxOp:
+	void parse_op(Asstype* asstype, string* op_str, string* to_str, string* from_str){
+		if (!op_str->compare("movzx")){
 			if (isReg(to_str) && isReg(from_str)){
 				insertSrc(asstype, from_str); insertDest(asstype, to_str);
-				if (isByte(from_str) && isDword(to_str)) return movzx(memoryBlock, movzxByteToDwordMode, asstype->modrm.src, asstype->modrm.dest);
-				else if (isWord(from_str) && isDword(to_str)) return movzx(memoryBlock, movzxWordToDwordMode, asstype->modrm.src, asstype->modrm.dest);
+				if (isByte(from_str) && isDword(to_str)) asstype->opmode = movzxByteToDwordMode;
+				else if (isWord(from_str) && isDword(to_str)) asstype->opmode = movzxWordToDwordMode;
 			}
-			break;
-		case movOp:
-			
-			break;
-		case addOp: break;
-		case subOp: break;
-		case andOp: break;
-		case orOp: break;
-		case xorOp: break;
-		case shlOp: break;
-		case shrOp: break;
-		case cmpOp: break;
-		case jmpOp: break;
-		case jeOp: break;
-		case jneOp: break;
-		case jaOp: break;
-		case jbOp: break;
-		case jaeOp: break;
-		case jbeOp: break;
-		case retOp: break;
-		case nopOp: break;
-		case leaOp: break;
-		default: opmodeError("ass"); return none;
+		}
+		else if(!op_str->compare("mov")){ }
+		else if(!op_str->compare("add")){ }
+		else if(!op_str->compare("sub")){ }
+		else if(!op_str->compare("and")){ }
+		else if(!op_str->compare("or")){ }
+		else if(!op_str->compare("xor")){ }
+		else if(!op_str->compare("shl")){ }
+		else if (!op_str->compare("shr")){ }
+		else if(!op_str->compare("cmp")){ }
+		else if(!op_str->compare("jmp")){ }
+		else if(!op_str->compare("je")){ }
+		else if (!op_str->compare("jne")){ }
+		else if (!op_str->compare("ja")){ }
+		else if (!op_str->compare("jb")){ }
+		else if (!op_str->compare("jae")){ }
+		else if (!op_str->compare("jbe")){ }
+		else if(!op_str->compare("ret")){ }
+		else if(!op_str->compare("nop")){ }
+		else if(!op_str->compare("lea")){ }
+
+	}
+
+	
+
+
+	OperandSizes run_op(vect8* memoryBlock, Asstype* asstype){
+		//all must return OperandSizes
+		switch (asstype->opmode){
+		case movzxByteToDwordMode: 
+		case movzxWordToDwordMode: return movzx(memoryBlock, asstype->opmode, asstype->modrm.src, asstype->modrm.dest);
+		case movToMemaddrByteMode: 
+		case movToMemaddrDwordMode: 
+		case movToMemaddrWordMode: 
+		case movFromMemaddrByteMode: 
+		case movFromMemaddrDwordMode: 
+		case movFromMemaddrWordMode: 
+		case movDwordRegToRegMode: 
+		case movByteRegToMemMode: 
+		case movDwordRegToMemMode: 
+		case movWordRegToMemMode: 
+		case movByteMemToRegMode: 
+		case movDwordMemToRegMode: 
+		case movWordMemToRegMode: 
+		case dwordMovImmToAregMode: 
+		case dwordMovImmToBregMode: 
+		case dwordMovImmToCregMode: 
+		case dwordMovImmToDregMode: 
+		case dwordAddMode: 
+		case dwordAddImmToRegMode: 
+		case byteAddImmToMemaddrMode: 
+		case wordAddImmToMemaddrMode: 
+		case dwordAddImmToMemaddrMode: 
+		case dwordSubMode: 
+		case dwordAndMode: 
+		case dwordOrMode: 
+		case dwordXorMode: 
+		case dwordShiftLeftMode: 
+		case dwordShiftRightMode: 
+		case cmpMode: 
+		case byteRelJmpMode: 
+		case wordRelJmpMode: 
+		case dwordRelJmpMode: 
+		case byteRelJeMode: 
+		case byteRelJneMode: 
+		case byteRelJaMode: 
+		case byteRelJaeMode: 
+		case byteRelJbMode: 
+		case byteRelJbeMode: 
+		case leaWithDispMode: 
+		case leaWithoutDispMode: 
+
+		case retMode: 
+		case nopMode: 
+		
+		default: opmodeError("parse"); return none;
 		}
 	
 		return none;
@@ -927,7 +929,7 @@ public:
 		return str.substr(first, (last - first + 1));
 	}
 
-	OperandSizes ass(vect8* memoryBlock, const char* str){
+	OperandSizes parse(vect8* memoryBlock, const char* str){
 		Asstype asstype;
 		string op_str;
 		string to_str;
@@ -944,9 +946,9 @@ public:
 		op_str = trim(op_str);
 
 		//to op
-		parse_op(&asstype, &op_str);
+		parse_op(&asstype, &op_str, &to_str, &from_str);
 
-		return run_op(memoryBlock, &asstype, &to_str, &from_str);
+		return run_op(memoryBlock, &asstype);
 
 	}
 
