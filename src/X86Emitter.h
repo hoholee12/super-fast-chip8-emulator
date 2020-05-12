@@ -132,6 +132,7 @@
 #include<iostream>
 #include<vector>
 #include<stdint.h>
+#include<string>
 
 using vect8 = std::vector<uint8_t>; //tryinig really hard to shorten code here;-;
 
@@ -767,5 +768,188 @@ public:
 		mov(memoryBlock, movToMemaddrDwordMode, Areg, insertDisp(memvar));
 		return setDwordToMemaddrSize;
 	}
+
+	/*
+	
+		text assembler(please dont write bs in it error checking is hard af)
+	
+		TODO: implement
+	*/
+
+
+
+	enum Operands{
+		movzxOp,
+		movOp,
+		addOp,
+		subOp,
+		andOp,
+		orOp,
+		xorOp,
+		shlOp,
+		shrOp,
+		cmpOp,
+		jmpOp,
+		jeOp,
+		jneOp,
+		jaOp,
+		jbOp,
+		jaeOp,
+		jbeOp,
+		retOp,
+		nopOp,
+		leaOp,
+
+	};
+
+
+	using string = std::string;
+	string convertLowercase(string* str){
+		string result;
+		
+		for (uint32_t i = 0; i < str->size(); i++){
+			result.push_back(tolower(str->at(i)));
+		}
+		return result;
+	}
+
+
+	using Asstype = struct{
+		Operands op;
+		OperandModes opmode;
+		Modrm modrm;
+		Sib sib;
+		Disp disp;
+		int opusage;
+	};
+
+	
+	
+	void parse_op(Asstype* asstype, string* op_str){
+		if(!op_str->compare("movzx")) asstype->op = movzxOp;
+		else if(!op_str->compare("mov")) asstype->op = movOp;
+		else if(!op_str->compare("add")) asstype->op = addOp;
+		else if(!op_str->compare("sub")) asstype->op = subOp;
+		else if(!op_str->compare("and")) asstype->op = andOp;
+		else if(!op_str->compare("or")) asstype->op = orOp;
+		else if(!op_str->compare("xor")) asstype->op = xorOp;
+		else if(!op_str->compare("shl")) asstype->op = shlOp;
+		else if (!op_str->compare("shr")) asstype->op = shrOp;
+		else if(!op_str->compare("cmp")) asstype->op = cmpOp;
+		else if(!op_str->compare("jmp")) asstype->op = jmpOp;
+		else if(!op_str->compare("je")) asstype->op = jeOp;
+		else if (!op_str->compare("jne")) asstype->op = jneOp;
+		else if (!op_str->compare("ja")) asstype->op = jaOp;
+		else if (!op_str->compare("jb")) asstype->op = jbOp;
+		else if (!op_str->compare("jae")) asstype->op = jaeOp;
+		else if (!op_str->compare("jbe")) asstype->op = jbeOp;
+		else if(!op_str->compare("ret")) asstype->op = retOp;
+		else if(!op_str->compare("nop")) asstype->op = nopOp;
+		else if(!op_str->compare("lea")) asstype->op = leaOp;
+
+	}
+
+	bool isByte(string* str){ if ((str->find("byte") != string::npos) || (str->find("l") != string::npos)) return true; else return false; }
+	bool isWord(string* str){ if ((str->find("word") != string::npos) || ((str->find("x") != string::npos) && (str->find("e") == string::npos))) return true; else return false; }
+	bool isDword(string* str){ if ((str->find("dword") != string::npos) || (str->find("x") != string::npos)) return true; else return false; }
+	bool isPtr(string* str){ if ((str->find("ptr") != string::npos) || (str->find("[") != string::npos)) return true; else return false; }
+	bool isImm(string* str){ 
+		string regNames[12] = { "al", "bl", "cl", "dl", "ax", "bx", "cx", "dx", "eax", "ebx", "ecx", "edx" };
+		size_t shit = string::npos;
+		for (int i = 0; i < 12; i++){
+			if (str->find(regNames[i])){
+				shit = 123; //some other than npos
+			}
+		}
+		if (shit == string::npos) return true;
+		else return false;
+	}
+	bool isReg(string* str){ return !isImm(str); }
+	bool isMem(string* str){ return (isImm(str) && isPtr(str)); }
+
+	void insertSrc(Asstype* asstype, string* from_str){
+		if (from_str->find("a") != string::npos) asstype->modrm.src = Areg;
+		else if (from_str->find("b") != string::npos) asstype->modrm.src = Breg;
+		else if (from_str->find("c") != string::npos) asstype->modrm.src = Creg;
+		else if (from_str->find("d") != string::npos) asstype->modrm.src = Dreg;
+	}
+	void insertDest(Asstype* asstype, string* to_str){
+		if (to_str->find("a") != string::npos) asstype->modrm.dest = Areg;
+		else if (to_str->find("b") != string::npos) asstype->modrm.dest = Breg;
+		else if (to_str->find("c") != string::npos) asstype->modrm.dest = Creg;
+		else if (to_str->find("d") != string::npos) asstype->modrm.dest = Dreg;
+	}
+
+	OperandSizes run_op(vect8* memoryBlock, Asstype* asstype, string* to_str, string* from_str){
+		switch (asstype->op){
+		case movzxOp:
+			if (isReg(to_str) && isReg(from_str)){
+				insertSrc(asstype, from_str); insertDest(asstype, to_str);
+				if (isByte(from_str) && isDword(to_str)) return movzx(memoryBlock, movzxByteToDwordMode, asstype->modrm.src, asstype->modrm.dest);
+				else if (isWord(from_str) && isDword(to_str)) return movzx(memoryBlock, movzxWordToDwordMode, asstype->modrm.src, asstype->modrm.dest);
+			}
+			break;
+		case movOp:
+			
+			break;
+		case addOp: break;
+		case subOp: break;
+		case andOp: break;
+		case orOp: break;
+		case xorOp: break;
+		case shlOp: break;
+		case shrOp: break;
+		case cmpOp: break;
+		case jmpOp: break;
+		case jeOp: break;
+		case jneOp: break;
+		case jaOp: break;
+		case jbOp: break;
+		case jaeOp: break;
+		case jbeOp: break;
+		case retOp: break;
+		case nopOp: break;
+		case leaOp: break;
+		default: opmodeError("ass"); return none;
+		}
+	
+		return none;
+	}
+
+	string trim(const string& str){
+		size_t first = str.find_first_not_of(' ');
+		if (string::npos == first)
+		{
+			return str;
+		}
+		size_t last = str.find_last_not_of(' ');
+		if (first == string::npos) return "";
+		return str.substr(first, (last - first + 1));
+	}
+
+	OperandSizes ass(vect8* memoryBlock, const char* str){
+		Asstype asstype;
+		string op_str;
+		string to_str;
+		string from_str;
+		string input;
+		input = str;
+		input = convertLowercase(&input);
+		from_str = input.substr(input.find(",") + 1);
+		from_str = trim(from_str);
+		input = input.substr(0, input.find(","));
+		to_str = input.substr(input.find(" ") + 1);
+		to_str = trim(to_str);
+		op_str = input.substr(0, input.find(" "));
+		op_str = trim(op_str);
+
+		//to op
+		parse_op(&asstype, &op_str);
+
+		return run_op(memoryBlock, &asstype, &to_str, &from_str);
+
+	}
+
+
 };
 
