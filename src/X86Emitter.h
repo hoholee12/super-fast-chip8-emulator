@@ -394,7 +394,7 @@ public:
 		setDwordToMemaddrMode,
 	};
 
-	OperandSizes opmodeError(const char* str){ fprintf(stderr, str); fprintf(stderr, ": incompatible opmode!"); exit(1); return none; }
+	OperandSizes opmodeError(const char* str, std::string str2 = std::string()){ fprintf(stderr, str); fprintf(stderr, ": incompatible opmode! -> "); fprintf(stderr, str2.c_str()); exit(1); return none; }
 
 	//no need for the opposite(use only for zeroing out high area)
 	OperandSizes movzx(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
@@ -1063,7 +1063,7 @@ public:
 	
 
 
-	OperandSizes run_op(vect8* memoryBlock, ParserType* parserType){
+	OperandSizes run_op(vect8* memoryBlock, ParserType* parserType, const char* str){
 		//all must return OperandSizes
 		switch (parserType->opmode){
 		case movzxByteToDwordMode: 
@@ -1110,12 +1110,12 @@ public:
 		
 		
 		case leaWithDispMode: 
-		case leaWithoutDispMode: return opmodeError("i dont want to parse this... please use lea() instead");
+		case leaWithoutDispMode: return opmodeError("lea", "i dont want to parse this... please use lea() instead");
 
 		case retMode: return ret(memoryBlock);
 		case nopMode: return nop(memoryBlock);
 		
-		default: opmodeError("parse"); return none;
+		default: opmodeError("parse", str); return none;
 		}
 	
 		return none;
@@ -1152,7 +1152,7 @@ public:
 		//to op
 		parse_op(&parserType, &op_str, &src_str, &dest_str, extra);
 
-		return run_op(memoryBlock, &parserType);
+		return run_op(memoryBlock, &parserType, str);
 
 	}
 
