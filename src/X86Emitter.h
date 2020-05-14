@@ -474,9 +474,9 @@ public:
 		switch (opmode){
 		case dwordAddImmToRegMode: init(memoryBlock, dwordAddImmToRegSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, Areg, dest); addDword(addr.dword); return dwordAddImmToRegSize;
 	
-		case byteAddImmToMemaddrMode: init(memoryBlock, byteAddImmToMemaddrSize); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addByte(disp.byte); return byteAddImmToMemaddrSize;
-		case wordAddImmToMemaddrMode: init(memoryBlock, wordAddImmToMemaddrSize); addPrefix(); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addWord(disp.word); return wordAddImmToMemaddrSize;
-		case dwordAddImmToMemaddrMode: init(memoryBlock, dwordAddImmToMemaddrSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addDword(disp.dword); return dwordAddImmToMemaddrSize;
+		case byteAddImmToMemaddrMode: init(memoryBlock, byteAddImmToMemaddrSize); addOpcode(opcode, srcToDest, byteOnly); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addByte(disp.byte); return byteAddImmToMemaddrSize;
+		case wordAddImmToMemaddrMode: init(memoryBlock, wordAddImmToMemaddrSize); addPrefix(); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addWord(disp.word); return wordAddImmToMemaddrSize;
+		case dwordAddImmToMemaddrMode: init(memoryBlock, dwordAddImmToMemaddrSize); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addDword(disp.dword); return dwordAddImmToMemaddrSize;
 		default: opmodeError("add_imm");
 		}
 		return none;
@@ -796,8 +796,8 @@ public:
 		OperandModes opmode;
 		Modrm modrm;
 		Sib sib;
+		Disp addr;
 		Disp disp;
-		int opusage;
 	};
 
 	bool isByte(string* str){ if ((str->find("byte") != string::npos) || (str->find("l") != string::npos)) return true; else return false; }
@@ -805,6 +805,7 @@ public:
 	bool isDword(string* str){ if ((str->find("dword") != string::npos) || ((str->find("x") != string::npos) && (str->find("e") != string::npos))) return true; else return false; }
 	bool isPtr(string* str){ if ((str->find("ptr") != string::npos) || (str->find("[") != string::npos)) return true; else return false; }
 	bool isImm(string* str){
+		if (str->find("extra") != string::npos) return true;
 		string regNames[12] = { "al", "bl", "cl", "dl", "ax", "bx", "cx", "dx", "eax", "ebx", "ecx", "edx" };
 		for (int i = 11; i > -1; i--){
 			if (str->find(regNames[i]) != string::npos) return false;
@@ -813,9 +814,9 @@ public:
 	}
 	bool isReg(string* str){ return !isImm(str); }
 	bool isMem(string* str){ return (isImm(str) && isPtr(str)); }
-	bool autoInsertExtra(ParserType* parserType, string* str, Disp extra){
+	bool autoInsertExtra(Disp* disp, string* str, Disp extra){
 		if (str->find("extra") != string::npos){
-			parserType->disp.dword = extra.dword;
+			disp->dword = extra.dword;
 			return true;
 		}
 		return false;
@@ -833,11 +834,11 @@ public:
 		else if (dest_str->find("c") != string::npos) parserType->modrm.dest = Creg;
 		else if (dest_str->find("d") != string::npos) parserType->modrm.dest = Dreg;
 	}
-	void insertImm(ParserType* parserType, string* imm_str){
+	void insertImm(Disp* disp, string* imm_str){
 		//hex
-		if (imm_str->find("0x") != string::npos) parserType->disp.dword = (uint32_t)std::stoi(*imm_str, 0, 16);
+		if (imm_str->find("0x") != string::npos) disp->dword = (uint32_t)std::stoi(*imm_str, 0, 16);
 		//dec
-		else parserType->disp.dword = (uint32_t)std::stoi(*imm_str, 0, 10);
+		else disp->dword = (uint32_t)std::stoi(*imm_str, 0, 10);
 	}
 
 	void parse_op(ParserType* parserType, string* op_str, string* src_str, string* dest_str, Disp extra){
@@ -853,7 +854,23 @@ public:
 			}
 		}
 		else if(!op_str->compare("mov")){
-			if (isReg(src_str) && isReg(dest_str)){
+			if (autoInsertExtra(&parserType->addr, src_str, extra) && isPtr(src_str)){	//from Memaddr
+				insertDest(parserType, dest_str);
+				if (isReg(dest_str) && !isPtr(dest_str)){
+					if (isByte(dest_str)) parserType->opmode = movFromMemaddrByteMode;
+					else if (isWord(dest_str)) parserType->opmode = movFromMemaddrWordMode;
+					else if (isDword(dest_str)) parserType->opmode = movFromMemaddrDwordMode;
+				}
+			}
+			else if (autoInsertExtra(&parserType->addr, dest_str, extra) && isPtr(dest_str)){	//to Memaddr
+				insertSrc(parserType, src_str);
+				if (isReg(src_str) && !isPtr(src_str)){
+					if (isByte(src_str)) parserType->opmode = movToMemaddrByteMode;
+					else if (isWord(src_str)) parserType->opmode = movToMemaddrWordMode;
+					else if (isDword(src_str)) parserType->opmode = movToMemaddrDwordMode;
+				}
+			}
+			else if (isReg(src_str) && isReg(dest_str)){
 				insertSrc(parserType, src_str); insertDest(parserType, dest_str);
 				if (isByte(src_str) && isDword(dest_str) && isPtr(dest_str))
 					parserType->opmode = movByteRegToMemMode;
@@ -873,8 +890,10 @@ public:
 				
 			}
 			//mov_imm
-			else if (isImm(src_str) && isReg(dest_str) && ! isPtr(src_str)){
-				insertImm(parserType, src_str); insertDest(parserType, dest_str);
+			else if (isDword(dest_str) && isReg(dest_str) && !isPtr(src_str)){
+				if (autoInsertExtra(&parserType->disp, src_str, extra)){}
+				else if (isImm(src_str))insertImm(&parserType->disp, src_str);
+				insertDest(parserType, dest_str);
 				if (parserType->modrm.dest == Areg) parserType->opmode = dwordMovImmToAregMode;
 				else if (parserType->modrm.dest == Breg) parserType->opmode = dwordMovImmToBregMode;
 				else if (parserType->modrm.dest == Creg) parserType->opmode = dwordMovImmToCregMode;
@@ -884,18 +903,27 @@ public:
 			}
 		}
 		else if(!op_str->compare("add")){
-			if (isReg(src_str) && !isPtr(src_str) && isReg(dest_str) && !isPtr(dest_str)){
+			if (autoInsertExtra(&parserType->addr, dest_str, extra) && !isReg(dest_str)){
+				if (isImm(src_str) && !isPtr(src_str)){
+					insertImm(&parserType->disp, src_str);
+					if (isByte(dest_str)) parserType->opmode = byteAddImmToMemaddrMode;
+					else if (isWord(dest_str)) parserType->opmode = wordAddImmToMemaddrMode;
+					else if (isDword(dest_str)) parserType->opmode = dwordAddImmToMemaddrMode;
+				}
+			
+			}
+			else if (isReg(src_str) && !isPtr(src_str) && isReg(dest_str) && !isPtr(dest_str)){
 				insertSrc(parserType, src_str); insertDest(parserType, dest_str);
 				if (isDword(src_str) && isDword(dest_str)) parserType->opmode = dwordAddMode;
 
 				
 			}
 			else if (isImm(src_str) && !isPtr(src_str) && isReg(dest_str) && !isPtr(dest_str)){
-				insertImm(parserType, src_str); insertDest(parserType, dest_str);
+				insertImm(&parserType->disp, src_str); insertDest(parserType, dest_str);
 				if (isDword(dest_str)) parserType->opmode = dwordAddImmToRegMode;
-
-				
 			}
+			
+
 		}
 		else if(!op_str->compare("sub")){
 			if (isReg(src_str) && !isPtr(src_str) && isReg(dest_str) && !isPtr(dest_str)){
@@ -931,7 +959,7 @@ public:
 		}
 		else if(!op_str->compare("shl")){ 
 			if (isImm(src_str) && !isPtr(src_str) && isReg(dest_str) && !isPtr(dest_str)){
-				insertImm(parserType, src_str); insertDest(parserType, dest_str);
+				insertImm(&parserType->disp, src_str); insertDest(parserType, dest_str);
 				if (isDword(dest_str)) parserType->opmode = dwordShiftLeftMode;
 
 				
@@ -939,7 +967,7 @@ public:
 		}
 		else if (!op_str->compare("shr")){ 
 			if (isImm(src_str) && !isPtr(src_str) && isReg(dest_str) && !isPtr(dest_str)){
-				insertImm(parserType, src_str); insertDest(parserType, dest_str);
+				insertImm(&parserType->disp, src_str); insertDest(parserType, dest_str);
 				if (isDword(dest_str)) parserType->opmode = dwordShiftRightMode;
 
 				
@@ -957,8 +985,8 @@ public:
 		//src_str is empty in operand with one input
 		else if(!op_str->compare("jmp")){ 
 			if (isImm(dest_str) && !isPtr(dest_str)){
-				if (autoInsertExtra(parserType, dest_str, extra)) parserType->opmode = byteRelJmpMode;
-				else insertImm(parserType, dest_str); //if its not extra then insert imm
+				if (autoInsertExtra(&parserType->disp, dest_str, extra)) parserType->opmode = byteRelJmpMode;
+				else insertImm(&parserType->disp, dest_str); //if its not extra then insert imm
 				if (isByte(dest_str)) parserType->opmode = byteRelJmpMode;
 				else if (isWord(dest_str)) parserType->opmode = wordRelJmpMode;
 				else if (isDword(dest_str)) parserType->opmode = dwordRelJmpMode;
@@ -968,8 +996,8 @@ public:
 		}
 		else if(!op_str->compare("je")){ 
 			if (isImm(dest_str) && !isPtr(dest_str)){
-				if (autoInsertExtra(parserType, dest_str, extra)) parserType->opmode = byteRelJeMode;
-				else insertImm(parserType, dest_str); //if its not extra then insert imm
+				if (autoInsertExtra(&parserType->disp, dest_str, extra)) parserType->opmode = byteRelJeMode;
+				else insertImm(&parserType->disp, dest_str); //if its not extra then insert imm
 				if (isByte(dest_str)) parserType->opmode = byteRelJeMode;
 
 				
@@ -977,8 +1005,8 @@ public:
 		}
 		else if (!op_str->compare("jne")){ 
 			if (isImm(dest_str) && !isPtr(dest_str)){
-				if (autoInsertExtra(parserType, dest_str, extra)) parserType->opmode = byteRelJneMode;
-				else insertImm(parserType, dest_str); //if its not extra then insert imm
+				if (autoInsertExtra(&parserType->disp, dest_str, extra)) parserType->opmode = byteRelJneMode;
+				else insertImm(&parserType->disp, dest_str); //if its not extra then insert imm
 				if (isByte(dest_str)) parserType->opmode = byteRelJneMode;
 
 				
@@ -986,8 +1014,8 @@ public:
 		}
 		else if (!op_str->compare("ja")){ 
 			if (isImm(dest_str) && !isPtr(dest_str)){
-				if (autoInsertExtra(parserType, dest_str, extra)) parserType->opmode = byteRelJaMode;
-				else insertImm(parserType, dest_str); //if its not extra then insert imm
+				if (autoInsertExtra(&parserType->disp, dest_str, extra)) parserType->opmode = byteRelJaMode;
+				else insertImm(&parserType->disp, dest_str); //if its not extra then insert imm
 				if (isByte(dest_str)) parserType->opmode = byteRelJaMode;
 
 				
@@ -995,8 +1023,8 @@ public:
 		}
 		else if (!op_str->compare("jb")){ 
 			if (isImm(dest_str) && !isPtr(dest_str)){
-				if (autoInsertExtra(parserType, dest_str, extra)) parserType->opmode = byteRelJbMode;
-				else insertImm(parserType, dest_str); //if its not extra then insert imm
+				if (autoInsertExtra(&parserType->disp, dest_str, extra)) parserType->opmode = byteRelJbMode;
+				else insertImm(&parserType->disp, dest_str); //if its not extra then insert imm
 				if (isByte(dest_str)) parserType->opmode = byteRelJbMode;
 
 				
@@ -1004,8 +1032,8 @@ public:
 		}
 		else if (!op_str->compare("jae")){ 
 			if (isImm(dest_str) && !isPtr(dest_str)){
-				if (autoInsertExtra(parserType, dest_str, extra)) parserType->opmode = byteRelJaeMode;
-				else insertImm(parserType, dest_str); //if its not extra then insert imm
+				if (autoInsertExtra(&parserType->disp, dest_str, extra)) parserType->opmode = byteRelJaeMode;
+				else insertImm(&parserType->disp, dest_str); //if its not extra then insert imm
 				if (isByte(dest_str)) parserType->opmode = byteRelJaeMode;
 
 				
@@ -1013,8 +1041,8 @@ public:
 		}
 		else if (!op_str->compare("jbe")){ 
 			if (isImm(dest_str) && !isPtr(dest_str)){
-				if (autoInsertExtra(parserType, dest_str, extra)) parserType->opmode = byteRelJbeMode;
-				else insertImm(parserType, dest_str); //if its not extra then insert imm
+				if (autoInsertExtra(&parserType->disp, dest_str, extra)) parserType->opmode = byteRelJbeMode;
+				else insertImm(&parserType->disp, dest_str); //if its not extra then insert imm
 				if (isByte(dest_str)) parserType->opmode = byteRelJbeMode;
 
 				
@@ -1045,7 +1073,7 @@ public:
 		case movToMemaddrWordMode: 
 		case movFromMemaddrByteMode: 
 		case movFromMemaddrDwordMode: 
-		case movFromMemaddrWordMode: return opmodeError("not supported by parser...yet");
+		case movFromMemaddrWordMode: return mov(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest, parserType->addr);
 		case movDwordRegToRegMode: 
 		case movByteRegToMemMode: 
 		case movDwordRegToMemMode: 
@@ -1061,7 +1089,7 @@ public:
 		case dwordAddImmToRegMode: return add_imm(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
 		case byteAddImmToMemaddrMode: 
 		case wordAddImmToMemaddrMode: 
-		case dwordAddImmToMemaddrMode: return opmodeError("not supported by parser...yet");
+		case dwordAddImmToMemaddrMode:  return add_imm(memoryBlock, parserType->opmode, parserType->addr, parserType->disp);
 		case dwordSubMode: return sub(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case dwordAndMode: return and(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case dwordOrMode: return or(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
