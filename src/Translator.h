@@ -103,9 +103,12 @@ public:
 	//fallback to interpreter, switch back whenever its done. but not here
 	//some opcodes are just too complicated to recreate in jit
 	//...or jump
-	void switchToInterpreter(){
+	void hintFallBack(){
 		X86Emitter::setByteToMemaddr(memoryBlock, interpreterSwitch, 0x1);
-		endMemoryBlock = true;	//end block
+	}
+	void switchToInterpreter(){
+		X86Emitter::ret(memoryBlock);
+		endMemoryBlock = true;	//this is hint for translator to cut blocks
 	}
 
 	//opcodes
@@ -113,6 +116,7 @@ public:
 		X86Emitter::setDwordToMemaddr(memoryBlock, controllerOp, (uint32_t)ControllerOp::clearScreen);
 
 		incrementPC();
+		switchToInterpreter();
 		//original
 		//controllerOp = ControllerOp::clearScreen;
 	}
@@ -446,43 +450,64 @@ public:
 		//programCounter = NNN + v[0]; flag = 1; //(dont increment pc)
 	}
 	void opcodecxnn(){
-
-		incrementPC();
+		hintFallBack();
+		switchToInterpreter();
+		//incrementPC();
 		//VX = (rand() % 0x100) & NN;	//random
 	}
 	void opcodedxyn(){
+		X86Emitter::setDwordToMemaddr(memoryBlock, controllerOp, (uint32_t)ControllerOp::drawVideo);
 
 		incrementPC();
+		switchToInterpreter();
 		//controllerOp = ControllerOp::drawVideo;
 	}
 	void opcodeex9e(){
+		X86Emitter::mov(memoryBlock, movByteMemToRegMode, Breg, insertDisp(pressedKey));
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, stack, stackPointer);
+		X86Emitter::cmp(memoryBlock, cmpMode, Areg, Breg);
+		X86Emitter::jcc(memoryBlock, byteRelJneMode, insertDisp(addWordToMemaddrSize));
+		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
 
 		incrementPC();
 		//if (*pressedKey == VX) programCounter += 2;
 	}
 	void opcodeexa1(){
+		X86Emitter::mov(memoryBlock, movByteMemToRegMode, Breg, insertDisp(pressedKey));
+		X86Emitter::loadWordArray_AregAsResult(memoryBlock, stack, stackPointer);
+		X86Emitter::cmp(memoryBlock, cmpMode, Areg, Breg);
+		X86Emitter::jcc(memoryBlock, byteRelJeMode, insertDisp(addWordToMemaddrSize));
+		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
 
 		incrementPC();
 		//if (*pressedKey != VX) programCounter += 2;
 	}
 	void opcodefx07(){
+		X86Emitter::mov(memoryBlock, movByteMemToRegMode, Areg, insertDisp(delayRegister));
+		X86Emitter::storeByteArray_AregAsInput(memoryBlock, v, vxPointer);
 
 		incrementPC();
 		//VX = *delayRegister;
 	}
 	void opcodefx0a(){
-
-		incrementPC();
+		hintFallBack();
+		switchToInterpreter();
+		//incrementPC();
 		//if (Input::isKeyPressed(*pressedKey) == true) VX = *pressedKey; else flag = 1; //wait again	(dont increment pc)
 	}
 	void opcodefx15(){
-
+		X86Emitter::loadByteArray_AregAsResult(memoryBlock, v, vxPointer);
+		X86Emitter::mov(memoryBlock, movByteRegToMemMode, Areg, insertDisp(delayRegister));
+		
 		incrementPC();
 		//*delayRegister = VX;
 	}
 	void opcodefx18(){
+		X86Emitter::setDwordToMemaddr(memoryBlock, controllerOp, (uint32_t)ControllerOp::setSoundTimer);
 
 		incrementPC();
+		switchToInterpreter();
+
 		//controllerOp = ControllerOp::setSoundTimer;
 	}
 	void opcodefx1e(){
