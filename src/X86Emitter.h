@@ -135,6 +135,7 @@
 #include<string>
 
 //msvc sucks
+#pragma warning(disable: 4003; disable: 4002; disable: 4018)
 #define EXPAND(x) x
 #define GLUE(x, y, z) x##y##z
 
@@ -655,22 +656,19 @@ public:
 		*/
 	//easy shortcut to load to register and expand
 
-
-
-
 #define loadMemToDwordReg_dontcount(memoryBlock, addr, Xreg, Size) {\
 	mov(memoryBlock, GLUE(movFromMemaddr, Size, Mode), Xreg, insertDisp(addr)); \
 	movzx(memoryBlock, GLUE(movzx, Size, ToDwordMode), Xreg, Xreg); \
 	}\
 	\
 
-#pragma warning(disable: 4003)
 #define loadMemToDwordReg_count(memoryBlock, addr, Xreg, Size, count) {\
 	count += mov(memoryBlock, GLUE(movFromMemaddr, Size, Mode), Xreg, insertDisp(addr)); \
 	count += movzx(memoryBlock, GLUE(movzx, Size, ToDwordMode), Xreg, Xreg); \
 	}\
 	\
 
+	//easy shortcut to load to register and expand
 #define loadMemToDwordReg_(memoryBlock, addr, Xreg, Size, count, FUNC, ...) FUNC
 #define loadMemToDwordReg(...) EXPAND(loadMemToDwordReg_(__VA_ARGS__, loadMemToDwordReg_count(__VA_ARGS__), loadMemToDwordReg_dontcount(__VA_ARGS__)))
 
@@ -746,48 +744,40 @@ public:
 	}
 
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	OperandSizes addByteToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		loadMemToDwordReg(memoryBlock, memvar, Areg, Byte);
-		//loadByteToDwordRegA(memoryBlock, memvar);
-		add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);
-		mov(memoryBlock, movToMemaddrByteMode, Areg, insertDisp(memvar));
-		return addByteToMemaddrSize;
-	}
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	OperandSizes addWordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		loadMemToDwordReg(memoryBlock, memvar, Areg, Byte);
-		//loadWordToDwordRegA(memoryBlock, memvar);
-		add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);
-		mov(memoryBlock, movToMemaddrWordMode, Areg, insertDisp(memvar));
-		return addWordToMemaddrSize;
-	}
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	OperandSizes addDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		loadMemToDwordReg(memoryBlock, memvar, Areg, Byte);
-		//loadDwordToDwordRegA(memoryBlock, memvar);
-		add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);
-		mov(memoryBlock, movToMemaddrDwordMode, Areg, insertDisp(memvar));
-		return addDwordToMemaddrSize;
-	}
+
+
+#define addToMemaddr_dontcount(memoryBlock, memvar, immval, Size){\
+	loadMemToDwordReg(memoryBlock, memvar, Areg, Byte);\
+	add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);\
+	mov(memoryBlock, GLUE(movToMemaddr, Size, Mode), Areg, insertDisp(memvar));\
+	}\
+
+#define addToMemaddr_count(memoryBlock, memvar, immval, Size, count){\
+	loadMemToDwordReg(memoryBlock, memvar, Areg, Byte, count);\
+	count += add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);\
+	count += mov(memoryBlock, GLUE(movToMemaddr, Size, Mode), Areg, insertDisp(memvar));\
+	}\
 
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	OperandSizes setByteToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));
-		mov(memoryBlock, movToMemaddrByteMode, Areg, insertDisp(memvar));
-		return setByteToMemaddrSize;
-	}
+#define addToMemaddr_(memoryBlock, memvar, immval, Size, count, FUNC, ...) FUNC
+#define addToMemaddr(...) EXPAND(addToMemaddr_(__VA_ARGS__, addToMemaddr_count(__VA_ARGS__), addToMemaddr_dontcount(__VA_ARGS__)))
+
+
+	//set mem
+#define setToMemaddr_dontcount(memoryBlock, memvar, immval, Size){\
+	mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));\
+	mov(memoryBlock, GLUE(movToMemaddr, Size, Mode), Areg, insertDisp(memvar));\
+		}\
+
+#define setToMemaddr_count(memoryBlock, memvar, immval, Size, count){\
+	count += mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));\
+	count += mov(memoryBlock, GLUE(movToMemaddr, Size, Mode), Areg, insertDisp(memvar));\
+		}\
+
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	OperandSizes setWordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));
-		mov(memoryBlock, movToMemaddrWordMode, Areg, insertDisp(memvar));
-		return setWordToMemaddrSize;
-	}
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	OperandSizes setDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));
-		mov(memoryBlock, movToMemaddrDwordMode, Areg, insertDisp(memvar));
-		return setDwordToMemaddrSize;
-	}
+#define setToMemaddr_(memoryBlock, memvar, immval, Size, count, FUNC, ...) FUNC
+#define setToMemaddr(...) EXPAND(setToMemaddr_(__VA_ARGS__, setToMemaddr_count(__VA_ARGS__), setToMemaddr_dontcount(__VA_ARGS__)))
+
 
 	/*
 	
