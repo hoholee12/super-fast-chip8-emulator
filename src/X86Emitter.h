@@ -134,6 +134,11 @@
 #include<stdint.h>
 #include<string>
 
+//msvc sucks
+#define EXPAND(x) x
+#define GLUE(x, y, z) x##y##z
+
+
 using vect8 = std::vector<uint8_t>; //tryinig really hard to shorten code here;-;
 
 class X86Emitter{
@@ -643,32 +648,38 @@ public:
 
 
 	/*
-	
+
 		shortcuts!
-	
-	
-	*/
+
+
+		*/
 	//easy shortcut to load to register and expand
-	OperandSizes loadByteToDwordRegA(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrByteMode, Areg, insertDisp(dword)); movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg); return loadByteShortcutSize; }
-	OperandSizes loadWordToDwordRegA(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrWordMode, Areg, insertDisp(dword)); movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg); return loadWordShortcutSize; }
-	OperandSizes loadDwordToDwordRegA(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrDwordMode, Areg, insertDisp(dword)); return loadDwordShortcutSize; }
 
-	OperandSizes loadByteToDwordRegB(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrByteMode, Breg, insertDisp(dword)); movzx(memoryBlock, movzxByteToDwordMode, Breg, Breg); return loadByteShortcutSize; }
-	OperandSizes loadWordToDwordRegB(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrWordMode, Breg, insertDisp(dword)); movzx(memoryBlock, movzxWordToDwordMode, Breg, Breg); return loadWordShortcutSize; }
-	OperandSizes loadDwordToDwordRegB(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrDwordMode, Breg, insertDisp(dword)); return loadDwordShortcutSize; }
 
-	OperandSizes loadByteToDwordRegC(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrByteMode, Creg, insertDisp(dword)); movzx(memoryBlock, movzxByteToDwordMode, Creg, Creg); return loadByteShortcutSize; }
-	OperandSizes loadWordToDwordRegC(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrWordMode, Creg, insertDisp(dword)); movzx(memoryBlock, movzxWordToDwordMode, Creg, Creg); return loadWordShortcutSize; }
-	OperandSizes loadDwordToDwordRegC(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrDwordMode, Creg, insertDisp(dword)); return loadDwordShortcutSize; }
 
-	OperandSizes loadByteToDwordRegD(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrByteMode, Dreg, insertDisp(dword)); movzx(memoryBlock, movzxByteToDwordMode, Dreg, Dreg); return loadByteShortcutSize; }
-	OperandSizes loadWordToDwordRegD(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrWordMode, Dreg, insertDisp(dword)); movzx(memoryBlock, movzxWordToDwordMode, Dreg, Dreg); return loadWordShortcutSize; }
-	OperandSizes loadDwordToDwordRegD(vect8* memoryBlock, uint32_t dword){ mov(memoryBlock, movFromMemaddrDwordMode, Dreg, insertDisp(dword)); return loadDwordShortcutSize; }
+
+#define loadMemToDwordReg_dontcount(memoryBlock, addr, Xreg, Size) {\
+	mov(memoryBlock, GLUE(movFromMemaddr, Size, Mode), Xreg, insertDisp(addr)); \
+	movzx(memoryBlock, GLUE(movzx, Size, ToDwordMode), Xreg, Xreg); \
+	}\
+	\
+
+#pragma warning(disable: 4003)
+#define loadMemToDwordReg_count(memoryBlock, addr, Xreg, Size, count) {\
+	count += mov(memoryBlock, GLUE(movFromMemaddr, Size, Mode), Xreg, insertDisp(addr)); \
+	count += movzx(memoryBlock, GLUE(movzx, Size, ToDwordMode), Xreg, Xreg); \
+	}\
+	\
+
+#define loadMemToDwordReg_(memoryBlock, addr, Xreg, Size, count, FUNC, ...) FUNC
+#define loadMemToDwordReg(...) EXPAND(loadMemToDwordReg_(__VA_ARGS__, loadMemToDwordReg_count(__VA_ARGS__), loadMemToDwordReg_dontcount(__VA_ARGS__)))
 
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
 	OperandSizes loadByteArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
 		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(array)); //A for array
-		loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
+
+		loadMemToDwordReg(memoryBlock, arrayptr, Breg, Byte);
+		//loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
 		
 		add(memoryBlock, dwordAddMode, Areg, Breg); //B as target element addr
 		
@@ -679,7 +690,8 @@ public:
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
 	OperandSizes loadWordArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
 		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(array)); //A for array
-		loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
+		loadMemToDwordReg(memoryBlock, arrayptr, Breg, Byte);
+		//loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
 
 		lea(memoryBlock, leaWithoutDispMode, Breg, x2, Breg, Areg);
 
@@ -690,7 +702,8 @@ public:
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
 	OperandSizes loadDwordArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
 		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(array)); //A for array
-		loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
+		loadMemToDwordReg(memoryBlock, arrayptr, Breg, Byte);
+		//loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
 
 		lea(memoryBlock, leaWithoutDispMode, Breg, x4, Breg, Areg);
 
@@ -700,7 +713,8 @@ public:
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
 	OperandSizes storeByteArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
 		mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(array)); //B for array
-		loadByteToDwordRegC(memoryBlock, arrayptr);	//C for arrayptr
+		loadMemToDwordReg(memoryBlock, arrayptr, Creg, Byte);
+		//loadByteToDwordRegC(memoryBlock, arrayptr);	//C for arrayptr
 
 		add(memoryBlock, dwordAddMode, Breg, Creg); //C as target element addr
 
@@ -710,7 +724,8 @@ public:
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
 	OperandSizes storeWordArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
 		mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(array)); //B for array
-		loadByteToDwordRegC(memoryBlock, arrayptr);	//C for arrayptr
+		loadMemToDwordReg(memoryBlock, arrayptr, Creg, Byte);
+		//loadByteToDwordRegC(memoryBlock, arrayptr);	//C for arrayptr
 
 
 		lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Breg);
@@ -721,7 +736,8 @@ public:
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
 	OperandSizes storeDwordArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
 		mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(array)); //B for array
-		loadByteToDwordRegC(memoryBlock, arrayptr); //C for arrayptr
+		loadMemToDwordReg(memoryBlock, arrayptr, Creg, Byte);
+		//loadByteToDwordRegC(memoryBlock, arrayptr); //C for arrayptr
 
 		lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Breg);
 
@@ -731,21 +747,24 @@ public:
 
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
 	OperandSizes addByteToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		loadByteToDwordRegA(memoryBlock, memvar);
+		loadMemToDwordReg(memoryBlock, memvar, Areg, Byte);
+		//loadByteToDwordRegA(memoryBlock, memvar);
 		add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);
 		mov(memoryBlock, movToMemaddrByteMode, Areg, insertDisp(memvar));
 		return addByteToMemaddrSize;
 	}
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
 	OperandSizes addWordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		loadWordToDwordRegA(memoryBlock, memvar);
+		loadMemToDwordReg(memoryBlock, memvar, Areg, Byte);
+		//loadWordToDwordRegA(memoryBlock, memvar);
 		add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);
 		mov(memoryBlock, movToMemaddrWordMode, Areg, insertDisp(memvar));
 		return addWordToMemaddrSize;
 	}
 	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
 	OperandSizes addDwordToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval){
-		loadDwordToDwordRegA(memoryBlock, memvar);
+		loadMemToDwordReg(memoryBlock, memvar, Areg, Byte);
+		//loadDwordToDwordRegA(memoryBlock, memvar);
 		add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);
 		mov(memoryBlock, movToMemaddrDwordMode, Areg, insertDisp(memvar));
 		return addDwordToMemaddrSize;
