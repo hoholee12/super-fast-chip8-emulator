@@ -686,8 +686,10 @@ public:
 	}\
 	\
 
-	//easy shortcut to load to register and expand
+	
 #define loadMemToDwordReg_(memoryBlock, addr, Xreg, Size, count, FUNC, ...) FUNC
+	//easy shortcut to load to register and expand
+	//params -> memoryBlock, addr, Xreg(A/B/C/Dreg), Size(Byte/Word/Dword), count(optional for jmp size)
 #define loadMemToDwordReg(...) EXPAND(loadMemToDwordReg_(__VA_ARGS__, loadMemToDwordReg_count(__VA_ARGS__), loadMemToDwordReg_dontcount(__VA_ARGS__)))
 
 	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
@@ -776,8 +778,9 @@ public:
 	count += mov(memoryBlock, GLUE(movToMemaddr, Size, Mode), Areg, insertDisp(memvar));\
 	}\
 
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
 #define addToMemaddr_(memoryBlock, memvar, immval, Size, count, FUNC, ...) FUNC
+	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
+	//params -> memoryBlock, memvar, immval, Size(Byte/Word/Dword), count(optional for jmp size)
 #define addToMemaddr(...) EXPAND(addToMemaddr_(__VA_ARGS__, addToMemaddr_count(__VA_ARGS__), addToMemaddr_dontcount(__VA_ARGS__)))
 
 
@@ -792,8 +795,10 @@ public:
 	count += mov(memoryBlock, GLUE(movToMemaddr, Size, Mode), Areg, insertDisp(memvar));\
 		}\
 
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
+	
 #define setToMemaddr_(memoryBlock, memvar, immval, Size, count, FUNC, ...) FUNC
+	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
+	//params -> memoryBlock, memvar, immval, Size(Byte/Word/Dword), count(optional for jmp size)
 #define setToMemaddr(...) EXPAND(setToMemaddr_(__VA_ARGS__, setToMemaddr_count(__VA_ARGS__), setToMemaddr_dontcount(__VA_ARGS__)))
 
 
