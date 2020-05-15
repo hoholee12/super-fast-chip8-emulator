@@ -294,6 +294,11 @@ public:
 		byteAddImmToMemaddrSize = 7,
 		wordAddImmToMemaddrSize = 9,
 		dwordAddImmToMemaddrSize = 10,
+
+		byteAddImmToRegaddrSize = 3,
+		wordAddImmToRegaddrSize = 5,
+		dwordAddImmToRegaddrSize = 6,
+
 		dwordSubSize = 2,
 		dwordAndSize = 2,
 		dwordOrSize = 2,
@@ -360,6 +365,11 @@ public:
 		byteAddImmToMemaddrMode,
 		wordAddImmToMemaddrMode,
 		dwordAddImmToMemaddrMode,
+
+		byteAddImmToRegaddrMode,
+		wordAddImmToRegaddrMode,
+		dwordAddImmToRegaddrMode,
+
 		dwordSubMode,
 		dwordAndMode,
 		dwordOrMode,
@@ -481,8 +491,16 @@ public:
 		case dwordAddImmToRegMode: init(memoryBlock, dwordAddImmToRegSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, Areg, dest); addDword(addr.dword); return dwordAddImmToRegSize;
 	
 		case byteAddImmToMemaddrMode: init(memoryBlock, byteAddImmToMemaddrSize); addOpcode(opcode, srcToDest, byteOnly); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addByte(disp.byte); return byteAddImmToMemaddrSize;
-		case wordAddImmToMemaddrMode: init(memoryBlock, wordAddImmToMemaddrSize); addPrefix(); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addWord(disp.word); return wordAddImmToMemaddrSize;
-		case dwordAddImmToMemaddrMode: init(memoryBlock, dwordAddImmToMemaddrSize); addOpcode(opcode, destToSrc, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addDword(disp.dword); return dwordAddImmToMemaddrSize;
+		case wordAddImmToMemaddrMode: init(memoryBlock, wordAddImmToMemaddrSize); addPrefix(); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addWord(disp.word); return wordAddImmToMemaddrSize;
+		case dwordAddImmToMemaddrMode: init(memoryBlock, dwordAddImmToMemaddrSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, Areg, memaddr); addDword(addr.dword); addDword(disp.dword); return dwordAddImmToMemaddrSize;
+		
+			//100000 0 0 00 000 010
+			//add    d s md arg drg
+		case byteAddImmToRegaddrMode: init(memoryBlock, byteAddImmToRegaddrSize); addOpcode(opcode, srcToDest, byteOnly); addModrm(forDisp, Areg, dest); addByte(addr.byte); return byteAddImmToRegaddrSize;
+		case wordAddImmToRegaddrMode: init(memoryBlock, wordAddImmToRegaddrSize); addPrefix(); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, Areg, dest); addWord(addr.word); return wordAddImmToRegaddrSize;
+		case dwordAddImmToRegaddrMode: init(memoryBlock, dwordAddImmToRegaddrSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, Areg, dest); addDword(addr.dword); return dwordAddImmToRegaddrSize;
+
+		
 		default: opmodeError("add_imm");
 		}
 		return none;
@@ -789,8 +807,10 @@ public:
 
 
 
-
+#define regNum 12
 	using string = std::string;
+
+	string* regNames;
 	string convertLowercase(string* str){
 		string result;
 		
@@ -815,8 +835,8 @@ public:
 	bool isPtr(string* str){ if ((str->find("ptr") != string::npos) || (str->find("[") != string::npos)) return true; else return false; }
 	bool isImm(string* str){
 		if (str->find("extra") != string::npos) return true;
-		string regNames[12] = { "al", "bl", "cl", "dl", "ax", "bx", "cx", "dx", "eax", "ebx", "ecx", "edx" };
-		for (int i = 11; i > -1; i--){
+		
+		for (int i = regNum - 1; i > -1; i--){
 			if (str->find(regNames[i]) != string::npos) return false;
 		}
 		return true;
@@ -832,16 +852,28 @@ public:
 	}
 
 	void insertSrc(ParserType* parserType, string* src_str){
-		if (src_str->find("a") != string::npos) parserType->modrm.src = Areg;
-		else if (src_str->find("b") != string::npos) parserType->modrm.src = Breg;
-		else if (src_str->find("c") != string::npos) parserType->modrm.src = Creg;
-		else if (src_str->find("d") != string::npos) parserType->modrm.src = Dreg;
+		int check = -1;
+		for (int i = 0; i < regNum; i++){ if (src_str->find(regNames[i]) != string::npos) check = i; }
+		if (check == -1) return;
+		switch (check % 4){
+		case 0: parserType->modrm.src = Areg; return;
+		case 1: parserType->modrm.src = Breg; return;
+		case 2: parserType->modrm.src = Creg; return;
+		case 3: parserType->modrm.src = Dreg; return;
+		
+		}
 	}
 	void insertDest(ParserType* parserType, string* dest_str){
-		if (dest_str->find("a") != string::npos) parserType->modrm.dest = Areg;
-		else if (dest_str->find("b") != string::npos) parserType->modrm.dest = Breg;
-		else if (dest_str->find("c") != string::npos) parserType->modrm.dest = Creg;
-		else if (dest_str->find("d") != string::npos) parserType->modrm.dest = Dreg;
+		int check = -1;
+		for (int i = 0; i < regNum; i++){ if (dest_str->find(regNames[i]) != string::npos) check = i; }
+		if (check == -1) return;
+		switch (check % 4){
+		case 0: parserType->modrm.dest = Areg; return;
+		case 1: parserType->modrm.dest = Breg; return;
+		case 2: parserType->modrm.dest = Creg; return;
+		case 3: parserType->modrm.dest = Dreg; return;
+
+		}
 	}
 	void insertImm(Disp* disp, string* imm_str){
 		//hex
@@ -920,6 +952,13 @@ public:
 					else if (isDword(dest_str)) parserType->opmode = dwordAddImmToMemaddrMode;
 				}
 			
+			}
+			else if (autoInsertExtra(&parserType->disp, src_str, extra) && isReg(dest_str)){
+				insertDest(parserType, dest_str);
+				if (isByte(dest_str)) parserType->opmode = byteAddImmToRegaddrMode;
+				else if (isWord(dest_str)) parserType->opmode = wordAddImmToRegaddrMode;
+				else if (isDword(dest_str)) parserType->opmode = dwordAddImmToRegaddrMode;
+
 			}
 			else if (isReg(src_str) && !isPtr(src_str) && isReg(dest_str) && !isPtr(dest_str)){
 				insertSrc(parserType, src_str); insertDest(parserType, dest_str);
@@ -1099,6 +1138,9 @@ public:
 		case byteAddImmToMemaddrMode: 
 		case wordAddImmToMemaddrMode: 
 		case dwordAddImmToMemaddrMode:  return add_imm(memoryBlock, parserType->opmode, parserType->addr, parserType->disp);
+		case byteAddImmToRegaddrMode:
+		case wordAddImmToRegaddrMode:
+		case dwordAddImmToRegaddrMode:	return add_imm(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
 		case dwordSubMode: return sub(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case dwordAndMode: return and(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case dwordOrMode: return or(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
@@ -1157,6 +1199,8 @@ public:
 		op_str = input.substr(0, input.find(" "));
 		op_str = trim(op_str);
 		if (src_str.find(op_str) != string::npos) src_str.clear();	//hax
+
+		regNames = new string[regNum] { "al", "bl", "cl", "dl", "ax", "bx", "cx", "dx", "eax", "ebx", "ecx", "edx" };
 
 		//to op
 		parse_op(&parserType, &op_str, &src_str, &dest_str, extra);
