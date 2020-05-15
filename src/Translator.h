@@ -96,7 +96,8 @@ public:
 
 	//increment program counter by 2
 	void incrementPC(){
-		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
+		addToMemaddr(memoryBlock, programCounter, 2, Word);
+		//X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
 	}
 
 	//interpreterSwitch = true;
@@ -104,7 +105,8 @@ public:
 	//some opcodes are just too complicated to recreate in jit
 	//...or jump
 	void hintFallBack(){
-		X86Emitter::setByteToMemaddr(memoryBlock, interpreterSwitch, 0x1);
+		setToMemaddr(memoryBlock, interpreterSwitch, 0x1, Byte);
+		//X86Emitter::setByteToMemaddr(memoryBlock, interpreterSwitch, 0x1);
 	}
 	void switchToInterpreter(){
 		X86Emitter::ret(memoryBlock);
@@ -113,7 +115,8 @@ public:
 
 	//opcodes
 	void opcode00e0(){
-		X86Emitter::setDwordToMemaddr(memoryBlock, controllerOp, (uint32_t)ControllerOp::clearScreen);
+		setToMemaddr(memoryBlock, controllerOp, ControllerOp::clearScreen, Dword);
+		//X86Emitter::setDwordToMemaddr(memoryBlock, controllerOp, (uint32_t)ControllerOp::clearScreen);
 
 		incrementPC();
 		switchToInterpreter();
@@ -141,7 +144,7 @@ public:
 	void opcode0nnn(){
 		
 		//= programCounter
-		X86Emitter::loadWordToDwordRegA(memoryBlock, programCounter);
+		loadMemToDwordReg(memoryBlock, programCounter, Areg, Word);
 
 		//stack[stackpointer]
 		X86Emitter::storeWordArray_AregAsInput(memoryBlock, stack, stackPointer);
@@ -151,17 +154,19 @@ public:
 		//X86Emitter::inc_byte_memaddr(memoryBlock, stackPointer);
 
 		//NNN(is an immediate) to programCounter
-		X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);
+		setToMemaddr(memoryBlock, programCounter, nnn, Word);
+		//X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);
 
 		switchToInterpreter();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 	}
 	void opcode1nnn(){
 		//NNN to programCounter
-		X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);
+		setToMemaddr(memoryBlock, programCounter, nnn, Word);
 
 		//jmpHint = true
-		X86Emitter::setByteToMemaddr(memoryBlock, jmpHint, 1);
+		setToMemaddr(memoryBlock, jmpHint, 1, Byte);
+		//X86Emitter::setByteToMemaddr(memoryBlock, jmpHint, 1);
 
 		switchToInterpreter();
 		//programCounter = NNN; flag = 1;//jump to nnn	(dont increment pc)
@@ -169,7 +174,7 @@ public:
 	}
 	void opcode2nnn(){
 		//= programCounter
-		X86Emitter::loadWordToDwordRegA(memoryBlock, programCounter);
+		loadMemToDwordReg(memoryBlock, programCounter, Areg, Word);
 
 		//stack[stackpointer]
 		X86Emitter::storeWordArray_AregAsInput(memoryBlock, stack, stackPointer);
@@ -179,7 +184,7 @@ public:
 		//X86Emitter::inc_byte_memaddr(memoryBlock, stackPointer);
 
 		//NNN(is an immediate) to programCounter
-		X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);
+		setToMemaddr(memoryBlock, programCounter, nnn, Word);
 
 		switchToInterpreter();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
@@ -188,13 +193,13 @@ public:
 	void opcode3xnn(){
 		//vx = eax, nn = ebx
 		X86Emitter::loadByteArray_AregAsResult(memoryBlock, v, vxPointer);
-		X86Emitter::loadWordToDwordRegB(memoryBlock, nn);
+		loadMemToDwordReg(memoryBlock, nn, Breg, Word);
 
 		X86Emitter::cmp(memoryBlock, cmpMode, Areg, Breg);
 		//X86Emitter::cmp_eax_to_ebx(memoryBlock);
 		X86Emitter::jcc(memoryBlock, byteRelJneMode, insertDisp(addWordToMemaddrSize));
 		//X86Emitter::short_jne(memoryBlock, addWordToMemaddrSize);
-		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
+		addToMemaddr(memoryBlock, programCounter, 2, Word);
 
 		incrementPC();
 		//if (VX == NN) programCounter += 2; //skip if ==
@@ -202,11 +207,11 @@ public:
 	void opcode4xnn(){
 		//vx = eax, nn = ebx
 		X86Emitter::loadByteArray_AregAsResult(memoryBlock, v, vxPointer);
-		X86Emitter::loadWordToDwordRegB(memoryBlock, nn);
+		loadMemToDwordReg(memoryBlock, nn, Breg, Word);
 
 		X86Emitter::cmp(memoryBlock, cmpMode, Areg, Breg);
 		X86Emitter::jcc(memoryBlock, byteRelJeMode, insertDisp(addWordToMemaddrSize));
-		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
+		addToMemaddr(memoryBlock, programCounter, 2, Word);
 
 		incrementPC();
 		//if (VX != NN) programCounter += 2; //skip if !=
@@ -220,14 +225,14 @@ public:
 
 		X86Emitter::cmp(memoryBlock, cmpMode, Areg, Breg);
 		X86Emitter::jcc(memoryBlock, byteRelJneMode, insertDisp(addWordToMemaddrSize));
-		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
+		addToMemaddr(memoryBlock, programCounter, 2, Word);
 
 		incrementPC();
 		//if (VX == VY) programCounter += 2; //skip if vx == vy
 	}
 	void opcode6xnn(){
 
-		X86Emitter::loadWordToDwordRegA(memoryBlock, nn);
+		loadMemToDwordReg(memoryBlock, nn, Areg, Word);
 		X86Emitter::storeByteArray_AregAsInput(memoryBlock, v, vxPointer);
 
 		incrementPC();
@@ -236,7 +241,7 @@ public:
 	void opcode7xnn(){
 
 		X86Emitter::loadByteArray_AregAsResult(memoryBlock, v, vxPointer);
-		X86Emitter::loadWordToDwordRegB(memoryBlock, nn);
+		loadMemToDwordReg(memoryBlock, nn, Breg, Word);
 		X86Emitter::add(memoryBlock, dwordAddMode, Breg, Areg);
 		//X86Emitter::add_ebx_to_eax(memoryBlock);
 
@@ -430,7 +435,7 @@ public:
 		X86Emitter::cmp(memoryBlock, cmpMode, Areg, Dreg);
 		X86Emitter::jcc(memoryBlock, byteRelJeMode, insertDisp(addWordToMemaddrSize));
 		
-		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
+		addToMemaddr(memoryBlock, programCounter, 2, Word);
 
 
 		incrementPC();
@@ -438,14 +443,14 @@ public:
 	}
 	void opcodeannn(){
 
-		X86Emitter::setWordToMemaddr(memoryBlock, indexRegister, nnn);
+		setToMemaddr(memoryBlock, indexRegister, nnn, Word);
 
 		incrementPC();
 		//indexRegister = NNN;
 	}
 	void opcodebnnn(){
-		X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);
-		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, stack);
+		setToMemaddr(memoryBlock, programCounter, nnn, Word);
+		addToMemaddr(memoryBlock, programCounter, stack, Word);
 
 		//programCounter = NNN + v[0]; flag = 1; //(dont increment pc)
 	}
@@ -456,7 +461,7 @@ public:
 		//VX = (rand() % 0x100) & NN;	//random
 	}
 	void opcodedxyn(){
-		X86Emitter::setDwordToMemaddr(memoryBlock, controllerOp, (uint32_t)ControllerOp::drawVideo);
+		setToMemaddr(memoryBlock, controllerOp, ControllerOp::drawVideo, Dword);
 
 		incrementPC();
 		switchToInterpreter();
@@ -467,7 +472,7 @@ public:
 		X86Emitter::loadWordArray_AregAsResult(memoryBlock, stack, stackPointer);
 		X86Emitter::cmp(memoryBlock, cmpMode, Areg, Breg);
 		X86Emitter::jcc(memoryBlock, byteRelJneMode, insertDisp(addWordToMemaddrSize));
-		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
+		addToMemaddr(memoryBlock, programCounter, 2, Word);
 
 		incrementPC();
 		//if (*pressedKey == VX) programCounter += 2;
@@ -477,7 +482,7 @@ public:
 		X86Emitter::loadWordArray_AregAsResult(memoryBlock, stack, stackPointer);
 		X86Emitter::cmp(memoryBlock, cmpMode, Areg, Breg);
 		X86Emitter::jcc(memoryBlock, byteRelJeMode, insertDisp(addWordToMemaddrSize));
-		X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
+		addToMemaddr(memoryBlock, programCounter, 2, Word);
 
 		incrementPC();
 		//if (*pressedKey != VX) programCounter += 2;
@@ -503,7 +508,7 @@ public:
 		//*delayRegister = VX;
 	}
 	void opcodefx18(){
-		X86Emitter::setDwordToMemaddr(memoryBlock, controllerOp, (uint32_t)ControllerOp::setSoundTimer);
+		setToMemaddr(memoryBlock, controllerOp, ControllerOp::setSoundTimer, Dword);
 
 		incrementPC();
 		switchToInterpreter();
