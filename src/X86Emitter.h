@@ -131,15 +131,11 @@
 
 #include<iostream>
 #include<vector>
-#include<stdint.h>
+#include<cstdint>
 #include<string>
+#include<cstring>
 
-//msvc sucks
-#pragma warning(disable: 4003; disable: 4002; disable: 4018)
-#define EXPAND(x) x
-#define GLUE(x, y, z) x##y##z
-
-
+#pragma warning(disable: 4018)
 using vect8 = std::vector<uint8_t>; //tryinig really hard to shorten code here;-;
 
 class X86Emitter{
@@ -148,7 +144,7 @@ private:
 	vect8* memoryBlock;
 	
 	//host endianness sensitive
-	typedef union{
+	using ByteRegs = union{
 		struct{
 			uint8_t byte0;
 			uint8_t byte1;
@@ -158,7 +154,7 @@ private:
 		uint8_t byte;
 		uint16_t word;
 		uint32_t dword;
-	} ByteRegs;
+	};
 	ByteRegs byteRegs;
 
 	void addByte(uint8_t byte){
@@ -208,12 +204,13 @@ public:
 	};
 
 	//displacement
-	using Disp = struct{
+	using Disp = struct _Disp{
 		union{
 			uint8_t byte;
 			uint16_t word;
 			uint32_t dword = 0;
 		};
+		_Disp(){ this->dword = 0; }	//give this a constructor for '= Disp()'
 
 		void operator=(uint32_t dword){ this->dword = dword; }
 		void operator=(uint16_t word){ this->word = word; }
@@ -226,7 +223,7 @@ public:
 
 
 	//sib
-	enum Scale{ x1 = 0x0, x2 = 0x1, x4 = 0x2, x8 = 0x3 };
+	using Scale = enum{ x1 = 0x0, x2 = 0x1, x4 = 0x2, x8 = 0x3 };
 	using Index = X86Regs;
 	using Base = X86Regs;
 	using Sib = struct{
@@ -268,7 +265,7 @@ public:
 	}
 
 	//use this template for jmp instructions
-	enum OperandSizes{
+	using OperandSizes = enum{
 		none = 0,
 		movzxByteToDwordSize = 3,
 		movzxWordToDwordSize = 3,
@@ -339,7 +336,7 @@ public:
 		setDwordToMemaddrSize = dwordMovImmToAregSize + movToMemaddrDwordSize,
 	};
 
-	enum OperandModes{
+	using OperandModes = enum{
 		noop,
 		movzxByteToDwordMode,
 		movzxWordToDwordMode,
@@ -410,10 +407,10 @@ public:
 		setDwordToMemaddrMode,
 	};
 
-	OperandSizes opmodeError(const char* str, std::string str2 = std::string()){ fprintf(stderr, str); fprintf(stderr, ": incompatible opmode! -> "); fprintf(stderr, str2.c_str()); exit(1); return none; }
+	OperandSizes opmodeError(const char* str, std::string str2 = std::string()){ fprintf(stderr, "%s", str); fprintf(stderr, ": incompatible opmode! -> "); fprintf(stderr, "%s", str2.c_str()); exit(1); return none; }
 
 	//no need for the opposite(use only for zeroing out high area)
-	OperandSizes movzx(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Movzx(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
 		uint8_t opcode = 0xB4; //10110100
 		switch (opmode){
 		case movzxByteToDwordMode: init(memoryBlock, movzxByteToDwordSize); addExtension(); addOpcode(opcode, destToSrc, byteOnly); addModrm(forReg, dest, src); return movzxByteToDwordSize;
@@ -424,14 +421,14 @@ public:
 		return none;
 	}
 	//ex) convert byte to dword
-	//movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg);
+	//Movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg);
 	
 	//ex) convert word to dword
-	//movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg);
+	//Movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg);
 	
 
 	//memoryaddr must always be dword!
-	OperandSizes mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest = memaddr, Disp disp = Disp()){
+	OperandSizes Mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest = memaddr, Disp disp = Disp()){
 		uint8_t opcode = 0x88; //10001000
 		switch (opmode){
 		case movToMemaddrByteMode: init(memoryBlock, movToMemaddrByteSize); addOpcode(opcode, srcToDest, byteOnly); addModrm(forDisp, src, memaddr); addDword(disp.dword); return movToMemaddrByteSize;
@@ -454,12 +451,12 @@ public:
 		return none;
 	}
 	//override
-	OperandSizes mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, Disp disp = Disp()){ return mov(memoryBlock, opmode, src, Areg, disp); }
+	OperandSizes Mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, Disp disp = Disp()){ return Mov(memoryBlock, opmode, src, Areg, disp); }
 
 
 
 	//kinda different - use Direction and Bitsize to point reg
-	OperandSizes mov_imm(vect8* memoryBlock, OperandModes opmode, Disp disp){
+	OperandSizes Mov_imm(vect8* memoryBlock, OperandModes opmode, Disp disp){
 		uint8_t opcode = 0xB8;
 		switch (opmode){
 		case dwordMovImmToAregMode: init(memoryBlock, dwordMovImmToAregSize); addOpcode(opcode, srcToDest, byteOnly); addDword(disp.dword); return dwordMovImmToAregSize;
@@ -474,7 +471,7 @@ public:
 	}
 
 	//dword add
-	OperandSizes add(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Add(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
 		uint8_t opcode = 0x00;
 		switch (opmode){
 		case dwordAddMode: init(memoryBlock, dwordAddSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordAddSize;
@@ -485,7 +482,7 @@ public:
 	}
 
 	//dword imm add
-	OperandSizes add_imm(vect8* memoryBlock, OperandModes opmode, Disp addr, Disp disp = Disp(), X86Regs dest = memaddr){
+	OperandSizes Add_imm(vect8* memoryBlock, OperandModes opmode, Disp addr, Disp disp = Disp(), X86Regs dest = memaddr){
 		uint8_t opcode = 0x80;
 		switch (opmode){
 		case dwordAddImmToRegMode: init(memoryBlock, dwordAddImmToRegSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, Areg, dest); addDword(addr.dword); return dwordAddImmToRegSize;
@@ -506,7 +503,7 @@ public:
 		return none;
 	}
 	//override
-	OperandSizes add_imm(vect8* memoryBlock, OperandModes opmode, Disp disp, X86Regs dest = memaddr){ return add_imm(memoryBlock, opmode, disp, insertDisp(0x0), dest); }
+	OperandSizes Add_imm(vect8* memoryBlock, OperandModes opmode, Disp disp, X86Regs dest = memaddr){ return Add_imm(memoryBlock, opmode, disp, insertDisp(0x0), dest); }
 
 	//add imm dword (AB <-> CD)
 	//100000 0 1 11 000(?) 000 disp32
@@ -523,7 +520,7 @@ public:
 	
 	
 	//sub
-	OperandSizes sub(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Sub(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
 		uint8_t opcode = 0x28;	//001010
 		switch (opmode){
 		case dwordSubMode: init(memoryBlock, dwordSubSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordSubSize;
@@ -537,7 +534,7 @@ public:
 
 
 	//dword and
-	OperandSizes and(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes And(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
 		uint8_t opcode = 0x20; //001000
 		switch (opmode){
 		case dwordAndMode: init(memoryBlock, dwordAndSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordAndSize;
@@ -548,7 +545,7 @@ public:
 	}
 
 	//dword or
-	OperandSizes or(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Or(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
 		uint8_t opcode = 0x08; //000010
 		switch (opmode){
 		case dwordOrMode: init(memoryBlock, dwordOrSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordOrSize;
@@ -559,7 +556,7 @@ public:
 	}
 
 	//dword xor
-	OperandSizes xor(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Xor(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
 		uint8_t opcode = 0x30; //001100
 		switch (opmode){
 		case dwordXorMode: init(memoryBlock, dwordXorSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordXorSize;
@@ -571,7 +568,7 @@ public:
 
 	//bitwise shl by immediate dword
 
-	OperandSizes shift(vect8* memoryBlock, OperandModes opmode, Disp disp, X86Regs dest){
+	OperandSizes Shift(vect8* memoryBlock, OperandModes opmode, Disp disp, X86Regs dest){
 		uint8_t opcode = 0xC0;	//110000
 		switch (opmode){
 		case dwordShiftLeftMode: init(memoryBlock, dwordShiftLeftSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, illegal, dest); addByte(disp.byte); return dwordShiftLeftSize;
@@ -583,7 +580,7 @@ public:
 	}
 
 	//cmp
-	OperandSizes cmp(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Cmp(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
 		uint8_t opcode = 0x38; //001110
 		switch (opmode){
 		case cmpMode: init(memoryBlock, cmpSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, dest, src); return cmpSize;
@@ -594,7 +591,7 @@ public:
 
 
 	//jmp	jump
-	OperandSizes jmp(vect8* memoryBlock, OperandModes opmode, Disp disp){
+	OperandSizes Jmp(vect8* memoryBlock, OperandModes opmode, Disp disp){
 		uint8_t opcode = 0xE8; //111010
 		switch (opmode){
 		case byteRelJmpMode: init(memoryBlock, byteRelJmpSize); addOpcode(opcode, destToSrc, wordAndDword); addByte(disp.byte); return byteRelJmpSize;
@@ -606,7 +603,7 @@ public:
 	}
 	//je	jump equals
 	//011101 0 0 11 001 011
-	OperandSizes jcc(vect8* memoryBlock, OperandModes opmode, Disp disp){
+	OperandSizes Jcc(vect8* memoryBlock, OperandModes opmode, Disp disp){
 		uint8_t opcode = 0x74;
 		switch (opmode){
 		case byteRelJeMode: init(memoryBlock, byteRelJeSize); addOpcode(opcode, srcToDest, byteOnly); addByte(disp.byte); return byteRelJeSize;
@@ -623,7 +620,7 @@ public:
 	//jb	jump less unsigned
 	//jbe	jump less equals unsigned
 	//jcc2
-	OperandSizes jcc2(vect8* memoryBlock, OperandModes opmode, Disp disp){
+	OperandSizes Jcc2(vect8* memoryBlock, OperandModes opmode, Disp disp){
 		uint8_t opcode = 0x70;
 		switch (opmode){
 		case byteRelJbMode: init(memoryBlock, byteRelJbSize); addOpcode(opcode, destToSrc, byteOnly); addByte(disp.byte); return byteRelJbSize;
@@ -640,15 +637,15 @@ public:
 	
 
 	//return from eax
-	OperandSizes ret(vect8* memoryBlock){ init(memoryBlock, retSize); addByte(0xC3); return retSize; }
+	OperandSizes Ret(vect8* memoryBlock){ init(memoryBlock, retSize); addByte(0xC3); return retSize; }
 
 	//nop
-	OperandSizes nop(vect8* memoryBlock){ init(memoryBlock, nopSize); addByte(0x90); return nopSize; }
+	OperandSizes Nop(vect8* memoryBlock){ init(memoryBlock, nopSize); addByte(0x90); return nopSize; }
 
 	//load effective address - lea <- shift + add
 	//bse -> memaddr: some dword immediate(disp32) you can add along with main(multiplcation)
 	//bse -> not memaddr: some reg(any reg) you can add along with main(multiplcation)
-	OperandSizes lea(vect8* memoryBlock, OperandModes opmode, X86Regs src, Scale scale, X86Regs idx, X86Regs bse, Disp disp = Disp()){
+	OperandSizes Lea(vect8* memoryBlock, OperandModes opmode, X86Regs src, Scale scale, X86Regs idx, X86Regs bse, Disp disp = Disp()){
 		uint8_t opcode = 0x8C;					//100011 0 1 00 011 100 01 000 001
 												//lea    d s md src dst sc idx bse
 												//              Brg ill x2 Arg Crg	->	lea ebx, [eax*2 + ecx]
@@ -673,133 +670,64 @@ public:
 
 		*/
 	//easy shortcut to load to register and expand
+	using ExpandSizes = enum{ Byte, Word, Dword };
 
-#define loadMemToDwordReg_dontcount(memoryBlock, addr, Xreg, Size) {\
-	mov(memoryBlock, GLUE(movFromMemaddr, Size, Mode), Xreg, insertDisp(addr)); \
-	movzx(memoryBlock, GLUE(movzx, Size, ToDwordMode), Xreg, Xreg); \
-	}\
-	\
+	OperandSizes loadMemToDwordReg(vect8* memoryBlock, uint32_t addr, X86Regs Xreg, ExpandSizes Size){
+		switch (Size){
+		case Byte: Mov(memoryBlock, movFromMemaddrByteMode, Xreg, insertDisp(addr)); Movzx(memoryBlock, movzxByteToDwordMode, Xreg, Xreg); return loadByteShortcutSize;
+		case Word: Mov(memoryBlock, movFromMemaddrWordMode, Xreg, insertDisp(addr)); Movzx(memoryBlock, movzxWordToDwordMode, Xreg, Xreg); return loadWordShortcutSize;
+		case Dword: Mov(memoryBlock, movFromMemaddrDwordMode, Xreg, insertDisp(addr)); return loadDwordShortcutSize;
+		}
+		return none;
+	}
 
-#define loadMemToDwordReg_count(memoryBlock, addr, Xreg, Size, count) {\
-	count += mov(memoryBlock, GLUE(movFromMemaddr, Size, Mode), Xreg, insertDisp(addr)); \
-	count += movzx(memoryBlock, GLUE(movzx, Size, ToDwordMode), Xreg, Xreg); \
-	}\
-	\
+	OperandSizes loadArray_AregAsResult(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size){
+		Mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(arr));
+		loadMemToDwordReg(memoryBlock, arrptr, Breg, Byte);
+		switch (Size){
+		case Byte: Add(memoryBlock, dwordAddMode, Areg, Breg); Mov(memoryBlock, movByteMemToRegMode, Breg, Areg); Movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg); return loadByteArraySize;
+		case Word: Lea(memoryBlock, leaWithoutDispMode, Breg, x2, Breg, Areg); Mov(memoryBlock, movWordMemToRegMode, Breg, Areg); Movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg); return loadWordArraySize;
+		case Dword: Lea(memoryBlock, leaWithoutDispMode, Breg, x4, Breg, Areg); Mov(memoryBlock, movDwordMemToRegMode, Breg, Areg); return loadDwordArraySize;
+		}
+		return none;
+	}
 
-	
-#define loadMemToDwordReg_(memoryBlock, addr, Xreg, Size, count, FUNC, ...) FUNC
-	//easy shortcut to load to register and expand
-	//params -> memoryBlock, addr, Xreg(A/B/C/Dreg), Size(Byte/Word/Dword), count(optional for jmp size)
-#define loadMemToDwordReg(...) EXPAND(loadMemToDwordReg_(__VA_ARGS__, loadMemToDwordReg_count(__VA_ARGS__), loadMemToDwordReg_dontcount(__VA_ARGS__)))
+	OperandSizes storeArray_AregAsInput(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size){
+		Mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(arr));
+		loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
+		switch (Size){
+		case Byte: Add(memoryBlock, dwordAddMode, Breg, Creg); Mov(memoryBlock, movByteRegToMemMode, Areg, Creg); return storeByteArraySize;
+		case Word: Lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Breg); Mov(memoryBlock, movWordRegToMemMode, Areg, Creg); return storeWordArraySize;
+		case Dword: Lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Breg); Mov(memoryBlock, movDwordRegToMemMode, Areg, Creg); return storeDwordArraySize;
+		}
+		return none;
+	}
 
-	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	OperandSizes loadByteArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(array)); //A for array
-
-		loadMemToDwordReg(memoryBlock, arrayptr, Breg, Byte);
-		//loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
+	uint32_t addToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval, ExpandSizes Size){
+		switch (Size){
+		case Byte: loadMemToDwordReg(memoryBlock, memvar, Areg, Byte); break;
+		case Word: loadMemToDwordReg(memoryBlock, memvar, Areg, Word); break;
+		case Dword: loadMemToDwordReg(memoryBlock, memvar, Areg, Dword); break;
+		}
 		
-		add(memoryBlock, dwordAddMode, Areg, Breg); //B as target element addr
-		
-		mov(memoryBlock, movByteMemToRegMode, Breg, Areg);  //to Areg
-		movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg);	//expand
-		return loadByteArraySize;
-	}
-	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	OperandSizes loadWordArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(array)); //A for array
-		loadMemToDwordReg(memoryBlock, arrayptr, Breg, Byte);
-		//loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
-
-		lea(memoryBlock, leaWithoutDispMode, Breg, x2, Breg, Areg);
-
-		mov(memoryBlock, movByteMemToRegMode, Breg, Areg);  //to Areg
-		movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg);	//expand
-		return loadWordArraySize;
-	}
-	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	OperandSizes loadDwordArray_AregAsResult(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(array)); //A for array
-		loadMemToDwordReg(memoryBlock, arrayptr, Breg, Byte);
-		//loadByteToDwordRegB(memoryBlock, arrayptr);	//B for arrayptr
-
-		lea(memoryBlock, leaWithoutDispMode, Breg, x4, Breg, Areg);
-
-		mov(memoryBlock, movByteMemToRegMode, Breg, Areg);  //to Areg
-		return loadDwordArraySize;
-	}
-	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	OperandSizes storeByteArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(array)); //B for array
-		loadMemToDwordReg(memoryBlock, arrayptr, Creg, Byte);
-		//loadByteToDwordRegC(memoryBlock, arrayptr);	//C for arrayptr
-
-		add(memoryBlock, dwordAddMode, Breg, Creg); //C as target element addr
-
-		mov(memoryBlock, movByteRegToMemMode, Areg, Creg); //input to array
-		return storeByteArraySize;
-	}
-	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	OperandSizes storeWordArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(array)); //B for array
-		loadMemToDwordReg(memoryBlock, arrayptr, Creg, Byte);
-		//loadByteToDwordRegC(memoryBlock, arrayptr);	//C for arrayptr
-
-
-		lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Breg);
-
-		mov(memoryBlock, movWordRegToMemMode, Areg, Creg); //input to array
-		return storeWordArraySize;
-	}
-	//preferred way to load/store array elements to register, ABC regs will get occupied, backup shit before using.
-	OperandSizes storeDwordArray_AregAsInput(vect8* memoryBlock, uint32_t array, uint32_t arrayptr){
-		mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(array)); //B for array
-		loadMemToDwordReg(memoryBlock, arrayptr, Creg, Byte);
-		//loadByteToDwordRegC(memoryBlock, arrayptr); //C for arrayptr
-
-		lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Breg);
-
-		mov(memoryBlock, movDwordRegToMemMode, Areg, Creg); //input to array
-		return storeDwordArraySize;
+		Add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);
+		switch (Size){
+		case Byte: Mov(memoryBlock, movToMemaddrByteMode, Areg, insertDisp(memvar)); return addByteToMemaddrSize;
+		case Word: Mov(memoryBlock, movToMemaddrWordMode, Areg, insertDisp(memvar)); return addWordToMemaddrSize;
+		case Dword: Mov(memoryBlock, movToMemaddrDwordMode, Areg, insertDisp(memvar)); return addDwordToMemaddrSize;
+		}
+		return none;
 	}
 
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-
-
-#define addToMemaddr_dontcount(memoryBlock, memvar, immval, Size){\
-	loadMemToDwordReg(memoryBlock, memvar, Areg, Byte);\
-	add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);\
-	mov(memoryBlock, GLUE(movToMemaddr, Size, Mode), Areg, insertDisp(memvar));\
-	}\
-
-#define addToMemaddr_count(memoryBlock, memvar, immval, Size, count){\
-	loadMemToDwordReg(memoryBlock, memvar, Areg, Byte, count);\
-	count += add_imm(memoryBlock, dwordAddImmToRegMode, insertDisp(immval), Areg);\
-	count += mov(memoryBlock, GLUE(movToMemaddr, Size, Mode), Areg, insertDisp(memvar));\
-	}\
-
-#define addToMemaddr_(memoryBlock, memvar, immval, Size, count, FUNC, ...) FUNC
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	//params -> memoryBlock, memvar, immval, Size(Byte/Word/Dword), count(optional for jmp size)
-#define addToMemaddr(...) EXPAND(addToMemaddr_(__VA_ARGS__, addToMemaddr_count(__VA_ARGS__), addToMemaddr_dontcount(__VA_ARGS__)))
-
-
-	//set mem
-#define setToMemaddr_dontcount(memoryBlock, memvar, immval, Size){\
-	mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));\
-	mov(memoryBlock, GLUE(movToMemaddr, Size, Mode), Areg, insertDisp(memvar));\
-		}\
-
-#define setToMemaddr_count(memoryBlock, memvar, immval, Size, count){\
-	count += mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));\
-	count += mov(memoryBlock, GLUE(movToMemaddr, Size, Mode), Areg, insertDisp(memvar));\
-		}\
-
-	
-#define setToMemaddr_(memoryBlock, memvar, immval, Size, count, FUNC, ...) FUNC
-	//shortcut to change one piece of memory variable without mumbojumbo, Areg is used.
-	//params -> memoryBlock, memvar, immval, Size(Byte/Word/Dword), count(optional for jmp size)
-#define setToMemaddr(...) EXPAND(setToMemaddr_(__VA_ARGS__, setToMemaddr_count(__VA_ARGS__), setToMemaddr_dontcount(__VA_ARGS__)))
+	OperandSizes setToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval, ExpandSizes Size){
+		Mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));
+		switch (Size){
+		case Byte: Mov(memoryBlock, movToMemaddrByteMode, Areg, insertDisp(memvar)); return setByteToMemaddrSize;
+		case Word: Mov(memoryBlock, movToMemaddrWordMode, Areg, insertDisp(memvar)); return setWordToMemaddrSize;
+		case Dword: Mov(memoryBlock, movToMemaddrDwordMode, Areg, insertDisp(memvar)); return setDwordToMemaddrSize;
+		}
+		return none;
+	}
 
 
 	/*
@@ -813,6 +741,7 @@ public:
 
 
 #define regNum 12
+#define regData { "al", "bl", "cl", "dl", "ax", "bx", "cx", "dx", "eax", "ebx", "ecx", "edx" };
 	using string = std::string;
 
 	string* regNames;
@@ -1120,56 +1049,56 @@ public:
 		//all must return OperandSizes
 		switch (parserType->opmode){
 		case movzxByteToDwordMode: 
-		case movzxWordToDwordMode: return movzx(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
+		case movzxWordToDwordMode: return Movzx(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case movToMemaddrByteMode:
 		case movToMemaddrDwordMode: 
 		case movToMemaddrWordMode: 
 		case movFromMemaddrByteMode: 
 		case movFromMemaddrDwordMode: 
-		case movFromMemaddrWordMode: return mov(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest, parserType->addr);
+		case movFromMemaddrWordMode: return Mov(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest, parserType->addr);
 		case movDwordRegToRegMode: 
 		case movByteRegToMemMode: 
 		case movDwordRegToMemMode: 
 		case movWordRegToMemMode: 
 		case movByteMemToRegMode: 
 		case movDwordMemToRegMode: 
-		case movWordMemToRegMode: return mov(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
+		case movWordMemToRegMode: return Mov(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case dwordMovImmToAregMode: 
 		case dwordMovImmToBregMode: 
 		case dwordMovImmToCregMode: 
-		case dwordMovImmToDregMode: return mov_imm(memoryBlock, parserType->opmode, parserType->disp);
-		case dwordAddMode: return add(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
-		case dwordAddImmToRegMode: return add_imm(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
+		case dwordMovImmToDregMode: return Mov_imm(memoryBlock, parserType->opmode, parserType->disp);
+		case dwordAddMode: return Add(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
+		case dwordAddImmToRegMode: return Add_imm(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
 		case byteAddImmToMemaddrMode: 
 		case wordAddImmToMemaddrMode: 
-		case dwordAddImmToMemaddrMode:  return add_imm(memoryBlock, parserType->opmode, parserType->addr, parserType->disp);
+		case dwordAddImmToMemaddrMode:  return Add_imm(memoryBlock, parserType->opmode, parserType->addr, parserType->disp);
 		case byteAddImmToRegaddrMode:
 		case wordAddImmToRegaddrMode:
-		case dwordAddImmToRegaddrMode:	return add_imm(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
-		case dwordSubMode: return sub(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
-		case dwordAndMode: return and(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
-		case dwordOrMode: return or(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
-		case dwordXorMode: return xor(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
+		case dwordAddImmToRegaddrMode:	return Add_imm(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
+		case dwordSubMode: return Sub(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
+		case dwordAndMode: return And(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
+		case dwordOrMode: return Or(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
+		case dwordXorMode: return Xor(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case dwordShiftLeftMode: 
-		case dwordShiftRightMode: return shift(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
-		case cmpMode: return cmp(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
+		case dwordShiftRightMode: return Shift(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
+		case cmpMode: return Cmp(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case byteRelJmpMode: 
 		case wordRelJmpMode: 
-		case dwordRelJmpMode: return jmp(memoryBlock, parserType->opmode, parserType->disp);
+		case dwordRelJmpMode: return Jmp(memoryBlock, parserType->opmode, parserType->disp);
 		case byteRelJeMode: 
 		case byteRelJneMode: 
 		case byteRelJaMode: 
-		case byteRelJbeMode: return jcc(memoryBlock, parserType->opmode, parserType->disp);
+		case byteRelJbeMode: return Jcc(memoryBlock, parserType->opmode, parserType->disp);
 
 		case byteRelJbMode:
-		case byteRelJaeMode: return jcc2(memoryBlock, parserType->opmode, parserType->disp);
+		case byteRelJaeMode: return Jcc2(memoryBlock, parserType->opmode, parserType->disp);
 		
 		
 		case leaWithDispMode: 
-		case leaWithoutDispMode: return opmodeError("lea", "i dont want to parse this... please use lea() instead");
+		case leaWithoutDispMode: return opmodeError("lea", "i dont want to parse this... please use Lea() instead");
 
-		case retMode: return ret(memoryBlock);
-		case nopMode: return nop(memoryBlock);
+		case retMode: return Ret(memoryBlock);
+		case nopMode: return Nop(memoryBlock);
 		
 		default: opmodeError("parse", str); return none;
 		}
@@ -1205,7 +1134,7 @@ public:
 		op_str = trim(op_str);
 		if (src_str.find(op_str) != string::npos) src_str.clear();	//hax
 
-		regNames = new string[regNum] { "al", "bl", "cl", "dl", "ax", "bx", "cx", "dx", "eax", "ebx", "ecx", "edx" };
+		regNames = new string[regNum] regData;
 
 		//to op
 		parse_op(&parserType, &op_str, &src_str, &dest_str, extra);
