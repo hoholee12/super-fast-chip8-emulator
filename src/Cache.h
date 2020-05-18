@@ -10,16 +10,13 @@
 */
 
 using vect8 = std::vector<uint8_t>;
-using string = std::string;
 
 class Cache{
 public:
 #define CACHE_SIZE 4096
 	vect8* iCache[CACHE_SIZE];
-	string dumpfile;
 
-	Cache(string dumpfile){
-		this->dumpfile = dumpfile;
+	Cache(){
 		//init with NULL
 		for (int i = 0; i < CACHE_SIZE; i++) iCache[i] = NULL;
 	}
