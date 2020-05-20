@@ -7,6 +7,7 @@
 #include"Timer.h"
 #include"TimeSched.h"
 #include"Frameskip.h"
+#include"Dynarec.h"
 
 #include"defaults.h"
 #include"Debug.h"
@@ -26,6 +27,8 @@ private:
 	Video* video;
 	Audio* audio;
 	Frameskip* fskip;
+
+	Dynarec* dynarec;
 
 	bool running;
 	uint16_t currentOpcode;

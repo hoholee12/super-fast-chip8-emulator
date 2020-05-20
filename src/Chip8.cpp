@@ -15,6 +15,8 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 	audio = new Audio();
 	fskip = new Frameskip();
 
+	dynarec = new Dynarec();
+
 	//init timers
 	videoTimerInstance = new Timer();
 	fskipTimerInstance = new Timer();
@@ -46,6 +48,8 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 	video->init(title, mainwindow, flickerOffset);
 	audio->init();
 	audio->playAudio(); //test
+
+	dynarec->init(cpu, video, memory, audio);
 
 	this->whichInterpreter = whichInterpreter;
 
@@ -113,6 +117,14 @@ void Chip8::run(){
 			update_lowerhalf();
 		}
 		break;
+	case 4:
+		while (running){
+			while (scheduler->baseLoop()){
+				dynarec->updateRecompiler();
+			}
+			dynarec->executeBlock();
+			update_lowerhalf();
+		}
 	default:
 		fprintf(stderr, "configuration error!\n");
 	}

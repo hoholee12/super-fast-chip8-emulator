@@ -7,6 +7,13 @@ defaults.h
 
 */
 
+
+#ifdef __cplusplus
+extern "C"
+#endif
+
+#pragma warning(disable:4018; disable:4996; disable:4244)
+
 #ifdef _WIN32
 #include<SDL.h>
 #include<SDL_mixer.h>	//this guy apparently requires SDL.h not SDL/SDL.h
@@ -20,6 +27,7 @@ defaults.h
 #include<string.h>
 #include<string>
 #include<stdint.h>
+
 
 
 //#define DEBUG_ME

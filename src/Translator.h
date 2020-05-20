@@ -30,6 +30,7 @@ private:
 	uint32_t mem;				//byte
 	uint32_t currentOpcode;		//word
 
+	uint32_t hintFallback;		//byte
 	uint32_t interpreterSwitch;	//byte
 
 	uint32_t vxPointer;			//byte
@@ -46,11 +47,10 @@ private:
 	uint16_t nnnx;
 	uint32_t nnn;				//word
 
-	bool endMemoryBlock = false;
-
 	int* index;
 	std::vector<uint8_t>* memoryBlock;
 
+	bool endDecode = false;
 
 	//jumboLUT version of opcode table
 #define JUMBO_TABLE_SIZE 0x10000
@@ -62,7 +62,6 @@ public:
 	//internal: do not use
 	void init(std::vector<uint8_t>* memoryBlock){
 		this->memoryBlock = memoryBlock;
-		endMemoryBlock = false;
 
 		//...or a jumbo table (32bit count)
 		for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodenull;		//exception
@@ -111,7 +110,7 @@ public:
 
 
 	//constructor
-	Translator(CPU* cpu){
+	Translator(CPU* cpu, uint32_t interpreterSwitch, uint32_t hintFallback, uint32_t x_val, uint32_t y_val){
 		controllerOp = (uint32_t)&cpu->controllerOp;
 		programCounter = (uint32_t)&cpu->programCounter;
 		stack = (uint32_t)&cpu->stack;
@@ -126,11 +125,11 @@ public:
 		mem = (uint32_t)&cpu->memory->mem;
 		currentOpcode = (uint32_t)&cpu->currentOpcode;
 
-		cpu->interpreterSwitch = false;
-		interpreterSwitch = (uint32_t)&cpu->interpreterSwitch;
+		this->interpreterSwitch = interpreterSwitch;
+		this->hintFallback = hintFallback;
 
-		vxPointer = (uint32_t)&cpu->x_val;
-		vyPointer = (uint32_t)&cpu->y_val;
+		vxPointer = x_val;
+		vyPointer = y_val;
 		vfPointerx = 0xF;
 		vfPointer = (uint32_t)&vfPointerx;
 		vzPointerx = 0x0;
@@ -145,15 +144,18 @@ public:
 	}
 
 	void decode(){
+		(this->*(jumbo_table[currentOpcode]))();
 
-		//opcode table
-		(this->*								(jumbo_table[currentOpcode]))	();
-		//^needed to modify chip8 variables		^specific function name			^no parameter
+		if (endDecode) {
+		//TODO: cut array create new array
+			//and return
+		
+		
+		}
+
+		//TODO
 	}
 
-	//memoryblock status
-	//check to see if it should end append job
-	bool getEndMemoryBlock(){ return endMemoryBlock; }
 
 	//increment program counter by 2
 	void incrementPC(){
@@ -165,13 +167,14 @@ public:
 	//fallback to interpreter, switch back whenever its done. but not here
 	//some opcodes are just too complicated to recreate in jit
 	//...or jump
-	void hintFallBack(){
-		setToMemaddr(memoryBlock, interpreterSwitch, 0x1, Byte);
-		//X86Emitter::setByteToMemaddr(memoryBlock, interpreterSwitch, 0x1);
+	void hintFallback_func(){
+		X86Emitter::setToMemaddr(memoryBlock, hintFallback, 0x1, Byte);
+		
 	}
-	void switchToInterpreter(){
+	void interpreterSwitch_func(){
+		X86Emitter::setToMemaddr(memoryBlock, interpreterSwitch, 0x1, Byte);
 		X86Emitter::Ret(memoryBlock);
-		endMemoryBlock = true;	//this is hint for translator to cut blocks
+		endDecode = true;
 	}
 
 	//opcodes
@@ -180,7 +183,7 @@ public:
 		//X86Emitter::setDwordToMemaddr(memoryBlock, controllerOp, (uint32_t)ControllerOp::clearScreen);
 
 		incrementPC();
-		switchToInterpreter();
+		interpreterSwitch_func();
 		//original
 		//controllerOp = ControllerOp::clearScreen;
 	}
@@ -199,7 +202,7 @@ public:
 		//X86Emitter::mov_ax_to_memoryaddr(memoryBlock, programCounter);
 
 		incrementPC();
-		switchToInterpreter();
+		interpreterSwitch_func();
 		//programCounter = stack[--stackPointer]; //return from SUBroutine	(and increment pc after to get out of loop)
 	}
 	void opcode0nnn(){
@@ -218,7 +221,7 @@ public:
 		X86Emitter::setToMemaddr(memoryBlock, programCounter, nnn, Word);
 		//X86Emitter::setWordToMemaddr(memoryBlock, programCounter, nnn);
 
-		switchToInterpreter();
+		interpreterSwitch_func();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 	}
 	void opcode1nnn(){
@@ -229,7 +232,7 @@ public:
 		X86Emitter::setToMemaddr(memoryBlock, jmpHint, 1, Byte);
 		//X86Emitter::setByteToMemaddr(memoryBlock, jmpHint, 1);
 
-		switchToInterpreter();
+		interpreterSwitch_func();
 		//programCounter = NNN; flag = 1;//jump to nnn	(dont increment pc)
 		//jmpHint = true; //hint for video flicker loop
 	}
@@ -247,7 +250,7 @@ public:
 		//NNN(is an immediate) to programCounter
 		X86Emitter::setToMemaddr(memoryBlock, programCounter, nnn, Word);
 
-		switchToInterpreter();
+		interpreterSwitch_func();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
 	}
 
@@ -516,8 +519,8 @@ public:
 		//programCounter = NNN + v[0]; flag = 1; //(dont increment pc)
 	}
 	void opcodecxnn(){
-		hintFallBack();
-		switchToInterpreter();
+		hintFallback_func();
+		interpreterSwitch_func();
 		//incrementPC();
 		//VX = (rand() % 0x100) & NN;	//random
 	}
@@ -525,7 +528,7 @@ public:
 		X86Emitter::setToMemaddr(memoryBlock, controllerOp, ControllerOp::drawVideo, Dword);
 
 		incrementPC();
-		switchToInterpreter();
+		interpreterSwitch_func();
 		//controllerOp = ControllerOp::drawVideo;
 	}
 	void opcodeex9e(){
@@ -556,8 +559,8 @@ public:
 		//VX = *delayRegister;
 	}
 	void opcodefx0a(){
-		hintFallBack();
-		switchToInterpreter();
+		hintFallback_func();
+		interpreterSwitch_func();
 		//incrementPC();
 		//if (Input::isKeyPressed(*pressedKey) == true) VX = *pressedKey; else flag = 1; //wait again	(dont increment pc)
 	}
@@ -572,7 +575,7 @@ public:
 		setToMemaddr(memoryBlock, controllerOp, ControllerOp::setSoundTimer, Dword);
 
 		incrementPC();
-		switchToInterpreter();
+		interpreterSwitch_func();
 
 		//controllerOp = ControllerOp::setSoundTimer;
 	}
@@ -592,30 +595,30 @@ public:
 		//indexRegister = VX * 5;	//font is stored at mem[0 ~ FONT_COUNT * 5]
 	}
 	void opcodefx33(){
-		hintFallBack();
-		switchToInterpreter();
+		hintFallback_func();
+		interpreterSwitch_func();
 		//incrementPC();
 		//memory->write(indexRegister, VX / 100);
 		//memory->write(indexRegister + 1, (VX / 10) % 10);
 		//memory->write(indexRegister + 2, VX % 10);
 	}
 	void opcodefx55(){
-		hintFallBack();
-		switchToInterpreter();
+		hintFallback_func();
+		interpreterSwitch_func();
 		//incrementPC();
 		//for (int i = 0; i <= (currentOpcode & 0x0f00) >> 8; i++) memory->write(indexRegister + i, v[i]);
 	}
 	void opcodefx65(){
-		hintFallBack();
-		switchToInterpreter();
+		hintFallback_func();
+		interpreterSwitch_func();
 		//incrementPC();
 		//for (int i = 0; i <= (currentOpcode & 0x0f00) >> 8; i++) v[i] = memory->read(indexRegister + i);
 	}
 
 	//exception
 	void opcodenull(){
-		hintFallBack();
-		switchToInterpreter();
+		hintFallback_func();
+		interpreterSwitch_func();
 		//incrementPC();
 		//throwError = true;
 	}
