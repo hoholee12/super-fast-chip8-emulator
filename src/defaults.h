@@ -1,9 +1,9 @@
 #pragma once
 /*
 
-defaults.h
+	defaults.h - proxy class(sorta)
 
--change default api easily by modifying this header
+	-change default api easily by modifying this header
 
 */
 
@@ -36,53 +36,52 @@ extern "C"
 
 class defaults{
 public:
-	Mix_Chunk* sound = NULL;
+	mutable Mix_Chunk* sound = NULL;
 	const char* sound_file = "data/sound/klik.wav";
 
 
 	//SDL stuff
-	SDL_Renderer* renderer;
-	SDL_Window* window;
-	SDL_Surface* screenSurface;
-	SDL_Rect* pixelRect;
+	mutable SDL_Renderer* renderer;
+	mutable SDL_Window* window;
+	mutable SDL_Surface* screenSurface;
+	mutable SDL_Rect* pixelRect;
 
-	int screenWidth;
-	int screenHeight;
+	mutable int screenWidth;
+	mutable int screenHeight;
 
-	uint8_t pressedKey;
+	mutable uint8_t pressedKey;
 
 	//title stuff
-	char a0[100];
+	mutable char a0[100];
 	const char* a1 = ": cpu speed=";
 	const char* a2 = " fps=";
 	const char* a3 = " frametime=";
 	const char* a4 = "ms";
-	char a5[100];
 
 
 
-	void audioInit();
-	void playAudio();
+	void audioInit() const;
+	void playAudio() const;
 
-	void videoInit(char* str, int w, int h, int scale);
-	void drawVideo(uint8_t* videoBuffer);
+	void videoInit(char* str, int w, int h, int scale) const;
+	void drawVideo(uint8_t* videoBuffer) const;
 
-	void inputInit();
-	uint8_t getInput();
+	void inputInit() const;
+	uint8_t getInput() const;
 
 	//fps timer
-	uint32_t checkTime();
-	void delayTime(uint32_t input); //sleep
+	uint32_t checkTime() const;
+	void delayTime(uint32_t input) const; //sleep
 
-	void updateTitle(char* str, int cpuspeed, int fps, int frametime);
+	void updateTitle(char* str, int cpuspeed, int fps, int frametime) const;
 };
 
 //inline getters
-inline uint32_t defaults::checkTime(){
+inline uint32_t defaults::checkTime() const{
 	return SDL_GetTicks();
 }
 
-inline uint8_t defaults::getInput(){
+inline uint8_t defaults::getInput() const{
 
 	SDL_Event e;
 	while (SDL_PollEvent(&e)){

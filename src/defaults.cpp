@@ -1,6 +1,6 @@
 #include"defaults.h"
 
-void defaults::audioInit(){
+void defaults::audioInit() const{
 #ifdef _WIN32
 	//SDL stuff
 	putenv("SDL_AUDIODRIVER=DirectSound");
@@ -16,14 +16,14 @@ void defaults::audioInit(){
 
 }
 
-void defaults::playAudio(){
+void defaults::playAudio() const{
 	//play audio
 	Mix_PlayChannel(-1, sound, 0);
 }
 
 
 
-void defaults::videoInit(char* str, int w, int h, int scale){
+void defaults::videoInit(char* str, int w, int h, int scale) const{
 	screenWidth = w;
 	screenHeight = h;
 
@@ -51,7 +51,7 @@ void defaults::videoInit(char* str, int w, int h, int scale){
 
 }
 
-void defaults::drawVideo(uint8_t* videoBuffer){
+void defaults::drawVideo(uint8_t* videoBuffer) const{
 
 	int scan = 0;
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -72,16 +72,16 @@ void defaults::drawVideo(uint8_t* videoBuffer){
 
 }
 
-void defaults::inputInit(){
+void defaults::inputInit() const{
 	pressedKey = 0xfe;
 
 }
 
-void defaults::delayTime(uint32_t input){
+void defaults::delayTime(uint32_t input) const{
 	SDL_Delay(input);
 }
 
-void defaults::updateTitle(char* str, int cpuspeed, int fps, int frametime){
+void defaults::updateTitle(char* str, int cpuspeed, int fps, int frametime) const{
 	using namespace std;
 
 

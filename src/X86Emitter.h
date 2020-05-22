@@ -141,7 +141,7 @@ using vect8 = std::vector<uint8_t>; //tryinig really hard to shorten code here;-
 class X86Emitter{
 private:
 
-	vect8* memoryBlock;
+	mutable vect8* memoryBlock;
 	
 	//host endianness sensitive
 	using ByteRegs = union{
@@ -155,18 +155,18 @@ private:
 		uint16_t word;
 		uint32_t dword;
 	};
-	ByteRegs byteRegs;
+	mutable ByteRegs byteRegs;
 
-	void addByte(uint8_t byte){
+	void addByte(uint8_t byte) const{
 		byteRegs.byte = byte;
 		memoryBlock->push_back(byteRegs.byte0);
 	}
-	void addWord(uint16_t word){
+	void addWord(uint16_t word) const{
 		byteRegs.word = word;
 		memoryBlock->push_back(byteRegs.byte0);
 		memoryBlock->push_back(byteRegs.byte1);
 	}
-	void addDword(uint32_t dword){
+	void addDword(uint32_t dword) const{
 		byteRegs.dword = dword;
 		memoryBlock->push_back(byteRegs.byte0);
 		memoryBlock->push_back(byteRegs.byte1);
@@ -176,7 +176,7 @@ private:
 
 	//get memoryBlock from outside
 	//memoryBlock optimization
-	void init(vect8* inputMemoryBlock, int index = 0){
+	void init(vect8* inputMemoryBlock, int index = 0) const{
 		memoryBlock = inputMemoryBlock;
 		memoryBlock->reserve(memoryBlock->capacity() + index);
 		byteRegs.dword = 0;
@@ -218,8 +218,8 @@ public:
 
 	};
 
-	Disp insertDisp(int temp){ Disp disp; disp = (uint32_t)temp; return disp; }
-	Disp insertAddr(int temp){ Disp disp; disp = (uint32_t)temp; return disp; }
+	Disp insertDisp(int temp) const{ Disp disp; disp = (uint32_t)temp; return disp; }
+	Disp insertAddr(int temp) const{ return insertDisp(temp); }
 
 
 	//sib
@@ -234,11 +234,11 @@ public:
 	};
 
 	//byte
-	void addExtension(){ addByte(0x0F); }
+	void addExtension() const{ addByte(0x0F); }
 	//byte
-	void addPrefix(){ addByte(0x66); }
+	void addPrefix() const{ addByte(0x66); }
 	//byte
-	void addOpcode(uint8_t opcode, Direction direction, Bitsize bitsize){
+	void addOpcode(uint8_t opcode, Direction direction, Bitsize bitsize) const{
 		uint8_t d = 0x0;
 		uint8_t s = 0x0;
 		if (direction == 1) d = 0x2;
@@ -247,22 +247,20 @@ public:
 		opcode |= s;
 		addByte(opcode);
 	}
-	//byte
-	void addModrm(Mod mod, X86Regs src, X86Regs dest){
+
+	template<typename Dbit, typename Tbit, typename Tbit_2>
+	void addMiddleGround(Dbit mod, Tbit src, Tbit_2 dest) const{
 		uint8_t opcode = 0x0;
 		opcode |= ((uint8_t)mod << 6);
 		opcode |= ((uint8_t)src << 3);
 		opcode |= (uint8_t)dest;
 		addByte(opcode);
 	}
+
 	//byte
-	void addSib(Scale scale, Index index, Base base){
-		uint8_t opcode = 0x0;
-		opcode |= ((uint8_t)scale << 6);
-		opcode |= ((uint8_t)index << 3);
-		opcode |= (uint8_t)base;
-		addByte(opcode);
-	}
+	void addModrm(Mod mod, X86Regs src, X86Regs dest) const{ addMiddleGround(mod, src, dest); }
+	//byte
+	void addSib(Scale scale, Index index, Base base) const{ addMiddleGround(scale, index, base); }
 
 	//use this template for jmp instructions
 	using OperandSizes = enum{
@@ -407,10 +405,10 @@ public:
 		setDwordToMemaddrMode,
 	};
 
-	OperandSizes opmodeError(const char* str, std::string str2 = std::string()){ fprintf(stderr, "%s", str); fprintf(stderr, ": incompatible opmode! -> "); fprintf(stderr, "%s", str2.c_str()); exit(1); return none; }
+	OperandSizes opmodeError(const char* str, std::string str2 = std::string()) const{ fprintf(stderr, "%s", str); fprintf(stderr, ": incompatible opmode! -> "); fprintf(stderr, "%s", str2.c_str()); exit(1); return none; }
 
 	//no need for the opposite(use only for zeroing out high area)
-	OperandSizes Movzx(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Movzx(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest) const{
 		uint8_t opcode = 0xB4; //10110100
 		switch (opmode){
 		case movzxByteToDwordMode: init(memoryBlock, movzxByteToDwordSize); addExtension(); addOpcode(opcode, destToSrc, byteOnly); addModrm(forReg, dest, src); return movzxByteToDwordSize;
@@ -428,7 +426,7 @@ public:
 	
 
 	//memoryaddr must always be dword!
-	OperandSizes Mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest = memaddr, Disp disp = Disp()){
+	OperandSizes Mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest = memaddr, Disp disp = Disp()) const{
 		uint8_t opcode = 0x88; //10001000
 		switch (opmode){
 		case movToMemaddrByteMode: init(memoryBlock, movToMemaddrByteSize); addOpcode(opcode, srcToDest, byteOnly); addModrm(forDisp, src, memaddr); addDword(disp.dword); return movToMemaddrByteSize;
@@ -451,12 +449,12 @@ public:
 		return none;
 	}
 	//override
-	OperandSizes Mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, Disp disp = Disp()){ return Mov(memoryBlock, opmode, src, Areg, disp); }
+	OperandSizes Mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, Disp disp = Disp()) const{ return Mov(memoryBlock, opmode, src, Areg, disp); }
 
 
 
 	//kinda different - use Direction and Bitsize to point reg
-	OperandSizes Mov_imm(vect8* memoryBlock, OperandModes opmode, Disp disp){
+	OperandSizes Mov_imm(vect8* memoryBlock, OperandModes opmode, Disp disp) const{
 		uint8_t opcode = 0xB8;
 		switch (opmode){
 		case dwordMovImmToAregMode: init(memoryBlock, dwordMovImmToAregSize); addOpcode(opcode, srcToDest, byteOnly); addDword(disp.dword); return dwordMovImmToAregSize;
@@ -471,7 +469,7 @@ public:
 	}
 
 	//dword add
-	OperandSizes Add(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Add(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest) const{
 		uint8_t opcode = 0x00;
 		switch (opmode){
 		case dwordAddMode: init(memoryBlock, dwordAddSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordAddSize;
@@ -482,7 +480,7 @@ public:
 	}
 
 	//dword imm add
-	OperandSizes Add_imm(vect8* memoryBlock, OperandModes opmode, Disp addr, Disp disp = Disp(), X86Regs dest = memaddr){
+	OperandSizes Add_imm(vect8* memoryBlock, OperandModes opmode, Disp addr, Disp disp = Disp(), X86Regs dest = memaddr) const{
 		uint8_t opcode = 0x80;
 		switch (opmode){
 		case dwordAddImmToRegMode: init(memoryBlock, dwordAddImmToRegSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, Areg, dest); addDword(addr.dword); return dwordAddImmToRegSize;
@@ -503,7 +501,7 @@ public:
 		return none;
 	}
 	//override
-	OperandSizes Add_imm(vect8* memoryBlock, OperandModes opmode, Disp disp, X86Regs dest = memaddr){ return Add_imm(memoryBlock, opmode, disp, insertDisp(0x0), dest); }
+	OperandSizes Add_imm(vect8* memoryBlock, OperandModes opmode, Disp disp, X86Regs dest = memaddr) const{ return Add_imm(memoryBlock, opmode, disp, insertDisp(0x0), dest); }
 
 	//add imm dword (AB <-> CD)
 	//100000 0 1 11 000(?) 000 disp32
@@ -520,7 +518,7 @@ public:
 	
 	
 	//sub
-	OperandSizes Sub(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Sub(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest) const{
 		uint8_t opcode = 0x28;	//001010
 		switch (opmode){
 		case dwordSubMode: init(memoryBlock, dwordSubSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordSubSize;
@@ -534,7 +532,7 @@ public:
 
 
 	//dword and
-	OperandSizes And(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes And(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest) const{
 		uint8_t opcode = 0x20; //001000
 		switch (opmode){
 		case dwordAndMode: init(memoryBlock, dwordAndSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordAndSize;
@@ -545,7 +543,7 @@ public:
 	}
 
 	//dword or
-	OperandSizes Or(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Or(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest) const{
 		uint8_t opcode = 0x08; //000010
 		switch (opmode){
 		case dwordOrMode: init(memoryBlock, dwordOrSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordOrSize;
@@ -556,7 +554,7 @@ public:
 	}
 
 	//dword xor
-	OperandSizes Xor(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Xor(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest) const{
 		uint8_t opcode = 0x30; //001100
 		switch (opmode){
 		case dwordXorMode: init(memoryBlock, dwordXorSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordXorSize;
@@ -568,7 +566,7 @@ public:
 
 	//bitwise shl by immediate dword
 
-	OperandSizes Shift(vect8* memoryBlock, OperandModes opmode, Disp disp, X86Regs dest){
+	OperandSizes Shift(vect8* memoryBlock, OperandModes opmode, Disp disp, X86Regs dest) const{
 		uint8_t opcode = 0xC0;	//110000
 		switch (opmode){
 		case dwordShiftLeftMode: init(memoryBlock, dwordShiftLeftSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, illegal, dest); addByte(disp.byte); return dwordShiftLeftSize;
@@ -580,7 +578,7 @@ public:
 	}
 
 	//cmp
-	OperandSizes Cmp(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest){
+	OperandSizes Cmp(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest) const{
 		uint8_t opcode = 0x38; //001110
 		switch (opmode){
 		case cmpMode: init(memoryBlock, cmpSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, dest, src); return cmpSize;
@@ -591,7 +589,7 @@ public:
 
 
 	//jmp	jump
-	OperandSizes Jmp(vect8* memoryBlock, OperandModes opmode, Disp disp){
+	OperandSizes Jmp(vect8* memoryBlock, OperandModes opmode, Disp disp) const{
 		uint8_t opcode = 0xE8; //111010
 		switch (opmode){
 		case byteRelJmpMode: init(memoryBlock, byteRelJmpSize); addOpcode(opcode, destToSrc, wordAndDword); addByte(disp.byte); return byteRelJmpSize;
@@ -603,7 +601,7 @@ public:
 	}
 	//je	jump equals
 	//011101 0 0 11 001 011
-	OperandSizes Jcc(vect8* memoryBlock, OperandModes opmode, Disp disp){
+	OperandSizes Jcc(vect8* memoryBlock, OperandModes opmode, Disp disp) const{
 		uint8_t opcode = 0x74;
 		switch (opmode){
 		case byteRelJeMode: init(memoryBlock, byteRelJeSize); addOpcode(opcode, srcToDest, byteOnly); addByte(disp.byte); return byteRelJeSize;
@@ -620,7 +618,7 @@ public:
 	//jb	jump less unsigned
 	//jbe	jump less equals unsigned
 	//jcc2
-	OperandSizes Jcc2(vect8* memoryBlock, OperandModes opmode, Disp disp){
+	OperandSizes Jcc2(vect8* memoryBlock, OperandModes opmode, Disp disp) const{
 		uint8_t opcode = 0x70;
 		switch (opmode){
 		case byteRelJbMode: init(memoryBlock, byteRelJbSize); addOpcode(opcode, destToSrc, byteOnly); addByte(disp.byte); return byteRelJbSize;
@@ -637,15 +635,15 @@ public:
 	
 
 	//return from eax
-	OperandSizes Ret(vect8* memoryBlock){ init(memoryBlock, retSize); addByte(0xC3); return retSize; }
+	OperandSizes Ret(vect8* memoryBlock) const{ init(memoryBlock, retSize); addByte(0xC3); return retSize; }
 
 	//nop
-	OperandSizes Nop(vect8* memoryBlock){ init(memoryBlock, nopSize); addByte(0x90); return nopSize; }
+	OperandSizes Nop(vect8* memoryBlock) const{ init(memoryBlock, nopSize); addByte(0x90); return nopSize; }
 
 	//load effective address - lea <- shift + add
 	//bse -> memaddr: some dword immediate(disp32) you can add along with main(multiplcation)
 	//bse -> not memaddr: some reg(any reg) you can add along with main(multiplcation)
-	OperandSizes Lea(vect8* memoryBlock, OperandModes opmode, X86Regs src, Scale scale, X86Regs idx, X86Regs bse, Disp disp = Disp()){
+	OperandSizes Lea(vect8* memoryBlock, OperandModes opmode, X86Regs src, Scale scale, X86Regs idx, X86Regs bse, Disp disp = Disp()) const{
 		uint8_t opcode = 0x8C;					//100011 0 1 00 011 100 01 000 001
 												//lea    d s md src dst sc idx bse
 												//              Brg ill x2 Arg Crg	->	lea ebx, [eax*2 + ecx]
@@ -672,7 +670,7 @@ public:
 	//easy shortcut to load to register and expand
 	using ExpandSizes = enum{ Byte, Word, Dword };
 
-	OperandSizes loadMemToDwordReg(vect8* memoryBlock, uint32_t addr, X86Regs Xreg, ExpandSizes Size){
+	OperandSizes loadMemToDwordReg(vect8* memoryBlock, uint32_t addr, X86Regs Xreg, ExpandSizes Size) const{
 		switch (Size){
 		case Byte: Mov(memoryBlock, movFromMemaddrByteMode, Xreg, insertDisp(addr)); Movzx(memoryBlock, movzxByteToDwordMode, Xreg, Xreg); return loadByteShortcutSize;
 		case Word: Mov(memoryBlock, movFromMemaddrWordMode, Xreg, insertDisp(addr)); Movzx(memoryBlock, movzxWordToDwordMode, Xreg, Xreg); return loadWordShortcutSize;
@@ -681,7 +679,7 @@ public:
 		return none;
 	}
 
-	OperandSizes loadArray_AregAsResult(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size){
+	OperandSizes loadArray_AregAsResult(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size) const{
 		Mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(arr));
 		loadMemToDwordReg(memoryBlock, arrptr, Breg, Byte);
 		switch (Size){
@@ -692,7 +690,7 @@ public:
 		return none;
 	}
 
-	OperandSizes storeArray_AregAsInput(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size){
+	OperandSizes storeArray_AregAsInput(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size) const{
 		Mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(arr));
 		loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
 		switch (Size){
@@ -703,7 +701,7 @@ public:
 		return none;
 	}
 
-	uint32_t addToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval, ExpandSizes Size){
+	uint32_t addToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval, ExpandSizes Size) const{
 		switch (Size){
 		case Byte: loadMemToDwordReg(memoryBlock, memvar, Areg, Byte); break;
 		case Word: loadMemToDwordReg(memoryBlock, memvar, Areg, Word); break;
@@ -719,7 +717,7 @@ public:
 		return none;
 	}
 
-	OperandSizes setToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval, ExpandSizes Size){
+	OperandSizes setToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval, ExpandSizes Size) const{
 		Mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(immval));
 		switch (Size){
 		case Byte: Mov(memoryBlock, movToMemaddrByteMode, Areg, insertDisp(memvar)); return setByteToMemaddrSize;
@@ -744,8 +742,8 @@ public:
 #define regData { "al", "bl", "cl", "dl", "ax", "bx", "cx", "dx", "eax", "ebx", "ecx", "edx" };
 	using string = std::string;
 
-	string* regNames;
-	string convertLowercase(string* str){
+	mutable string* regNames;
+	string convertLowercase(string* str) const{
 		string result;
 		
 		for (uint32_t i = 0; i < str->size(); i++){
@@ -763,11 +761,11 @@ public:
 		Disp disp;
 	};
 
-	bool isByte(string* str){ if ((str->find("byte") != string::npos) || (str->find("l") != string::npos)) return true; else return false; }
-	bool isWord(string* str){ if ((str->find("word") != string::npos) || ((str->find("x") != string::npos) && (str->find("e") == string::npos))) return true; else return false; }
-	bool isDword(string* str){ if ((str->find("dword") != string::npos) || ((str->find("x") != string::npos) && (str->find("e") != string::npos))) return true; else return false; }
-	bool isPtr(string* str){ if ((str->find("ptr") != string::npos) || (str->find("[") != string::npos)) return true; else return false; }
-	bool isImm(string* str){
+	bool isByte(string* str) const{ if ((str->find("byte") != string::npos) || (str->find("l") != string::npos)) return true; else return false; }
+	bool isWord(string* str) const{ if ((str->find("word") != string::npos) || ((str->find("x") != string::npos) && (str->find("e") == string::npos))) return true; else return false; }
+	bool isDword(string* str) const{ if ((str->find("dword") != string::npos) || ((str->find("x") != string::npos) && (str->find("e") != string::npos))) return true; else return false; }
+	bool isPtr(string* str) const{ if ((str->find("ptr") != string::npos) || (str->find("[") != string::npos)) return true; else return false; }
+	bool isImm(string* str) const{
 		if (str->find("extra") != string::npos) return true;
 		
 		for (int i = regNum - 1; i > -1; i--){
@@ -775,9 +773,9 @@ public:
 		}
 		return true;
 	}
-	bool isReg(string* str){ return !isImm(str); }
-	bool isMem(string* str){ return (isImm(str) && isPtr(str)); }
-	bool autoInsertExtra(Disp* disp, string* str, Disp extra){
+	bool isReg(string* str) const{ return !isImm(str); }
+	bool isMem(string* str) const{ return (isImm(str) && isPtr(str)); }
+	bool autoInsertExtra(Disp* disp, string* str, Disp extra) const{
 		if (str->find("extra") != string::npos){
 			disp->dword = extra.dword;
 			return true;
@@ -785,7 +783,7 @@ public:
 		return false;
 	}
 
-	void insertSrc(ParserType* parserType, string* src_str){
+	void insertSrc(ParserType* parserType, string* src_str) const{
 		int check = -1;
 		for (int i = 0; i < regNum; i++){ if (src_str->find(regNames[i]) != string::npos) check = i; }
 		if (check == -1) return;
@@ -797,7 +795,7 @@ public:
 		
 		}
 	}
-	void insertDest(ParserType* parserType, string* dest_str){
+	void insertDest(ParserType* parserType, string* dest_str) const{
 		int check = -1;
 		for (int i = 0; i < regNum; i++){ if (dest_str->find(regNames[i]) != string::npos) check = i; }
 		if (check == -1) return;
@@ -809,14 +807,14 @@ public:
 
 		}
 	}
-	void insertImm(Disp* disp, string* imm_str){
+	void insertImm(Disp* disp, string* imm_str) const{
 		//hex
 		if (imm_str->find("0x") != string::npos) disp->dword = (uint32_t)std::stoi(*imm_str, 0, 16);
 		//dec
 		else disp->dword = (uint32_t)std::stoi(*imm_str, 0, 10);
 	}
 
-	void parse_op(ParserType* parserType, string* op_str, string* src_str, string* dest_str, Disp extra){
+	void parse_op(ParserType* parserType, string* op_str, string* src_str, string* dest_str, Disp extra) const{
 		if (!op_str->compare("movzx")){
 			if (isReg(src_str) && isReg(dest_str)){
 				insertSrc(parserType, src_str); insertDest(parserType, dest_str);
@@ -1045,7 +1043,7 @@ public:
 	
 
 
-	OperandSizes run_op(vect8* memoryBlock, ParserType* parserType, const char* str){
+	OperandSizes run_op(vect8* memoryBlock, ParserType* parserType, const char* str) const{
 		//all must return OperandSizes
 		switch (parserType->opmode){
 		case movzxByteToDwordMode: 
@@ -1106,7 +1104,7 @@ public:
 		return none;
 	}
 
-	string trim(const string& str){
+	string trim(const string& str) const{
 		size_t first = str.find_first_not_of(' ');
 		if (string::npos == first)
 		{
@@ -1117,7 +1115,7 @@ public:
 		return str.substr(first, (last - first + 1));
 	}
 
-	OperandSizes parse(vect8* memoryBlock, const char* str, Disp extra = Disp()){
+	OperandSizes parse(vect8* memoryBlock, const char* str, Disp extra = Disp()) const{
 		ParserType parserType;
 		string op_str;
 		string src_str;
