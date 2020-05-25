@@ -3,6 +3,7 @@
 #include<vector>
 #include<cstdint>
 #include<string>
+#include "Memory.h"
 
 /*
 	Dyanarec the executable cache club
@@ -13,29 +14,26 @@ using vect8 = std::vector<uint8_t>;
 
 class Cache{
 public:
-#define CACHE_SIZE 4096
-	vect8* iCache[CACHE_SIZE];
+
+	vect8 iCache[FULL_MEM_SIZE];
+	bool iCheck[FULL_MEM_SIZE];
 
 	Cache(){
-		//init with NULL
-		for (int i = 0; i < CACHE_SIZE; i++) iCache[i] = NULL;
+		for (int i = 0; i < FULL_MEM_SIZE; i++) iCheck[i] = false;
 	}
 
-	bool checkCacheExists(int pc){
-		if (iCache[pc] != NULL) return true;
-		else return false;
-	}
+	bool checkCacheExists(int pc){ return iCheck[pc]; }
 
 	vect8* createCache(int pc){
-		if (iCache[pc] != NULL) delete iCache[pc];
-		iCache[pc] = new vect8();
-		return iCache[pc];
+		iCheck[pc] = true;
+		iCache[pc].clear();
+		return &iCache[pc];
 	}
 
-	void dumpCache(int pc){
-		if (iCache[pc] == NULL) return;
+	void printCache(int pc){
+		if (!iCheck[pc]) return;
 		printf("pc = %02X cache dump:\n", pc);
-		for (int i = 0; i < iCache[pc]->size(); i++) printf("%02X ", iCache[pc]->at(i));
+		for (int i = 0; i < iCache[pc].size(); i++) printf("%02X ", iCache[pc].at(i));
 	}
 
 

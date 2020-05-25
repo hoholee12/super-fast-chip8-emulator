@@ -249,18 +249,40 @@ public:
 	}
 
 	template<typename Dbit, typename Tbit, typename Tbit_2>
-	void addMiddleGround(Dbit mod, Tbit src, Tbit_2 dest) const{
+	struct _MiddleGround{
+		Dbit dbit;
+		Tbit tbit;
+		Tbit_2 tbit_2;
+	};
+
+	template<typename Dbit, typename Tbit, typename Tbit_2>
+	void addMiddleGround(_MiddleGround<Dbit, Tbit, Tbit_2> mground) const{
 		uint8_t opcode = 0x0;
-		opcode |= ((uint8_t)mod << 6);
-		opcode |= ((uint8_t)src << 3);
-		opcode |= (uint8_t)dest;
+		opcode |= ((uint8_t)mground.dbit << 6);
+		opcode |= ((uint8_t)mground.tbit << 3);
+		opcode |= (uint8_t)mground.tbit_2;
 		addByte(opcode);
 	}
 
+	struct ModrmGround{
+		using MiddleGround = _MiddleGround<Mod, X86Regs, X86Regs>;
+	};
+
+	struct SibGround{
+		using MiddleGround = _MiddleGround<Scale, Index, Base>;
+	};
+	//using ModrmGround = struct MiddleGround<Mod, X86Regs, X86Regs>;
+	//using SibGround = struct MiddleGround<Scale, Index, Base>;
+
 	//byte
-	void addModrm(Mod mod, X86Regs src, X86Regs dest) const{ addMiddleGround(mod, src, dest); }
+	void addModrm(ModrmGround::MiddleGround modrmGround) const{ addMiddleGround(modrmGround); }
 	//byte
-	void addSib(Scale scale, Index index, Base base) const{ addMiddleGround(scale, index, base); }
+	void addSib(SibGround::MiddleGround sibGround) const{ addMiddleGround(sibGround); }
+
+	//byte
+	void addModrm(Mod mod, X86Regs src, X86Regs dest) const{ addModrm(ModrmGround::MiddleGround{ mod, src, dest }); }
+	//byte
+	void addSib(Scale scale, Index index, Base base) const{ addSib(SibGround::MiddleGround{ scale, index, base }); }
 
 	//use this template for jmp instructions
 	using OperandSizes = enum{
