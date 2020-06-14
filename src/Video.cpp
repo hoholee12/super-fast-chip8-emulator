@@ -29,7 +29,7 @@ void Video::clearVBuffer(){
 	copyToFbuffer();
 }
 
-void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory){
+void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory, Video* video){
 	//?x??
 	uint8_t *vx = cpu->getV((opcode & 0x0f00) >> 8);
 	
@@ -50,24 +50,28 @@ void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory){
 	uint8_t wrapY = *vy;// % SCREEN_HEIGHT;
 
 	//draw to fbuffer before jmp
-	pre_optimizations(new QueueType{ opcode, cpu->prevJmpHint() });
-
+	bool temp = video->prevOverwriteHint();
 #ifdef DEBUG_ME
-	printf("indexReg = %x, x = %x, y = %x, f = %x, n = %x\n", *cpu->getIndexRegister(), *vx, *vy, *vf, n);
+	if (temp) printf("overwrite hint!!!!\n");
 #endif
+	pre_optimizations(new QueueType{ opcode, cpu->prevJmpHint(), temp });
+
+
 	for (int y = 0; y < n; y++){
 		for (int x = 0; x < 8; x++){
 			int check1 = SCREEN_WIDTH * (wrapY + y) + (wrapX + x);
 			uint8_t check2 = memory->read(*cpu->getIndexRegister() + y) << x;
 			check2 >>= 7;
 			//printf("%d ", check2);
-			if ((videoBuffer[check1] & check2) != 0) *vf = 0x1;
+			if ((videoBuffer[check1] & check2) != 0) overwriteHint = *vf = 0x1;
 			videoBuffer[check1] ^= check2;
 		}
 		//printf("\n");
 	}
 
 	post_optimizations();
-	
+#ifdef DEBUG_ME
+	printf("indexReg = %x, x = %x, y = %x, f = %x, n = %x\n", *cpu->getIndexRegister(), *vx, *vy, *vf, n);
+#endif
 }
 

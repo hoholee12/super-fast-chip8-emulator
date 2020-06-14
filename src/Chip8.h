@@ -147,7 +147,7 @@ inline void Chip8::update_controller(){
 				video->clearVBuffer();
 				drawFlag = false;
 			}
-			video->copySprite(currentOpcode, cpu, memory);
+			video->copySprite(currentOpcode, cpu, memory, video);
 			break;
 		case ControllerOp::setSoundTimer:
 			audio->setSoundTimer(currentOpcode, cpu);

@@ -11,7 +11,6 @@
 #include"Memory.h"
 #include"Audio.h"
 
-
 //replace updateInterpreter_??()
 
 class Dynarec{
@@ -106,12 +105,15 @@ public:
 		
 
 
-		
+		/*
 #ifdef DEBUG_ME
 		//debugger
 		printf("delayReg = %x,\t", delayRegister);
 		debugMe();
 #endif
+		*/
+
+
 		translator->decode();
 		cpu->decode();
 		//decode
@@ -137,7 +139,7 @@ public:
 					video->clearVBuffer();
 					drawFlag = false;
 				}
-				video->copySprite(currentOpcode, cpu, memory);
+				video->copySprite(currentOpcode, cpu, memory, video);
 				break;
 			case ControllerOp::setSoundTimer:
 				audio->setSoundTimer(currentOpcode, cpu);

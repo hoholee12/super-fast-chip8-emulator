@@ -19,6 +19,7 @@ typedef struct _QueueType{
 	//uint8_t vy;
 	//uint8_t vf;
 	bool jmpState;
+	bool overwriteState;
 
 	const bool operator==(const _QueueType& queueOp){
 		return //(indexReg == queueOp.indexReg)
@@ -26,8 +27,10 @@ typedef struct _QueueType{
 			//&& (vx == queueOp.vx)
 			//&& (vy == queueOp.vy)
 			//&& (vf == queueOp.vf)
-			&& (jmpState == true)
-			&& (queueOp.jmpState == true)
+			&& ((jmpState == true)
+			&& (queueOp.jmpState == true))
+			//&& ((overwriteState == false)
+			//&& (queueOp.overwriteState == false))
 			;
 	}
 } QueueType;
@@ -40,6 +43,7 @@ private:
 	uint8_t videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer
 	uint8_t frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //one for real display
 
+	bool overwriteHint = false;
 	
 
 	//simple queue
@@ -52,11 +56,16 @@ private:
 	uint32_t prevOp = 0;
 
 	void enqueue(QueueType* inputQueue){ 
-#ifdef DEBUG_ME
-		printf(">>insert queue\n");
-#endif
+
 		prevOp = inputQueue->opcode;
-		opcodeQueue[queueMask(queuePointer++)] = *inputQueue; }
+		opcodeQueue[queueMask(queuePointer++)] = *inputQueue; 
+#ifdef DEBUG_ME
+		printf(">>insert queue: %d draws recorded\n", queuePointer);
+
+		for (int i = 0; i < queuePointer; i++) printf("%d:\topcode:%02X\tjmp:%d\trewrite:%d\n"
+			, i + 1, opcodeQueue->opcode, opcodeQueue->jmpState, opcodeQueue->overwriteState);
+#endif
+	}
 	
 	void empty_queue(){ 
 #ifdef DEBUG_ME
@@ -100,13 +109,19 @@ private:
 
 public:
 
+	bool prevOverwriteHint(){
+		bool temp = overwriteHint;
+		overwriteHint = false;	//reset
+		return temp;
+	}
+
 
 	//clone to fbuffer
 	void copyToFbuffer(){ for (int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) frameBuffer[i] = videoBuffer[i]; }
 
 	void clearVBuffer();
 
-	void copySprite(uint16_t opcode, CPU* cpu, Memory* memory);
+	void copySprite(uint16_t opcode, CPU* cpu, Memory* memory, Video* video);
 
 	//for chip8 endless looop
 	void forceFlush(){
@@ -128,8 +143,10 @@ inline void Video::pre_optimizations(QueueType* inputQueue){
 	//deflicker
 	findOpcodefromQueue(inputQueue);
 	if(copyFlag){
+#ifndef DEBUG_ME
 		if (queuePointer < 2) offset_limit = -1;	//hax for tetris
 		if (prevOp == inputQueue->opcode) offset_limit = -1;	//hax for random
+#endif
 		forceFlush();
 		copyFlag = false;
 	}
