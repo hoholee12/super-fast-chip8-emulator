@@ -29,6 +29,7 @@ private:
 
 public:
 
+	uint32_t getBaseClock(){ return baseClock; }
 	
 	//for cpu while loop
 	bool baseLoop(){

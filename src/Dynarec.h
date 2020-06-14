@@ -11,6 +11,7 @@
 #include"Memory.h"
 #include"Audio.h"
 
+
 //replace updateInterpreter_??()
 
 class Dynarec{
@@ -37,6 +38,14 @@ class Dynarec{
 	uint32_t x_val;
 	uint32_t y_val;
 
+	//scheduling arrays
+	uint16_t* itpArr;
+	using vect8ptr = std::vector<vect8*>;
+	vect8ptr blockArr;
+	uint32_t itpIterator; uint32_t blockIterator = 0;
+	
+
+
 	/*
 		TODO:
 
@@ -61,7 +70,11 @@ class Dynarec{
 
 
 public:
-	void init(CPU* cpu, Video* video, Memory* memory, Audio* audio){
+	void init(CPU* cpu, Video* video, Memory* memory, Audio* audio, uint32_t baseClock){
+		itpArr = new uint16_t(baseClock);
+		blockArr.resize(baseClock);
+
+		
 		this->cpu = cpu;
 		this->video = video;
 		this->memory = memory;

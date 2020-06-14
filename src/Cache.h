@@ -12,28 +12,31 @@
 
 using vect8 = std::vector<uint8_t>;
 
+using ICache = struct _ICache{
+	vect8 cache;
+	uint16_t endOp = NULL;
+	bool check = false;
+};
+
 class Cache{
+
+	ICache iCache[FULL_MEM_SIZE];
 public:
 
-	vect8 iCache[FULL_MEM_SIZE];
-	bool iCheck[FULL_MEM_SIZE];
 
-	Cache(){
-		for (int i = 0; i < FULL_MEM_SIZE; i++) iCheck[i] = false;
-	}
+	bool checkCacheExists(int pc){ return iCache[pc].check; }
 
-	bool checkCacheExists(int pc){ return iCheck[pc]; }
-
-	vect8* createCache(int pc){
-		iCheck[pc] = true;
-		iCache[pc].clear();
+	ICache* createCache(int pc){
+		iCache[pc].endOp = pc;
+		iCache[pc].check = true;
+		iCache[pc].cache.clear();
 		return &iCache[pc];
 	}
 
 	void printCache(int pc){
-		if (!iCheck[pc]) return;
+		if (!iCache[pc].check) return;
 		printf("pc = %02X cache dump:\n", pc);
-		for (int i = 0; i < iCache[pc].size(); i++) printf("%02X ", iCache[pc].at(i));
+		for (int i = 0; i < iCache[pc].cache.size(); i++) printf("%02X ", iCache[pc].cache.at(i));
 	}
 
 
