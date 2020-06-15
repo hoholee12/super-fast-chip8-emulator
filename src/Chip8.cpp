@@ -49,7 +49,7 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 	audio->init();
 	audio->playAudio(); //test
 
-	dynarec->init(cpu, video, memory, audio);
+	dynarec->init(cpu, video, memory, audio, scheduler->getBaseClock());
 
 	this->whichInterpreter = whichInterpreter;
 
