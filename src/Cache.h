@@ -33,6 +33,13 @@ public:
 		return &iCache[pc];
 	}
 
+	ICache* getCache(int pc){
+		if (!checkCacheExists(pc)){
+			createCache(pc);
+		}
+		return &iCache[pc];
+	}
+
 	void printCache(int pc){
 		if (!iCache[pc].check) return;
 		printf("pc = %02X cache dump:\n", pc);

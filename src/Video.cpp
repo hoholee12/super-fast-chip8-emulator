@@ -63,7 +63,10 @@ void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory, Video* video){
 			uint8_t check2 = memory->read(*cpu->getIndexRegister() + y) << x;
 			check2 >>= 7;
 			//printf("%d ", check2);
-			if ((videoBuffer[check1] & check2) != 0) overwriteHint = *vf = 0x1;
+			if ((videoBuffer[check1] & check2) != 0){ 
+				overwriteHint = true;
+				*vf = 0x1;
+			}
 			videoBuffer[check1] ^= check2;
 		}
 		//printf("\n");

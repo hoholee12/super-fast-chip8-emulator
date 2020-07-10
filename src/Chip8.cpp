@@ -119,10 +119,11 @@ void Chip8::run(){
 		break;
 	case 4:
 		while (running){
-			while (scheduler->baseLoop()){
-				dynarec->updateRecompiler();
-			}
-			dynarec->executeBlock();
+			
+			
+			dynarec->updateRecompiler();
+			
+			dynarec->executeBlock();	//cpu & controller
 			update_lowerhalf();
 		}
 	default:
