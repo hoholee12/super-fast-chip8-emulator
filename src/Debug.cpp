@@ -1,10 +1,16 @@
 #include"Debug.h"
 
-void Debug::printDebug(uint16_t pc, uint16_t stack, uint16_t input, defaults* mainwindow){
+void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, defaults* mainwindow){
 	static int count = 0;
 	static bool inCall = false;
 
 	mainwindow->delayTime(DEBUG_TIME);
+
+	printf("\nregister dump: <");
+	for (int i = 0; i < 0x10; i++){
+		printf("%02X ", v[i]);
+	}
+	printf(">\n");
 
 	if (inCall) printf("(call)\t");
 	printf("%d:\tpc: %x\t\tstack: %x\topcode: %x\t", ++count, pc, stack, input);

@@ -91,10 +91,10 @@ public:
 
 
 
-	void updateRecompiler(){
+	uint16_t updateRecompiler(){
 
 		//ready icache
-		if (cache->checkCacheExists(cpu->programCounter)) return;
+		if (cache->checkCacheExists(cpu->programCounter)) return currentOpcode;
 		translator->init(cache->createCache(cpu->programCounter));
 
 		//compile ahead while backup pc
@@ -122,12 +122,16 @@ public:
 			cpu->programCounter += 2;
 		}
 
+#ifdef DEBUG_ME
 		cache->printCache(pcTemp);
+
+#endif
 
 		//restore original pc
 		cpu->programCounter = pcTemp;
-	}
 
+		return currentOpcode;
+	}
 
 
 
