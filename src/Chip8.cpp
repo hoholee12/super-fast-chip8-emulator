@@ -123,7 +123,16 @@ void Chip8::run(){
 			
 			dynarec->updateRecompiler();
 			
+
+
 			dynarec->executeBlock();	//cpu & controller
+
+#ifdef DEBUG_ME
+			//debugger
+			printf("delayReg = %x,\t", delayRegister);
+			debugMe();
+
+#endif
 			update_lowerhalf();
 		}
 	default:

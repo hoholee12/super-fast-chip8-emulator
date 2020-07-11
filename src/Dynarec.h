@@ -98,10 +98,10 @@ public:
 		translator->init(cache->createCache(cpu->programCounter));
 
 		//compile ahead while backup pc
-		uint16_t opcodeTemp = cpu->programCounter;
+		uint16_t pcTemp = cpu->programCounter;
 
 		//recompile n
-		for (int i = 0; i < baseClock && !translator->checkFallback(); i++){
+		for (int i = 0; i < baseClock && !translator->checkFallback() && !translator->checkEndDecode(); i++){
 
 			//fetch
 			previousOpcode = currentOpcode;
@@ -120,8 +120,10 @@ public:
 			cpu->programCounter += 2;
 		}
 
+		cache->printCache(pcTemp);
+
 		//restore original pc
-		cpu->programCounter = opcodeTemp;
+		cpu->programCounter = pcTemp;
 	}
 
 

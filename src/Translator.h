@@ -147,7 +147,8 @@ public:
 	}
 
 	void decode(){
-		(this->*(jumbo_table[*(uint16_t*)currentOpcode]))();
+		uint16_t cpuOp = *(uint16_t*)currentOpcode;
+		(this->*(jumbo_table[cpuOp]))();
 		memoryBlock->check = true;
 		//memoryBlock->endOp = currentOpcode;
 		//TODO
@@ -162,6 +163,11 @@ public:
 	bool checkFallback(){
 		bool temp = doFallback;
 		doFallback = false;
+		return temp;
+	}
+	bool checkEndDecode(){
+		bool temp = endDecode;
+		endDecode = false;
 		return temp;
 	}
 
