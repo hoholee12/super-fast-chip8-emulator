@@ -147,7 +147,7 @@ public:
 	}
 
 	void decode(){
-		(this->*(jumbo_table[currentOpcode]))();
+		(this->*(jumbo_table[*(uint16_t*)currentOpcode]))();
 		memoryBlock->check = true;
 		//memoryBlock->endOp = currentOpcode;
 		//TODO
