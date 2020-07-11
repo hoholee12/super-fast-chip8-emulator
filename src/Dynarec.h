@@ -112,8 +112,10 @@ public:
 			x_val = (currentOpcode & 0x0f00) >> 8;
 			y_val = (currentOpcode & 0x00f0) >> 4;
 
-
-			translator->decode();
+			//cut one full jiffy
+			//ret at the end
+			if (i == baseClock - 1) translator->decode(true);
+			else translator->decode();
 
 			//won't reach if translator decodes a fallback
 			//next opcode

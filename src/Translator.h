@@ -146,7 +146,12 @@ public:
 		
 	}
 
-	void decode(){
+
+	//call this from Dynarec core
+	void decode(bool endMe = false){
+		//abrupt cut by jiffy
+		if (endMe){ interpreterSwitch_func(); return; }
+
 		uint16_t cpuOp = *(uint16_t*)currentOpcode;
 		(this->*(jumbo_table[cpuOp]))();
 		memoryBlock->check = true;
@@ -171,6 +176,9 @@ public:
 		return temp;
 	}
 
+private:
+
+	//these are for internal use
 	//increment program counter by 2
 	void incrementPC(){
 		X86Emitter::addToMemaddr(&memoryBlock->cache, programCounter, 2, Word);

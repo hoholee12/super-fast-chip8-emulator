@@ -50,6 +50,7 @@ public:
 		if (!iCache[pc].check) return;
 		printf("pc = %02X cache dump:\n", pc);
 		for (int i = 0; i < iCache[pc].cache.size(); i++) printf("%02X ", iCache[pc].cache.at(i));
+		printf("\n");
 	}
 
 
