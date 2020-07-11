@@ -14,7 +14,7 @@ using vect8 = std::vector<uint8_t>;
 
 using ICache = struct _ICache{
 	vect8 cache;
-	uint16_t endOp = NULL;
+	bool isFallback = false;
 	bool check = false;
 };
 
@@ -27,9 +27,15 @@ public:
 	bool checkCacheExists(int pc){ return iCache[pc].check; }
 
 	ICache* createCache(int pc){
-		iCache[pc].endOp = pc;
+		iCache[pc].isFallback = false;
 		iCache[pc].check = true;
 		iCache[pc].cache.clear();
+		return &iCache[pc];
+	}
+
+	ICache* createFallback(int pc){
+		iCache[pc].isFallback = true;
+		iCache[pc].check = true;
 		return &iCache[pc];
 	}
 

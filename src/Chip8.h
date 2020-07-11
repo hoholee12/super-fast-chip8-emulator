@@ -1,4 +1,6 @@
 #pragma once
+//windows.h header MUST BE DECLARED FIRST!!(Dynarec.h)
+#include"Dynarec.h"
 #include"CPU.h"
 #include"Memory.h"
 #include"Input.h"
@@ -7,7 +9,7 @@
 #include"Timer.h"
 #include"TimeSched.h"
 #include"Frameskip.h"
-#include"Dynarec.h"
+
 
 #include"defaults.h"
 #include"Debug.h"

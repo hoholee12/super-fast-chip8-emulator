@@ -1,5 +1,12 @@
 #pragma once
 
+//windows.h header MUST BE DECLARED FIRST!!
+#ifdef _WIN32
+#include <windows.h>
+#elif __LINUX__
+#include <sys/mman.h>
+#endif
+
 /*
 	Dynarec main core
 
@@ -11,11 +18,6 @@
 #include"Memory.h"
 #include"Audio.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/mman.h>
-#endif
 
 //replace updateInterpreter_??()
 
@@ -42,12 +44,6 @@ class Dynarec{
 	bool hintFallback = false;
 	uint32_t x_val;
 	uint32_t y_val;
-
-	//scheduling arrays
-	uint16_t* itpArr;
-	using vect8ptr = std::vector<vect8*>;
-	vect8ptr blockArr;
-	uint32_t itpIterator; uint32_t blockIterator = 0;
 	
 	uint32_t baseClock;
 
@@ -77,8 +73,7 @@ class Dynarec{
 
 public:
 	void init(CPU* cpu, Video* video, Memory* memory, Audio* audio, uint32_t baseClock){
-		itpArr = new uint16_t(baseClock);
-		blockArr.resize(baseClock);
+		
 		this->baseClock = baseClock;
 		
 		this->cpu = cpu;
@@ -102,12 +97,16 @@ public:
 		if (cache->checkCacheExists(cpu->programCounter)) return;
 		translator->init(cache->createCache(cpu->programCounter));
 
+		//compile ahead while backup pc
+		uint16_t opcodeTemp = cpu->programCounter;
+
 		//recompile n
-		for (int i = 0; i < baseClock; i++){
+		for (int i = 0; i < baseClock && !translator->checkFallback(); i++){
 
 			//fetch
 			previousOpcode = currentOpcode;
 			currentOpcode = cpu->fetch();
+
 
 			//update xy for next opcode
 			x_val = (currentOpcode & 0x0f00) >> 8;
@@ -116,9 +115,13 @@ public:
 
 			translator->decode();
 
+			//won't reach if translator decodes a fallback
+			//next opcode
+			cpu->programCounter += 2;
 		}
 
-
+		//restore original pc
+		cpu->programCounter = opcodeTemp;
 	}
 
 
@@ -130,77 +133,81 @@ public:
 
 		ICache* temp = cache->getCache(cpu->programCounter);
 		
-
+		if (!temp->isFallback){
 #ifdef _WIN32
 
-		SYSTEM_INFO system_info;
-		GetSystemInfo(&system_info);
-		auto const page_size = system_info.dwPageSize;
+			SYSTEM_INFO system_info;
+			GetSystemInfo(&system_info);
+			auto const page_size = system_info.dwPageSize;
 
-		// prepare the memory in which the machine code will be put (it's not executable yet):
-		void* buffer = VirtualAlloc(nullptr, page_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+			// prepare the memory in which the machine code will be put (it's not executable yet):
+			void* buffer = VirtualAlloc(nullptr, page_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-		// copy the machine code into that memory:
-		memcpy(buffer, temp->cache.data(), temp->cache.size());
+			// copy the machine code into that memory:
+			memcpy(buffer, temp->cache.data(), temp->cache.size());
 
-		// mark the memory as executable:
-		DWORD dummy;
-		VirtualProtect(buffer, temp->cache.size(), PAGE_EXECUTE_READ, &dummy);
+			// mark the memory as executable:
+			DWORD dummy;
+			VirtualProtect(buffer, temp->cache.size(), PAGE_EXECUTE_READ, &dummy);
 
-		// interpret the beginning of the (now) executable memory as the entry
-		// point of a function taking no arguments and returning a 4-byte int:
-
-
-		typedef int32_t(*dank)(void);
-		using weed = int32_t(*)(void);
-		dank function_ptr = (weed)buffer;
-
-		//auto const function_ptr = reinterpret_cast<std::int32_t(*)()>(buffer);
+			// interpret the beginning of the (now) executable memory as the entry
+			// point of a function taking no arguments and returning a 4-byte int:
 
 
-		// call the function and store the result in a local std::int32_t object:
-		function_ptr();
+			typedef int32_t(*dank)(void);
+			using weed = int32_t(*)(void);
+			dank function_ptr = (weed)buffer;
 
-		// free the executable memory:
-		VirtualFree(buffer, 0, MEM_RELEASE);
+			//auto const function_ptr = reinterpret_cast<std::int32_t(*)()>(buffer);
 
-#else
-		void *buffer = mmap(NULL,             // address
-			4096,             // size
-			PROT_READ | PROT_WRITE | PROT_EXEC,
-			MAP_PRIVATE | MAP_ANONYMOUS,
-			-1,               // fd (not used here)
-			0);               // offset (not used here)
 
-		memcpy(buffer, temp->cache.data(), temp->cache.size());
+			// call the function and store the result in a local std::int32_t object:
+			function_ptr();
 
-		typedef int32_t(*dank)(void);
-		using weed = int32_t(*)(void);
-		dank function_ptr = (weed)buffer;
+			// free the executable memory:
+			VirtualFree(buffer, 0, MEM_RELEASE);
 
-		function_ptr();
+#elif __LINUX__
+			void *buffer = mmap(NULL,             // address
+				4096,             // size
+				PROT_READ | PROT_WRITE | PROT_EXEC,
+				MAP_PRIVATE | MAP_ANONYMOUS,
+				-1,               // fd (not used here)
+				0);               // offset (not used here)
+
+			memcpy(buffer, temp->cache.data(), temp->cache.size());
+
+			typedef int32_t(*dank)(void);
+			using weed = int32_t(*)(void);
+			dank function_ptr = (weed)buffer;
+
+			function_ptr();
 
 #endif
 
-
-
-		//controller
-		if (controllerOp != ControllerOp::none)		//optimization
-			switch (controllerOp){
-			case ControllerOp::clearScreen:
-				drawFlag = true;
-				break;
-			case ControllerOp::drawVideo:
-				if (drawFlag){
-					video->clearVBuffer();
-					drawFlag = false;
-				}
-				video->copySprite(currentOpcode, cpu, memory, video);
-				break;
-			case ControllerOp::setSoundTimer:
-				audio->setSoundTimer(currentOpcode, cpu);
-				break;
 		}
+		else{
+			cpu->decode_jumboLUT();
+			//controller
+			if (controllerOp != ControllerOp::none)		//optimization
+				switch (controllerOp){
+				case ControllerOp::clearScreen:
+					drawFlag = true;
+					break;
+				case ControllerOp::drawVideo:
+					if (drawFlag){
+						video->clearVBuffer();
+						drawFlag = false;
+					}
+					video->copySprite(currentOpcode, cpu, memory, video);
+					break;
+				case ControllerOp::setSoundTimer:
+					audio->setSoundTimer(currentOpcode, cpu);
+					break;
+			}
+		}
+
+		
 		
 	}
 

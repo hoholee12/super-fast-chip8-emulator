@@ -52,6 +52,8 @@ private:
 	ICache* memoryBlock;
 
 	bool endDecode = false;
+	bool doIncrementPC = false;
+	bool doFallback = false;
 
 	//jumboLUT version of opcode table
 #define JUMBO_TABLE_SIZE 0x10000
@@ -147,14 +149,26 @@ public:
 	void decode(){
 		(this->*(jumbo_table[currentOpcode]))();
 		memoryBlock->check = true;
-		memoryBlock->endOp = currentOpcode;
+		//memoryBlock->endOp = currentOpcode;
 		//TODO
 	}
 
 
+	bool checkIncrementPC(){
+		bool temp = doIncrementPC;
+		doIncrementPC = false;
+		return temp;
+	}
+	bool checkFallback(){
+		bool temp = doFallback;
+		doFallback = false;
+		return temp;
+	}
+
 	//increment program counter by 2
 	void incrementPC(){
 		X86Emitter::addToMemaddr(&memoryBlock->cache, programCounter, 2, Word);
+		doIncrementPC = true;
 		//X86Emitter::addWordToMemaddr(memoryBlock, programCounter, 2);
 	}
 
@@ -164,6 +178,11 @@ public:
 	//...or jump
 	void hintFallback_func(){
 		X86Emitter::setToMemaddr(&memoryBlock->cache, hintFallback, 0x1, Byte);
+
+		//for executeBlock
+		memoryBlock->isFallback = true;
+		//for updateRecompiler
+		doFallback = true;
 		
 	}
 	void interpreterSwitch_func(){
