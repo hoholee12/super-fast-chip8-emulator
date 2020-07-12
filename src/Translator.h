@@ -331,7 +331,7 @@ private:
 		//X86Emitter::inc_byte_memaddr(&memoryBlock->cache, stackPointer);
 
 		//NNN(is an immediate) to programCounter
-		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
 		//X86Emitter::setWordToMemaddr(&memoryBlock->cache, programCounter, nnn);
 
 		interpreterSwitch_func();
@@ -339,7 +339,7 @@ private:
 	}
 	void opcode1nnn(){
 		//NNN to programCounter
-		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
 
 		//jmpHint = true
 		X86Emitter::setToMemaddr(&memoryBlock->cache, jmpHint, 1, Byte);
@@ -361,7 +361,8 @@ private:
 		//X86Emitter::inc_byte_memaddr(&memoryBlock->cache, stackPointer);
 
 		//NNN(is an immediate) to programCounter
-		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
+		//printf("2nnn: %02X\n", *(uint32_t*)nnn);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
 
 		interpreterSwitch_func();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
@@ -626,13 +627,13 @@ private:
 	}
 	void opcodeannn(){
 
-		X86Emitter::setToMemaddr(&memoryBlock->cache, indexRegister, nnn, Word);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, indexRegister, *(uint32_t*)nnn, Word);
 
 		incrementPC();
 		//indexRegister = NNN;
 	}
 	void opcodebnnn(){
-		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
 		X86Emitter::addToMemaddr(&memoryBlock->cache, programCounter, stack, Word);
 
 		//programCounter = NNN + v[0]; flag = 1; //(dont increment pc)
