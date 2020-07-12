@@ -9,6 +9,17 @@
 #include"CPU.h"
 #include"Cache.h"
 
+
+typedef struct _translatorState{
+
+	uint32_t x_val = 0;
+	uint32_t y_val = 0;
+	uint32_t nx = 0;
+	uint32_t nnx = 0;
+	uint32_t nnnx = 0;
+
+} TranslatorState;
+
 class Translator;
 typedef void(Translator::*Table) (void);
 
@@ -115,12 +126,7 @@ public:
 	//constructor
 	Translator(CPU* cpu,
 		uint32_t interpreterSwitch,
-		uint32_t hintFallback,
-		uint32_t x_val,
-		uint32_t y_val,
-		uint32_t nx,
-		uint32_t nnx,
-		uint32_t nnnx
+		uint32_t hintFallback
 		){
 		controllerOp = (uint32_t)&cpu->controllerOp;
 		programCounter = (uint32_t)&cpu->programCounter;
@@ -139,17 +145,13 @@ public:
 		this->interpreterSwitch = interpreterSwitch;
 		this->hintFallback = hintFallback;
 
-		vxPointer = x_val;
-		vyPointer = y_val;
 		
 		vfPointerx = 0xF;
 		vfPointer = (uint32_t)&vfPointerx;
 		vzPointerx = 0x0;
 		vzPointer = (uint32_t)&vzPointerx;
 		
-		n = nx;
-		nn = nnx;
-		nnn = nnnx;
+
 
 #ifdef DEBUG_ME
 		//for checking proper translator input
@@ -170,41 +172,26 @@ public:
 			"(0x%02X)|"
 			"(0x%02X)|"
 			"(0x%02X)|"
-			"(0x%02X)|"
-			"(0x%02X)|"
-			"(0x%02X)|"
-			"(0x%02X)|"
-			"(0x%02X)|"
 			"(0x%02X)"
 			"\nReplace with:\n"
-			"(?1vxPointer)"
-			"(?2vyPointer)"
-			"(?3interpreterSwitch)"
-			"(?4hintFallback)"
-			"(?5n)"
-			"(?6nn)"
-			"(?7nnn)"
-			"(?8Vreg)"
-			"(?9controllerOp)"
-			"(?10programCounter)"
-			"(?11stack)"
-			"(?12stackPointer)"
-			"(?13flag)"
-			"(?14jmpHint)"
-			"(?15indexRegister)"
-			"(?16pressedKey)"
-			"(?17delayRegister)"
-			"(?18throwError)"
-			"(?19mem)"
-			"(?20currentOpcode)"
+			"(?1interpreterSwitch)"
+			"(?2hintFallback)"
+			"(?3Vreg)"
+			"(?4controllerOp)"
+			"(?5programCounter)"
+			"(?6stack)"
+			"(?7stackPointer)"
+			"(?8flag)"
+			"(?9jmpHint)"
+			"(?10indexRegister)"
+			"(?11pressedKey)"
+			"(?12delayRegister)"
+			"(?13throwError)"
+			"(?14mem)"
+			"(?15currentOpcode)"
 			"\n\n",
-			vxPointer,
-			vyPointer,
 			interpreterSwitch,
 			hintFallback,
-			n,
-			nn,
-			nnn,
 			v,
 			controllerOp,
 			programCounter,
@@ -225,12 +212,19 @@ public:
 
 
 	//call this from Dynarec core
-	void decode(bool endMe = false){
+	void decode(TranslatorState* state, bool endMe = false){
 		//abrupt cut by jiffy
 		if (endMe){ interpreterSwitch_func(); return; }
 
 
 		uint16_t cpuOp = *(uint16_t*)currentOpcode;
+
+		//to each state
+		vxPointer = (uint32_t)&state->x_val;
+		vyPointer = (uint32_t)&state->y_val;
+		n = (uint32_t)&state->nx;
+		nn = (uint32_t)&state->nnx;
+		nnn = (uint32_t)&state->nnnx;
 
 
 #ifdef DEBUG_ME

@@ -21,6 +21,8 @@
 
 //replace updateInterpreter_??()
 
+
+
 class Dynarec{
 	Cache* cache;
 	Translator* translator;
@@ -45,11 +47,10 @@ class Dynarec{
 	//translator core stuff
 	bool switchToInterpreter = false;
 	bool hintFallback = false;
-	uint32_t x_val = 0;
-	uint32_t y_val = 0;
-	uint32_t nx = 0;
-	uint32_t nnx = 0;
-	uint32_t nnnx = 0;
+
+	//baseClock is max size of stateArr
+	std::vector<TranslatorState> stateArr;
+	uint32_t stateArrPtr = 0;
 	
 	uint32_t baseClock;
 
@@ -87,14 +88,16 @@ public:
 		this->memory = memory;
 		this->audio = audio;
 		cache = new Cache();
+
+
+		//determine all states for one jiffy
+		stateArr.resize(baseClock);
+
+
+		
 		translator = new Translator(cpu,	//cpu variables
 			(uint32_t)&switchToInterpreter,
-			(uint32_t)&hintFallback,
-			(uint32_t)&x_val,
-			(uint32_t)&y_val, 
-			(uint32_t)&nx, 
-			(uint32_t)&nnx, 
-			(uint32_t)&nnnx);	//core variables
+			(uint32_t)&hintFallback);	//core variables
 	}
 
 
@@ -120,17 +123,17 @@ public:
 			currentOpcode = cpu->fetch();
 
 
-			//update xy for next opcode
-			x_val = (currentOpcode & 0x0f00) >> 8;
-			y_val = (currentOpcode & 0x00f0) >> 4;
-			nx = currentOpcode & 0x000F;
-			nnx = currentOpcode & 0x00FF;
-			nnnx = currentOpcode & 0x0FFF;
+			//update xyn for next opcode
+			stateArr[i].x_val = (currentOpcode & 0x0f00) >> 8;
+			stateArr[i].y_val = (currentOpcode & 0x00f0) >> 4;
+			stateArr[i].nx = currentOpcode & 0x000F;
+			stateArr[i].nnx = currentOpcode & 0x00FF;
+			stateArr[i].nnnx = currentOpcode & 0x0FFF;
 
 			//cut one full jiffy
 			//ret at the end
-			if (i == baseClock - 1) translator->decode(true);
-			else translator->decode();
+			if (i == baseClock - 1) translator->decode(&stateArr[i], true);
+			else translator->decode(&stateArr[i]);
 
 			//won't reach if translator decodes a fallback
 			//next opcode
@@ -230,8 +233,6 @@ public:
 			}
 		}
 
-		
-		
 	}
 
 };
