@@ -113,7 +113,15 @@ public:
 
 
 	//constructor
-	Translator(CPU* cpu, uint32_t interpreterSwitch, uint32_t hintFallback, uint32_t x_val, uint32_t y_val){
+	Translator(CPU* cpu,
+		uint32_t interpreterSwitch,
+		uint32_t hintFallback,
+		uint32_t x_val,
+		uint32_t y_val,
+		uint32_t nx,
+		uint32_t nnx,
+		uint32_t nnnx
+		){
 		controllerOp = (uint32_t)&cpu->controllerOp;
 		programCounter = (uint32_t)&cpu->programCounter;
 		stack = (uint32_t)&cpu->stack;
@@ -133,16 +141,37 @@ public:
 
 		vxPointer = x_val;
 		vyPointer = y_val;
+		
 		vfPointerx = 0xF;
 		vfPointer = (uint32_t)&vfPointerx;
 		vzPointerx = 0x0;
 		vzPointer = (uint32_t)&vzPointerx;
-		nx = cpu->currentOpcode & 0x000F;
-		nnx = cpu->currentOpcode & 0x00FF;
-		nnnx = cpu->currentOpcode & 0x0FFF;
-		n = (uint32_t)&nx;
-		nn = (uint32_t)&nnx;
-		nnn = (uint32_t)&nnnx;
+		
+		n = nx;
+		nn = nnx;
+		nnn = nnnx;
+
+#ifdef DEBUG_ME
+		//for checking proper translator input
+		printf(
+			"address of:\n"
+			"vxPointer: %02X\n"
+			"vyPointer: %02X\n"
+			"interpreterSwitch: %02X\n"
+			"hintFallback: %02X\n"
+			"n: %02X\n"
+			"nn: %02X\n"
+			"nnn: %02X\n"
+			"\n\n",
+			vxPointer,
+			vyPointer,
+			interpreterSwitch,
+			hintFallback,
+			n,
+			nn,
+			nnn);
+
+#endif
 		
 	}
 
@@ -152,7 +181,19 @@ public:
 		//abrupt cut by jiffy
 		if (endMe){ interpreterSwitch_func(); return; }
 
+
 		uint16_t cpuOp = *(uint16_t*)currentOpcode;
+
+
+#ifdef DEBUG_ME
+		//for checking proper translator input
+		printf("compiled opcode: %02X, xPointer: %X, yPointer: %X, nnn: %X\n",
+			cpuOp,
+			*(uint32_t*)vxPointer,
+			*(uint32_t*)vyPointer,
+			*(uint32_t*)nnn);
+#endif
+
 		(this->*(jumbo_table[cpuOp]))();
 		memoryBlock->check = true;
 		//memoryBlock->endOp = currentOpcode;

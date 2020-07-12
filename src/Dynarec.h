@@ -39,11 +39,17 @@ class Dynarec{
 	int whichInterpreter; //choose interpreter method
 
 	bool drawFlag = false; //possible speed optimization
-
+	
+	
+	
+	//translator core stuff
 	bool switchToInterpreter = false;
 	bool hintFallback = false;
-	uint32_t x_val;
-	uint32_t y_val;
+	uint32_t x_val = 0;
+	uint32_t y_val = 0;
+	uint32_t nx = 0;
+	uint32_t nnx = 0;
+	uint32_t nnnx = 0;
 	
 	uint32_t baseClock;
 
@@ -82,7 +88,13 @@ public:
 		this->audio = audio;
 		cache = new Cache();
 		translator = new Translator(cpu,	//cpu variables
-			(uint32_t)&switchToInterpreter, (uint32_t)&hintFallback, (uint32_t)&x_val, (uint32_t)&y_val);	//core variables
+			(uint32_t)&switchToInterpreter,
+			(uint32_t)&hintFallback,
+			(uint32_t)&x_val,
+			(uint32_t)&y_val, 
+			(uint32_t)&nx, 
+			(uint32_t)&nnx, 
+			(uint32_t)&nnnx);	//core variables
 	}
 
 
@@ -111,6 +123,9 @@ public:
 			//update xy for next opcode
 			x_val = (currentOpcode & 0x0f00) >> 8;
 			y_val = (currentOpcode & 0x00f0) >> 4;
+			nx = currentOpcode & 0x000F;
+			nnx = currentOpcode & 0x00FF;
+			nnnx = currentOpcode & 0x0FFF;
 
 			//cut one full jiffy
 			//ret at the end
