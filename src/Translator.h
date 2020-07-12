@@ -154,14 +154,49 @@ public:
 #ifdef DEBUG_ME
 		//for checking proper translator input
 		printf(
-			"address of:\n"
-			"vxPointer: %02X\n"
-			"vyPointer: %02X\n"
-			"interpreterSwitch: %02X\n"
-			"hintFallback: %02X\n"
-			"n: %02X\n"
-			"nn: %02X\n"
-			"nnn: %02X\n"
+			"\tregex me!\n"
+			"Find what:\n"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)|"
+			"(0x%02X)"
+			"\nReplace with:\n"
+			"(?1vxPointer)"
+			"(?2vyPointer)"
+			"(?3interpreterSwitch)"
+			"(?4hintFallback)"
+			"(?5n)"
+			"(?6nn)"
+			"(?7nnn)"
+			"(?8Vreg)"
+			"(?9controllerOp)"
+			"(?10programCounter)"
+			"(?11stack)"
+			"(?12stackPointer)"
+			"(?13flag)"
+			"(?14jmpHint)"
+			"(?15indexRegister)"
+			"(?16pressedKey)"
+			"(?17delayRegister)"
+			"(?18throwError)"
+			"(?19mem)"
+			"(?20currentOpcode)"
 			"\n\n",
 			vxPointer,
 			vyPointer,
@@ -169,7 +204,20 @@ public:
 			hintFallback,
 			n,
 			nn,
-			nnn);
+			nnn,
+			v,
+			controllerOp,
+			programCounter,
+			stack,
+			stackPointer,
+			flag,
+			jmpHint,
+			indexRegister,
+			pressedKey,
+			delayRegister,
+			throwError,
+			mem,
+			currentOpcode);
 
 #endif
 		
