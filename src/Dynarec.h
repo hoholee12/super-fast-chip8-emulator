@@ -152,7 +152,7 @@ public:
 
 		//no leftover
 		if (leftoverCycle == 0){
-			for (; i < baseClock && !translator->checkFallback() && !translator->checkEndDecode(); i++) internalLoop(i);
+			for (; i < baseClock && !translator->checkFallback() && !translator->checkEndDecode(); i++) internalLoop(i, pcTemp);
 
 			//leftover cycle
 			leftoverCycle = baseClock - i;
@@ -175,7 +175,7 @@ public:
 		else{
 			
 			//leftover remaining
-			for (; i < leftoverCycle && !translator->checkFallback() && !translator->checkEndDecode(); i++) internalLoop(i);
+			for (; i < leftoverCycle && !translator->checkFallback() && !translator->checkEndDecode(); i++) internalLoop(i, pcTemp);
 
 			//leftover cycle
 			leftoverCycle -= i;
@@ -192,9 +192,10 @@ public:
 
 #endif
 
+			/*TODO: leftoverCycle inaccurate*/
 
 			//keep running until its completely filled
-			if (leftoverCycle != 0) return true;
+			if (leftoverCycle > 0) return true;
 		}
 
 
@@ -203,7 +204,7 @@ public:
 	}
 
 	//one opcode into icache
-	void internalLoop(int i){
+	void internalLoop(int i, uint16_t pcTemp){
 
 		//fetch
 		previousOpcode = currentOpcode;
@@ -223,7 +224,7 @@ public:
 		else translator->decode(&stateArr[i]);
 
 		//one opcode into icache count
-		cache->setOpcodeCount(cpu->programCounter, cache->getOpcodeCount(cpu->programCounter) + 1);
+		cache->setOpcodeCount(pcTemp, cache->getOpcodeCount(pcTemp) + 1);
 
 		//won't reach if translator decodes a fallback
 		//next opcode
