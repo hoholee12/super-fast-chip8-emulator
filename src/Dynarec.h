@@ -58,23 +58,20 @@ class Dynarec{
 	uint32_t leftoverCycle = 0;
 
 	/*
-		TODO:
+	structure:
 
-		8 cycles
-			recompile 1 opcode
-				put block arr(1~) translator.h
-			if fallback
-				put fallbackhint opcode arr(0~) cpu.h
-				new block arr(2~) translator.h
-			if jmp
-				executeblock
-				run jmp opcode cpu.h
-	
-		executeblock
-			for loop until last block
-				execute block arr(1~) translator.h
-				run fallback interpreter opcode(0~) cpu.h
-			init all arr
+		loop until n cycle filled
+			n cycles
+				break off if cache exist
+				recompile n opcodes
+				break off for certain ops
+			
+			executeblock
+				execute
+				if fallback
+					interpreter
+
+		run other_peripherals
 	
 	*/
 

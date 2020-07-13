@@ -212,6 +212,9 @@ void Chip8::debugMe(){
 	static bool doOnce = false;
 	if (!isEndlessLoop){
 		doOnce = false;
+		//universal stuff to debug here
+		printf("indexRegister = %x\n", *cpu->getIndexRegister());
+
 		Debug::printDebug(cpu->v, *cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode, mainwindow);
 	}
 	else{
