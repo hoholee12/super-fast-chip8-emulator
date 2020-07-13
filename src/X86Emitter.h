@@ -185,6 +185,8 @@ private:
 
 public:
 
+	/*everything is byte sized except addWord and addDword*/
+
 	enum Direction{ srcToDest, destToSrc = 1 }; //Direction -> srcToDest = 0, destToSrc = 1
 	enum Bitsize{ byteOnly, wordAndDword = 1 }; //Bitsize -> byteOnly = 0, wordAndDword = 1
 
@@ -312,6 +314,10 @@ public:
 		wordAddImmToMemaddrSize = 9,
 		dwordAddImmToMemaddrSize = 10,
 
+		dwordAddRegToMemaddrSize = 6,
+		wordAddRegToMemaddrSize = 7,
+		byteAddRegToMemaddrSize = 6,
+
 		byteAddImmToRegaddrSize = 3,
 		wordAddImmToRegaddrSize = 5,
 		dwordAddImmToRegaddrSize = 6,
@@ -382,6 +388,10 @@ public:
 		byteAddImmToMemaddrMode,
 		wordAddImmToMemaddrMode,
 		dwordAddImmToMemaddrMode,
+
+		dwordAddRegToMemaddrMode,
+		wordAddRegToMemaddrMode,
+		byteAddRegToMemaddrMode,
 
 		byteAddImmToRegaddrMode,
 		wordAddImmToRegaddrMode,
@@ -491,15 +501,26 @@ public:
 	}
 
 	//dword add
-	OperandSizes Add(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest) const{
+	OperandSizes Add(vect8* memoryBlock, OperandModes opmode, X86Regs src, X86Regs dest, Disp addr = Disp()) const{
 		uint8_t opcode = 0x00;
 		switch (opmode){
 		case dwordAddMode: init(memoryBlock, dwordAddSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, src, dest); return dwordAddSize;
-
+		
+			//000000 0 1 00 010 101 addr = add dword ptr [extra], edx
+			//word  = dword + prefix
+			//000000 0 0 00 010 101 addr = add byte ptr [extra], edx
+			//add    d s md arg drg
+		case dwordAddRegToMemaddrMode: init(memoryBlock, dwordAddRegToMemaddrSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, src, memaddr); addDword(addr.dword); return dwordAddRegToMemaddrSize;
+		case wordAddRegToMemaddrMode: init(memoryBlock, wordAddRegToMemaddrSize); addPrefix(); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forDisp, src, memaddr); addDword(addr.dword); return wordAddRegToMemaddrSize;
+		case byteAddRegToMemaddrMode: init(memoryBlock, byteAddRegToMemaddrSize); addOpcode(opcode, srcToDest, byteOnly); addModrm(forDisp, src, memaddr); addDword(addr.dword); return byteAddRegToMemaddrSize;
+			
 		default: opmodeError("add");
 		}
 		return none;
 	}
+
+	//memaddr ops shortcut
+	OperandSizes Add(vect8* memoryBlock, OperandModes opmode, X86Regs src, Disp addr = Disp()) const{ return Add(memoryBlock, opmode, src, memaddr, addr); }
 
 	//dword imm add
 	OperandSizes Add_imm(vect8* memoryBlock, OperandModes opmode, Disp addr, Disp disp = Disp(), X86Regs dest = memaddr) const{
@@ -905,6 +926,12 @@ public:
 					else if (isWord(dest_str)) parserType->opmode = wordAddImmToMemaddrMode;
 					else if (isDword(dest_str)) parserType->opmode = dwordAddImmToMemaddrMode;
 				}
+				else if (isReg(src_str)){
+					insertSrc(parserType, src_str);
+					if (isByte(dest_str)) parserType->opmode = byteAddRegToMemaddrMode;
+					else if (isWord(dest_str)) parserType->opmode = wordAddRegToMemaddrMode;
+					else if (isDword(dest_str)) parserType->opmode = dwordAddRegToMemaddrMode;
+				}
 			
 			}
 			else if (autoInsertExtra(&parserType->disp, src_str, extra) && isReg(dest_str)){
@@ -1088,6 +1115,9 @@ public:
 		case dwordMovImmToCregMode: 
 		case dwordMovImmToDregMode: return Mov_imm(memoryBlock, parserType->opmode, parserType->disp);
 		case dwordAddMode: return Add(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
+		case dwordAddRegToMemaddrMode:
+		case wordAddRegToMemaddrMode:
+		case byteAddRegToMemaddrMode: return Add(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->addr);
 		case dwordAddImmToRegMode: return Add_imm(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
 		case byteAddImmToMemaddrMode: 
 		case wordAddImmToMemaddrMode: 
