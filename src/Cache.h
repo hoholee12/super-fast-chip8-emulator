@@ -29,6 +29,7 @@ public:
 	bool checkCacheExists(int pc){ return iCache[pc].check; }
 
 	ICache* createCache(int pc){
+		iCache[pc].opcodeCount = 0;
 		iCache[pc].check = true;
 		iCache[pc].cache.clear();
 		return &iCache[pc];

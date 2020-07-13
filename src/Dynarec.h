@@ -119,20 +119,33 @@ public:
 #endif
 		//ready icache
 
+
+		//backup pc for executeBlock
+		uint16_t pcTemp = cpu->programCounter;
+
 		//if cache already exists
 		if (cache->checkCacheExists(cpu->programCounter)){
 #ifdef DEBUG_ME
 			printf("compiled block already exists!!\n");
+			cache->printCache(pcTemp);
 #endif
-			leftoverCycle = baseClock - cache->getOpcodeCount(cpu->programCounter);
-			return leftoverCycle != 0;	//to the next leftoverCycle
+			if (baseClock - cache->getOpcodeCount(cpu->programCounter) != 0){
+				if (leftoverCycle == 0){
+					leftoverCycle = baseClock - cache->getOpcodeCount(cpu->programCounter);
+				}
+				else{
+					leftoverCycle -= cache->getOpcodeCount(cpu->programCounter);
+				
+				}
+				return true;
+			}
+			else return false;	//to the next leftoverCycle
 		}
 
 		//else make cache
 		translator->init(cache->createCache(cpu->programCounter));
 
-		//backup pc for executeBlock
-		uint16_t pcTemp = cpu->programCounter;
+		
 
 		//recompile n opcodes
 		int i = 0;
