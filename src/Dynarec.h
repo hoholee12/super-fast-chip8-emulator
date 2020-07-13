@@ -35,7 +35,6 @@ class Dynarec{
 	uint16_t currentOpcode;
 	uint16_t previousOpcode;	//for some optimization
 
-	ControllerOp controllerOp;	//after cpu processes its stuff, next is chip8 controller output job
 	bool isEndlessLoop = false;	//notify debugger that this is endless loop
 
 	int whichInterpreter; //choose interpreter method
@@ -44,9 +43,11 @@ class Dynarec{
 	
 	
 	
-	//translator core stuff
+	//for executeBlock()
+	//...similar ones on the translator.h are only for updateRecompiler()
 	bool switchToInterpreter = false;
 	bool hintFallback = false;
+	bool delayNext = false;
 
 	//baseClock is max size of stateArr
 	std::vector<TranslatorState> stateArr;
@@ -98,7 +99,8 @@ public:
 		
 		translator = new Translator(cpu,	//cpu variables
 			(uint32_t)&switchToInterpreter,
-			(uint32_t)&hintFallback);	//core variables
+			(uint32_t)&hintFallback,
+			(uint32_t)&delayNext);	//core variables
 	}
 
 
@@ -282,10 +284,11 @@ public:
 #ifdef DEBUG_ME
 		printf("executing fallback...\n");
 #endif
-		controllerOp = cpu->decode_jumboLUT();
+		//delayNext for controllerOp
+		if(!delayNext) cpu->decode_jumboLUT();
 		//controller
-		if (controllerOp != ControllerOp::none)		//optimization
-			switch (controllerOp){
+		if (cpu->controllerOp != ControllerOp::none)		//optimization
+			switch (cpu->controllerOp){
 			case ControllerOp::clearScreen:
 				drawFlag = true;
 				break;
@@ -301,6 +304,10 @@ public:
 				break;
 		}
 
+		//reset
+		switchToInterpreter = false;
+		hintFallback = false;
+		delayNext = false;
 	}
 
 };

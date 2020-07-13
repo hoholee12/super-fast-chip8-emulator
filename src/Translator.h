@@ -44,6 +44,7 @@ private:
 
 	uint32_t hintFallback;		//byte
 	uint32_t interpreterSwitch;	//byte
+	uint32_t delayNext;			//byte
 
 	uint32_t vxPointer;			//byte
 	uint32_t vyPointer;			//byte
@@ -88,7 +89,8 @@ public:
 	//constructor
 	Translator(CPU* cpu,
 		uint32_t interpreterSwitch,
-		uint32_t hintFallback
+		uint32_t hintFallback,
+		uint32_t delayNext
 		){
 		controllerOp = (uint32_t)&cpu->controllerOp;
 		programCounter = (uint32_t)&cpu->programCounter;
@@ -106,6 +108,7 @@ public:
 
 		this->interpreterSwitch = interpreterSwitch;
 		this->hintFallback = hintFallback;
+		this->delayNext = delayNext;
 
 		
 		vfPointerx = 0xF;
@@ -278,6 +281,12 @@ private:
 		doFallback = true;
 		
 	}
+	void delayNext_func(){
+		//for controllerOp operations(use with hintFallback_func)
+		X86Emitter::setToMemaddr(&memoryBlock->cache, delayNext, 0x1, Byte);
+
+
+	}
 	void interpreterSwitch_func(){
 		X86Emitter::setToMemaddr(&memoryBlock->cache, interpreterSwitch, 0x1, Byte);
 		X86Emitter::Ret(&memoryBlock->cache);
@@ -290,6 +299,8 @@ private:
 		//X86Emitter::setDwordToMemaddr(&memoryBlock->cache, controllerOp, (uint32_t)ControllerOp::clearScreen);
 
 		incrementPC();
+		delayNext_func();
+		hintFallback_func();
 		interpreterSwitch_func();
 		//original
 		//controllerOp = ControllerOp::clearScreen;
@@ -642,6 +653,8 @@ private:
 		X86Emitter::setToMemaddr(&memoryBlock->cache, controllerOp, ControllerOp::drawVideo, Dword);
 
 		incrementPC();
+		delayNext_func();
+		hintFallback_func();
 		interpreterSwitch_func();
 		//controllerOp = ControllerOp::drawVideo;
 	}
@@ -691,6 +704,8 @@ private:
 		setToMemaddr(&memoryBlock->cache, controllerOp, ControllerOp::setSoundTimer, Dword);
 
 		incrementPC();
+		delayNext_func();
+		hintFallback_func();
 		interpreterSwitch_func();
 
 		//controllerOp = ControllerOp::setSoundTimer;
