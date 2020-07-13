@@ -480,7 +480,7 @@ public:
 		}
 		return none;
 	}
-	//override
+	//for memaddr
 	OperandSizes Mov(vect8* memoryBlock, OperandModes opmode, X86Regs src, Disp disp = Disp()) const{ return Mov(memoryBlock, opmode, src, Areg, disp); }
 
 

@@ -316,7 +316,7 @@ private:
 		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, stack, stackPointer, Word);
 
 		//to programCounter
-		X86Emitter::Mov(&memoryBlock->cache, movWordRegToMemMode, Areg, insertAddr(programCounter));
+		X86Emitter::Mov(&memoryBlock->cache, movToMemaddrWordMode, Areg, insertAddr(programCounter));
 		//X86Emitter::mov_ax_to_memoryaddr(&memoryBlock->cache, programCounter);
 
 		incrementPC();
@@ -380,7 +380,8 @@ private:
 
 		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Areg, Breg);
 		//X86Emitter::cmp_eax_to_ebx(&memoryBlock->cache);
-		X86Emitter::Jcc(&memoryBlock->cache, byteRelJneMode, insertDisp(addWordToMemaddrSize));
+		X86Emitter::parse(&memoryBlock->cache, "jne extra", insertDisp(addWordToMemaddrSize));
+		//X86Emitter::Jcc(&memoryBlock->cache, byteRelJneMode, insertDisp(addWordToMemaddrSize));
 		//X86Emitter::short_jne(&memoryBlock->cache, addWordToMemaddrSize);
 		X86Emitter::addToMemaddr(&memoryBlock->cache, programCounter, 2, Word);
 
@@ -659,7 +660,7 @@ private:
 		//controllerOp = ControllerOp::drawVideo;
 	}
 	void opcodeex9e(){
-		X86Emitter::Mov(&memoryBlock->cache, movByteMemToRegMode, Breg, insertDisp(pressedKey));
+		X86Emitter::Mov(&memoryBlock->cache, movFromMemaddrByteMode, Breg, insertAddr(pressedKey));
 		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, stack, stackPointer, Word);
 		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Areg, Breg);
 		X86Emitter::parse(&memoryBlock->cache, "jne extra", insertDisp(addWordToMemaddrSize));
@@ -670,7 +671,7 @@ private:
 		//if (*pressedKey == VX) programCounter += 2;
 	}
 	void opcodeexa1(){
-		X86Emitter::Mov(&memoryBlock->cache, movByteMemToRegMode, Breg, insertDisp(pressedKey));
+		X86Emitter::Mov(&memoryBlock->cache, movFromMemaddrByteMode, Breg, insertAddr(pressedKey));
 		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, stack, stackPointer, Word);
 		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Areg, Breg);
 		X86Emitter::parse(&memoryBlock->cache, "je extra", insertDisp(addWordToMemaddrSize));
@@ -681,7 +682,7 @@ private:
 		//if (*pressedKey != VX) programCounter += 2;
 	}
 	void opcodefx07(){
-		X86Emitter::Mov(&memoryBlock->cache, movByteMemToRegMode, Areg, insertDisp(delayRegister));
+		X86Emitter::Mov(&memoryBlock->cache, movFromMemaddrByteMode, Areg, insertAddr(delayRegister));
 		X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 
 		incrementPC();
@@ -695,7 +696,7 @@ private:
 	}
 	void opcodefx15(){
 		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
-		X86Emitter::Mov(&memoryBlock->cache, movByteRegToMemMode, Areg, insertDisp(delayRegister));
+		X86Emitter::Mov(&memoryBlock->cache, movToMemaddrByteMode, Areg, insertAddr(delayRegister));
 		
 		incrementPC();
 		//*delayRegister = VX;

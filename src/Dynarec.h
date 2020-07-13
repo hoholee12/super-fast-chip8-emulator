@@ -121,6 +121,9 @@ public:
 
 		//if cache already exists
 		if (cache->checkCacheExists(cpu->programCounter)){
+#ifdef DEBUG_ME
+			printf("compiled block already exists!!\n");
+#endif
 			leftoverCycle = baseClock - cache->getOpcodeCount(cpu->programCounter);
 			return leftoverCycle != 0;	//to the next leftoverCycle
 		}
