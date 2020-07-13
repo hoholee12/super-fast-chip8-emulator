@@ -77,6 +77,10 @@ public:
 	void init(ICache* memoryBlock){
 		this->memoryBlock = memoryBlock;
 
+		//start fresh
+		endDecode = false;
+		doIncrementPC = false;
+		doFallback = false;
 		
 	}
 
@@ -245,20 +249,12 @@ public:
 	}
 
 
-	bool checkIncrementPC(){
-		bool temp = doIncrementPC;
-		doIncrementPC = false;
-		return temp;
-	}
-	bool checkFallback(){
-		bool temp = doFallback;
-		doFallback = false;
-		return temp;
-	}
-	bool checkEndDecode(){
-		bool temp = endDecode;
-		endDecode = false;
-		return temp;
+	bool checkIncrementPC(){ return doIncrementPC; }
+	bool checkFallback(){ return doFallback; }
+	bool checkEndDecode(){ return endDecode; }
+
+	void endBlock(){
+		interpreterSwitch_func();
 	}
 
 private:
@@ -278,8 +274,6 @@ private:
 	void hintFallback_func(){
 		X86Emitter::setToMemaddr(&memoryBlock->cache, hintFallback, 0x1, Byte);
 
-		//for executeBlock
-		memoryBlock->isFallback = true;
 		//for updateRecompiler
 		doFallback = true;
 		

@@ -120,19 +120,24 @@ void Chip8::run(){
 	case 4:
 		while (running){
 			
-			
-			currentOpcode = dynarec->updateRecompiler();
-			
-
-
+			dynarec->updateRecompiler();
+			do{
+				dynarec->executeBlock();	//cpu & controller
+#ifdef DEBUG_ME
+				//debugger
+				printf("delayReg = %x,\t", delayRegister);
+				debugMe();
+#endif
+			} while (dynarec->updateRecompiler());
 			dynarec->executeBlock();	//cpu & controller
 
 #ifdef DEBUG_ME
 			//debugger
 			printf("delayReg = %x,\t", delayRegister);
 			debugMe();
-
+			printf("run lowerhalf!!\n");
 #endif
+			
 			update_lowerhalf();
 		}
 	default:

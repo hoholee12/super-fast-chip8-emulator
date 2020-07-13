@@ -14,8 +14,8 @@ using vect8 = std::vector<uint8_t>;
 
 using ICache = struct _ICache{
 	vect8 cache;
-	bool isFallback = false;
 	bool check = false;
+	uint32_t opcodeCount = 0;
 };
 
 class Cache{
@@ -23,18 +23,18 @@ class Cache{
 	ICache iCache[FULL_MEM_SIZE];
 public:
 
+	uint32_t getOpcodeCount(int pc){ return iCache[pc].opcodeCount; }
+	void setOpcodeCount(int pc, uint32_t val){ iCache[pc].opcodeCount = val; }
 
 	bool checkCacheExists(int pc){ return iCache[pc].check; }
 
 	ICache* createCache(int pc){
-		iCache[pc].isFallback = false;
 		iCache[pc].check = true;
 		iCache[pc].cache.clear();
 		return &iCache[pc];
 	}
 
 	ICache* createFallback(int pc){
-		iCache[pc].isFallback = true;
 		iCache[pc].check = true;
 		return &iCache[pc];
 	}
