@@ -67,7 +67,11 @@ public:
 	void printCache(int pc, bool flag = false){
 		if (!whichCache(pc, flag)->check) return;
 		printf("pc = %02X cache dump:\n", pc);
-		for (int i = 0; i < whichCache(pc, flag)->cache.size(); i++) printf("%02X ", whichCache(pc, flag)->cache.at(i));
+		for (int i = 0; i < whichCache(pc, flag)->cache.size(); i++){ 
+			if (i % 0x10 == 0) printf("\n");
+			printf("%02X ", whichCache(pc, flag)->cache.at(i));
+			
+		}
 		printf("\n");
 	}
 
