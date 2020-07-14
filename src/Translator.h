@@ -452,7 +452,7 @@ private:
 		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::Mov(&memoryBlock->cache, movDwordRegToRegMode, Areg, Breg);
 		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
-		X86Emitter::And(&memoryBlock->cache, dwordOrMode, Breg, Areg);
+		X86Emitter::And(&memoryBlock->cache, dwordAndMode, Breg, Areg);
 
 		X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 
@@ -464,7 +464,7 @@ private:
 		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::Mov(&memoryBlock->cache, movDwordRegToRegMode, Areg, Breg);
 		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
-		X86Emitter::Xor(&memoryBlock->cache, dwordOrMode, Breg, Areg);
+		X86Emitter::Xor(&memoryBlock->cache, dwordXorMode, Breg, Areg);
 
 		X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 

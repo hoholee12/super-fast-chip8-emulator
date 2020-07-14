@@ -6,8 +6,12 @@
 #include "Memory.h"
 
 /*
-	Dyanarec the executable cache club
+	cache me baby
 
+	i is for optimized blocks
+	b is for single opcodes
+
+	...shitty design but does it for now
 */
 
 
@@ -34,37 +38,36 @@ using ICache = struct _ICache{
 class Cache{
 
 	ICache iCache[FULL_MEM_SIZE];
+	ICache bCache[FULL_MEM_SIZE];	//for individual opcodes
 public:
 
-	uint32_t getOpcodeCount(int pc){ return iCache[pc].opcodeCount; }
-	void setOpcodeCount(int pc, uint32_t val){ iCache[pc].opcodeCount = val; }
+	//switch i(default)/b(true) cache
+	ICache* whichCache(int pc, bool flag = false){ return flag ? &bCache[pc] : &iCache[pc]; }
 
-	bool checkCacheExists(int pc){ return iCache[pc].check; }
+	uint32_t getOpcodeCount(int pc, bool flag = false){ return whichCache(pc, flag)->opcodeCount; }
+	void setOpcodeCount(int pc, uint32_t val, bool flag = false){ whichCache(pc, flag)->opcodeCount = val; }
 
-	ICache* createCache(int pc){
-		iCache[pc].opcodeCount = 0;
-		iCache[pc].check = true;
-		iCache[pc].cache.clear();
-		iCache[pc].TScache.clear();
-		return &iCache[pc];
+	bool checkCacheExists(int pc, bool flag = false){ return whichCache(pc, flag)->check; }
+
+	ICache* createCache(int pc, bool flag = false){
+		whichCache(pc, flag)->opcodeCount = 0;
+		whichCache(pc, flag)->check = true;
+		whichCache(pc, flag)->cache.clear();
+		whichCache(pc, flag)->TScache.clear();
+		return whichCache(pc, flag);
 	}
 
-	ICache* createFallback(int pc){
-		iCache[pc].check = true;
-		return &iCache[pc];
-	}
-
-	ICache* getCache(int pc){
-		if (!checkCacheExists(pc)){
-			createCache(pc);
+	ICache* getCache(int pc, bool flag = false){
+		if (!checkCacheExists(pc, flag)){
+			createCache(pc, flag);
 		}
-		return &iCache[pc];
+		return whichCache(pc, flag);
 	}
 
-	void printCache(int pc){
-		if (!iCache[pc].check) return;
+	void printCache(int pc, bool flag = false){
+		if (!whichCache(pc, flag)->check) return;
 		printf("pc = %02X cache dump:\n", pc);
-		for (int i = 0; i < iCache[pc].cache.size(); i++) printf("%02X ", iCache[pc].cache.at(i));
+		for (int i = 0; i < whichCache(pc, flag)->cache.size(); i++) printf("%02X ", whichCache(pc, flag)->cache.at(i));
 		printf("\n");
 	}
 

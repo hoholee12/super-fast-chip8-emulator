@@ -91,10 +91,32 @@ public:
 			(uint32_t)&switchToInterpreter,
 			(uint32_t)&hintFallback,
 			(uint32_t)&delayNext);	//core variables
+
+
+		//precompile single opcodes
+		precompiler();
 	}
 
 
+	void precompiler(){
+		uint16_t pcTemp = cpu->programCounter;
+		
 
+
+		for (; cpu->programCounter < FULL_MEM_SIZE;){
+			translator->init(cache->createCache(cpu->programCounter, true));
+			cache->getCache(cpu->programCounter, true)->TScache.resize(1);
+			internalLoop(0, cpu->programCounter, true);
+
+			// ensure block is closed
+			if (!translator->checkEndDecode()) translator->endBlock();
+
+		}
+
+		//restore original pc
+		cpu->programCounter = pcTemp;
+
+	}
 
 
 
@@ -122,7 +144,8 @@ public:
 			printf("compiled block already exists!!\n");
 			cache->printCache(pcTemp);
 #endif
-			if (baseClock - cache->getOpcodeCount(cpu->programCounter) != 0){
+			//if jiffy remains
+			if (baseClock - cache->getOpcodeCount(cpu->programCounter) > 0){
 				if (leftoverCycle == 0){
 					leftoverCycle = baseClock - cache->getOpcodeCount(cpu->programCounter);
 				}
@@ -132,6 +155,13 @@ public:
 				}
 				return true;
 			}
+
+			//jiffy miscalculation
+			else if (baseClock - cache->getOpcodeCount(cpu->programCounter) < 0){
+			
+			}
+
+			//if jiffy full
 			else return false;	//to the next leftoverCycle
 		}
 
@@ -190,7 +220,7 @@ public:
 			/*TODO: leftoverCycle inaccurate*/
 
 			//keep running until its completely filled
-			if (leftoverCycle > 0) return true;
+			if (leftoverCycle != 0) return true;
 		}
 
 
@@ -199,26 +229,26 @@ public:
 	}
 
 	//one opcode into icache
-	void internalLoop(int i, uint16_t pcTemp){
+	void internalLoop(int i, uint16_t pcTemp, bool flag = false){
 
 		//fetch
 		previousOpcode = currentOpcode;
 		currentOpcode = cpu->fetch();
 
 
-		cache->getCache(pcTemp)->TScache[i].x_val = (currentOpcode & 0x0f00) >> 8;
-		cache->getCache(pcTemp)->TScache[i].y_val = (currentOpcode & 0x00f0) >> 4;
-		cache->getCache(pcTemp)->TScache[i].nx = currentOpcode & 0x000F;
-		cache->getCache(pcTemp)->TScache[i].nnx = currentOpcode & 0x00FF;
-		cache->getCache(pcTemp)->TScache[i].nnnx = currentOpcode & 0x0FFF;
+		cache->getCache(pcTemp, flag)->TScache[i].x_val = (currentOpcode & 0x0f00) >> 8;
+		cache->getCache(pcTemp, flag)->TScache[i].y_val = (currentOpcode & 0x00f0) >> 4;
+		cache->getCache(pcTemp, flag)->TScache[i].nx = currentOpcode & 0x000F;
+		cache->getCache(pcTemp, flag)->TScache[i].nnx = currentOpcode & 0x00FF;
+		cache->getCache(pcTemp, flag)->TScache[i].nnnx = currentOpcode & 0x0FFF;
 
 		//cut one full jiffy
 		//ret at the end
-		if (i == baseClock - 1) translator->decode(&cache->getCache(pcTemp)->TScache[i], true);
-		else translator->decode(&cache->getCache(pcTemp)->TScache[i]);
+		if (i == baseClock - 1) translator->decode(&cache->getCache(pcTemp, flag)->TScache[i], true);
+		else translator->decode(&cache->getCache(pcTemp, flag)->TScache[i]);
 
 		//one opcode into icache count
-		cache->setOpcodeCount(pcTemp, cache->getOpcodeCount(pcTemp) + 1);
+		cache->setOpcodeCount(pcTemp, cache->getOpcodeCount(pcTemp, flag) + 1, flag);
 
 		//won't reach if translator decodes a fallback
 		//next opcode
