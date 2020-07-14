@@ -135,7 +135,7 @@ void Chip8::run(){
 			//debugger
 			printf("delayReg = %x,\t", delayRegister);
 			debugMe();
-			printf("run lowerhalf!!\n");
+			printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>run lowerhalf!!<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 #endif
 			
 			update_lowerhalf();
