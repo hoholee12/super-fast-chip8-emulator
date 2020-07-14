@@ -10,12 +10,25 @@
 
 */
 
+
+typedef struct _translatorState{
+
+	uint32_t x_val = 0;
+	uint32_t y_val = 0;
+	uint32_t nx = 0;
+	uint32_t nnx = 0;
+	uint32_t nnnx = 0;
+
+} TranslatorState;
+
 using vect8 = std::vector<uint8_t>;
+using vectTS = std::vector<TranslatorState>;
 
 using ICache = struct _ICache{
 	vect8 cache;
 	bool check = false;
 	uint32_t opcodeCount = 0;
+	vectTS TScache;	//Translator.h does reference to these variables, not copy.
 };
 
 class Cache{
@@ -32,6 +45,7 @@ public:
 		iCache[pc].opcodeCount = 0;
 		iCache[pc].check = true;
 		iCache[pc].cache.clear();
+		iCache[pc].TScache.clear();
 		return &iCache[pc];
 	}
 

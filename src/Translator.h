@@ -9,17 +9,6 @@
 #include"CPU.h"
 #include"Cache.h"
 
-
-typedef struct _translatorState{
-
-	uint32_t x_val = 0;
-	uint32_t y_val = 0;
-	uint32_t nx = 0;
-	uint32_t nnx = 0;
-	uint32_t nnnx = 0;
-
-} TranslatorState;
-
 class Translator;
 typedef void(Translator::*Table) (void);
 

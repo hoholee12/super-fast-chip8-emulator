@@ -49,9 +49,6 @@ class Dynarec{
 	bool hintFallback = false;
 	bool delayNext = false;
 
-	//baseClock is max size of stateArr
-	std::vector<TranslatorState> stateArr;
-	uint32_t stateArrPtr = 0;
 	
 	uint32_t baseClock;
 
@@ -87,10 +84,6 @@ public:
 		this->memory = memory;
 		this->audio = audio;
 		cache = new Cache();
-
-
-		//determine all states for one jiffy
-		stateArr.resize(baseClock);
 
 
 		
@@ -143,8 +136,10 @@ public:
 		}
 
 		//else make cache
-		translator->init(cache->createCache(cpu->programCounter));
+		translator->init(cache->createCache(pcTemp));
 
+		//update xyn for next opcode
+		cache->getCache(pcTemp)->TScache.resize(baseClock);
 		
 
 		//recompile n opcodes
@@ -211,17 +206,16 @@ public:
 		currentOpcode = cpu->fetch();
 
 
-		//update xyn for next opcode
-		stateArr[i].x_val = (currentOpcode & 0x0f00) >> 8;
-		stateArr[i].y_val = (currentOpcode & 0x00f0) >> 4;
-		stateArr[i].nx = currentOpcode & 0x000F;
-		stateArr[i].nnx = currentOpcode & 0x00FF;
-		stateArr[i].nnnx = currentOpcode & 0x0FFF;
+		cache->getCache(pcTemp)->TScache[i].x_val = (currentOpcode & 0x0f00) >> 8;
+		cache->getCache(pcTemp)->TScache[i].y_val = (currentOpcode & 0x00f0) >> 4;
+		cache->getCache(pcTemp)->TScache[i].nx = currentOpcode & 0x000F;
+		cache->getCache(pcTemp)->TScache[i].nnx = currentOpcode & 0x00FF;
+		cache->getCache(pcTemp)->TScache[i].nnnx = currentOpcode & 0x0FFF;
 
 		//cut one full jiffy
 		//ret at the end
-		if (i == baseClock - 1) translator->decode(&stateArr[i], true);
-		else translator->decode(&stateArr[i]);
+		if (i == baseClock - 1) translator->decode(&cache->getCache(pcTemp)->TScache[i], true);
+		else translator->decode(&cache->getCache(pcTemp)->TScache[i]);
 
 		//one opcode into icache count
 		cache->setOpcodeCount(pcTemp, cache->getOpcodeCount(pcTemp) + 1);
