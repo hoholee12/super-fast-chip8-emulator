@@ -52,7 +52,10 @@ class Dynarec{
 	
 	uint32_t baseClock;
 
-	uint32_t leftoverCycle = 0;
+	int64_t leftoverCycle = 0; //deals with negative numbers
+
+	//cache mode switcher
+	bool use_bCache = false;
 
 	/*
 	structure:
@@ -138,34 +141,66 @@ public:
 		//backup pc for executeBlock
 		uint16_t pcTemp = cpu->programCounter;
 
-		//if cache already exists
+		/*
+		*
+		*
+		*
+		*******	if cache already exists:
+		*
+		*
+		*
+		*/
+
+		//reset mode
+		use_bCache = false;
+
 		if (cache->checkCacheExists(cpu->programCounter)){
 #ifdef DEBUG_ME
 			printf("compiled block already exists!!\n");
 			cache->printCache(pcTemp);
 #endif
-			//if jiffy remains
-			if (baseClock - cache->getOpcodeCount(cpu->programCounter) > 0){
-				if (leftoverCycle == 0){
-					leftoverCycle = baseClock - cache->getOpcodeCount(cpu->programCounter);
-				}
-				else{
-					leftoverCycle -= cache->getOpcodeCount(cpu->programCounter);
-				
-				}
-				return true;
-			}
-
-			//jiffy miscalculation
-			else if (baseClock - cache->getOpcodeCount(cpu->programCounter) < 0){
+			if (leftoverCycle == 0){
+#ifdef DEBUG_ME
+				printf("if leftoverCycle == 0...");
+#endif
+				leftoverCycle = baseClock - cache->getOpcodeCount(cpu->programCounter);
 			
 			}
+			else if ((leftoverCycle - cache->getOpcodeCount(cpu->programCounter)) >= 0){
+#ifdef DEBUG_ME
+				printf("if leftoverCycle - cache->getOpcodeCount(cpu->programCounter) >= 0...");
+#endif
+				leftoverCycle -= cache->getOpcodeCount(cpu->programCounter);
+				
+			}
+			else{
+#ifdef DEBUG_ME
+				printf("else...");
+#endif
+				//use bCache
+				leftoverCycle -= cache->getOpcodeCount(cpu->programCounter, true);
+				use_bCache = true;
+			}
 
-			//if jiffy full
-			else return false;	//to the next leftoverCycle
+#ifdef DEBUG_ME
+			printf("after: %d\n", leftoverCycle);
+#endif
+			return (leftoverCycle != 0);	//loop if cycle remaining
+			
 		}
 
-		//else make cache
+
+
+
+		/*
+		*
+		*
+		*
+		*******	else make cache:
+		*
+		*
+		*
+		*/
 		translator->init(cache->createCache(pcTemp));
 
 		//update xyn for next opcode
@@ -259,10 +294,11 @@ public:
 
 	void executeBlock(){
 		
-		ICache* temp = cache->getCache(cpu->programCounter);
+		ICache* temp = cache->getCache(cpu->programCounter, use_bCache);
 		
 #ifdef DEBUG_ME
-		printf("executing block...\n");
+		if (!use_bCache) printf("executing iCache block...\n");
+		else printf("executing bCache block...\n");
 #endif
 #ifdef _WIN32
 
