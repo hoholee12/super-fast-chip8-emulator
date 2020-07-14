@@ -32,7 +32,7 @@ class Dynarec{
 	Audio* audio;
 
 	bool running;
-	uint16_t currentOpcode;
+	uint16_t currentOpcode = 0;
 	uint16_t previousOpcode;	//for some optimization
 
 	bool isEndlessLoop = false;	//notify debugger that this is endless loop
@@ -121,7 +121,12 @@ public:
 
 	}
 
+#ifdef DEBUG_ME
+	uint16_t getCurrentOpcode(){
+		return currentOpcode;
+	}
 
+#endif
 
 	/*
 	updateRecompiler

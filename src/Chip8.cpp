@@ -124,6 +124,8 @@ void Chip8::run(){
 			do{
 				dynarec->executeBlock();	//cpu & controller
 #ifdef DEBUG_ME
+				currentOpcode = dynarec->getCurrentOpcode();
+
 				//debugger
 				printf("delayReg = %x,\t", delayRegister);
 				debugMe();
@@ -140,6 +142,7 @@ void Chip8::run(){
 			
 			update_lowerhalf();
 		}
+		break;
 	default:
 		fprintf(stderr, "configuration error!\n");
 	}
