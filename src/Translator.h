@@ -82,13 +82,18 @@ public:
 		stackPointer = (uint32_t)&cpu->stackPointer;
 		flag = (uint32_t)&cpu->flag;
 		jmpHint = (uint32_t)&cpu->jmpHint;
-		v = (uint32_t)&cpu->v;
+		v = (uint32_t)&cpu->v;				//??
 		indexRegister = (uint32_t)&cpu->indexRegister;
-		pressedKey = (uint32_t)&cpu->pressedKey;
-		delayRegister = (uint32_t)&cpu->delayRegister;
 		throwError = (uint32_t)&cpu->throwError;
-		mem = (uint32_t)&cpu->memory->mem;
 		currentOpcode = (uint32_t)&cpu->currentOpcode;
+
+
+		//these are chip8 variables referenced from cpu
+		pressedKey = (uint32_t)cpu->pressedKey;
+		delayRegister = (uint32_t)cpu->delayRegister;
+
+		//TODO
+		mem = (uint32_t)&cpu->memory->mem;
 
 		this->interpreterSwitch = interpreterSwitch;
 		this->hintFallback = hintFallback;
@@ -151,8 +156,8 @@ public:
 
 #endif
 		
-		for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodefall;		//all fallback
-		/*
+		//for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodefall;		//all fallback
+		
 		//...or a jumbo table (32bit count)
 		for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodenull;		//exception
 		jumbo_table[0x00e0] = &Translator::opcode00e0;
@@ -195,7 +200,7 @@ public:
 			if ((i & 0x00ff) == 0x55) jumbo_table[i] = &Translator::opcodefx55;
 			if ((i & 0x00ff) == 0x65) jumbo_table[i] = &Translator::opcodefx65;
 		}
-		*/
+		
 
 	}
 
