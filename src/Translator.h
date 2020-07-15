@@ -151,7 +151,7 @@ public:
 
 #endif
 		
-		for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodefx65;		//exception
+		for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodefall;		//all fallback
 		/*
 		//...or a jumbo table (32bit count)
 		for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodenull;		//exception
@@ -222,9 +222,9 @@ public:
 		//for checking proper translator input
 		printf("compiled opcode: %02X, xPointer: %X, yPointer: %X, nnn: %X\n",
 			cpuOp,
-			*(uint32_t*)vxPointer,
-			*(uint32_t*)vyPointer,
-			*(uint32_t*)nnn);
+			*(uint8_t*)vxPointer,
+			*(uint8_t*)vyPointer,
+			*(uint16_t*)nnn);
 #endif
 
 		(this->*(jumbo_table[cpuOp]))();
@@ -326,7 +326,7 @@ private:
 	}
 	void opcode1nnn(){
 		//NNN to programCounter
-		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint16_t*)nnn, Word);
 
 		//jmpHint = true
 		X86Emitter::setToMemaddr(&memoryBlock->cache, jmpHint, 1, Byte);
@@ -349,7 +349,7 @@ private:
 
 		//NNN(is an immediate) to programCounter
 		//printf("2nnn: %02X\n", *(uint32_t*)nnn);
-		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint16_t*)nnn, Word);
 
 		interpreterSwitch_func();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
@@ -615,13 +615,13 @@ private:
 	}
 	void opcodeannn(){
 
-		X86Emitter::setToMemaddr(&memoryBlock->cache, indexRegister, *(uint32_t*)nnn, Word);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, indexRegister, *(uint16_t*)nnn, Word);
 
 		incrementPC();
 		//indexRegister = NNN;
 	}
 	void opcodebnnn(){
-		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint16_t*)nnn, Word);
 		X86Emitter::addToMemaddr(&memoryBlock->cache, programCounter, stack, Word);
 
 		//programCounter = NNN + v[0]; flag = 1; //(dont increment pc)
@@ -737,5 +737,21 @@ private:
 		//throwError = true;
 	}
 
+	//for testing purpose
+	void opcodefall(){
+		hintFallback_func();
+		interpreterSwitch_func();
+#ifdef DEBUG_ME
+		printf("immediate registers: vx = %01X, vy = %01X, n = %01X, nn = %02X, nnn = %03X, vz = %01X, vf = %01X\n",
+			*(uint8_t*)vxPointer,
+			*(uint8_t*)vyPointer, 
+			*(uint16_t*)n, 
+			*(uint16_t*)nn, 
+			*(uint16_t*)nnn, 
+			*(uint8_t*)vzPointer, 
+			*(uint8_t*)vfPointer
+			);
+#endif
+	}
 
 };

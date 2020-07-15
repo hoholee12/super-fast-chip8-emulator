@@ -31,7 +31,7 @@ extern "C"
 
 
 #define DEBUG_ME
-#define DEBUG_TIME 1000
+#define DEBUG_TIME 0
 
 
 class defaults{
