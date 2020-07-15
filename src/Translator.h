@@ -708,7 +708,7 @@ private:
 	void opcodefx29(){
 		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::Lea(&memoryBlock->cache, leaWithoutDispMode, Areg, x4, Areg, Areg);
-		X86Emitter::parse(&memoryBlock->cache, "add WORD PTR [extra], eax", insertAddr(indexRegister));
+		X86Emitter::parse(&memoryBlock->cache, "mov WORD PTR [extra], eax", insertAddr(indexRegister));
 
 		incrementPC();
 		//indexRegister = VX * 5;	//font is stored at mem[0 ~ FONT_COUNT * 5]
