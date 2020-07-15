@@ -159,7 +159,7 @@ public:
 		for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodefall;		//all fallback
 		
 		//TODO: fix all commented out opcodes
-		//		need to fix jmpHint not going through as well
+		//		need to fix test_opcode.ch8 not displaying anything
 
 		//for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodenull;		//exception
 		jumbo_table[0x00e0] = &Translator::opcode00e0;
@@ -173,21 +173,21 @@ public:
 		
 		//for (uint32_t i = 0x4000; i < 0x5000; i++) jumbo_table[i] = &Translator::opcode4xnn;
 		
-		for (uint32_t i = 0x5000; i < 0x6000; i++) if ((i & 0x000f) == 0x0) jumbo_table[i] = &Translator::opcode5xy0;
+		//for (uint32_t i = 0x5000; i < 0x6000; i++) if ((i & 0x000f) == 0x0) jumbo_table[i] = &Translator::opcode5xy0;
 		
 		for (uint32_t i = 0x6000; i < 0x7000; i++) jumbo_table[i] = &Translator::opcode6xnn;
 		
 		for (uint32_t i = 0x7000; i < 0x8000; i++) jumbo_table[i] = &Translator::opcode7xnn;
 		
 		for (uint32_t i = 0x8000; i < 0x9000; i++){
-			//if ((i & 0x000f) == 0x0) jumbo_table[i] = &Translator::opcode8xy0;
+			if ((i & 0x000f) == 0x0) jumbo_table[i] = &Translator::opcode8xy0;
 			//if ((i & 0x000f) == 0x1) jumbo_table[i] = &Translator::opcode8xy1;
 			//if ((i & 0x000f) == 0x2) jumbo_table[i] = &Translator::opcode8xy2;
 			//if ((i & 0x000f) == 0x3) jumbo_table[i] = &Translator::opcode8xy3;
 			//if ((i & 0x000f) == 0x4) jumbo_table[i] = &Translator::opcode8xy4;
 			//if ((i & 0x000f) == 0x5) jumbo_table[i] = &Translator::opcode8xy5;
-			//if ((i & 0x000f) == 0x6) jumbo_table[i] = &Translator::opcode8xy6;
-			//if ((i & 0x000f) == 0x7) jumbo_table[i] = &Translator::opcode8xy7;
+			if ((i & 0x000f) == 0x6) jumbo_table[i] = &Translator::opcode8xy6;
+			if ((i & 0x000f) == 0x7) jumbo_table[i] = &Translator::opcode8xy7;
 			//if ((i & 0x000f) == 0xe) jumbo_table[i] = &Translator::opcode8xye;
 		}
 		
@@ -202,21 +202,22 @@ public:
 		//for (uint32_t i = 0xd000; i < 0xe000; i++) jumbo_table[i] = &Translator::opcodedxyn;
 		
 		for (uint32_t i = 0xe000; i < 0xf000; i++){
-			//if ((i & 0x00ff) == 0x9e) jumbo_table[i] = &Translator::opcodeex9e;
+			if ((i & 0x00ff) == 0x9e) jumbo_table[i] = &Translator::opcodeex9e;
 			//if ((i & 0x00ff) == 0xa1) jumbo_table[i] = &Translator::opcodeexa1;
 		}
 		
 		for (uint32_t i = 0xf000; i < JUMBO_TABLE_SIZE; i++){
-			//if ((i & 0x00ff) == 0x07) jumbo_table[i] = &Translator::opcodefx07;
-			//if ((i & 0x00ff) == 0x0a) jumbo_table[i] = &Translator::opcodefx0a;
-			//if ((i & 0x00ff) == 0x15) jumbo_table[i] = &Translator::opcodefx15;
-			//if ((i & 0x00ff) == 0x18) jumbo_table[i] = &Translator::opcodefx18;
-			//if ((i & 0x00ff) == 0x1e) jumbo_table[i] = &Translator::opcodefx1e;
+			if ((i & 0x00ff) == 0x07) jumbo_table[i] = &Translator::opcodefx07;
+			if ((i & 0x00ff) == 0x0a) jumbo_table[i] = &Translator::opcodefx0a;
+			if ((i & 0x00ff) == 0x15) jumbo_table[i] = &Translator::opcodefx15;
+			if ((i & 0x00ff) == 0x18) jumbo_table[i] = &Translator::opcodefx18;
+			if ((i & 0x00ff) == 0x1e) jumbo_table[i] = &Translator::opcodefx1e;
 			//if ((i & 0x00ff) == 0x29) jumbo_table[i] = &Translator::opcodefx29;
-			//if ((i & 0x00ff) == 0x33) jumbo_table[i] = &Translator::opcodefx33;
-			//if ((i & 0x00ff) == 0x55) jumbo_table[i] = &Translator::opcodefx55;
-			//if ((i & 0x00ff) == 0x65) jumbo_table[i] = &Translator::opcodefx65;
+			if ((i & 0x00ff) == 0x33) jumbo_table[i] = &Translator::opcodefx33;
+			if ((i & 0x00ff) == 0x55) jumbo_table[i] = &Translator::opcodefx55;
+			if ((i & 0x00ff) == 0x65) jumbo_table[i] = &Translator::opcodefx65;
 		}
+
 
 	}
 
