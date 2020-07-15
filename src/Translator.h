@@ -37,16 +37,11 @@ private:
 
 	uint32_t vxPointer;			//byte
 	uint32_t vyPointer;			//byte
-	uint8_t vfPointerx;
 	uint32_t vfPointer;			//byte
-	uint8_t vzPointerx;
 	uint32_t vzPointer;			//byte
 
-	uint16_t nx;
 	uint32_t n;					//word
-	uint16_t nnx;
 	uint32_t nn;				//word
-	uint16_t nnnx;
 	uint32_t nnn;				//word
 
 	int* index;
@@ -98,12 +93,6 @@ public:
 		this->interpreterSwitch = interpreterSwitch;
 		this->hintFallback = hintFallback;
 		this->delayNext = delayNext;
-
-		
-		vfPointerx = 0xF;
-		vfPointer = (uint32_t)&vfPointerx;
-		vzPointerx = 0x0;
-		vzPointer = (uint32_t)&vzPointerx;
 		
 
 
@@ -162,6 +151,8 @@ public:
 
 #endif
 		
+		for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodefx65;		//exception
+		/*
 		//...or a jumbo table (32bit count)
 		for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodenull;		//exception
 		jumbo_table[0x00e0] = &Translator::opcode00e0;
@@ -204,7 +195,7 @@ public:
 			if ((i & 0x00ff) == 0x55) jumbo_table[i] = &Translator::opcodefx55;
 			if ((i & 0x00ff) == 0x65) jumbo_table[i] = &Translator::opcodefx65;
 		}
-
+		*/
 
 	}
 
@@ -223,6 +214,8 @@ public:
 		n = (uint32_t)&state->nx;
 		nn = (uint32_t)&state->nnx;
 		nnn = (uint32_t)&state->nnnx;
+		vzPointer = (uint32_t)&state->z_val;
+		vfPointer = (uint32_t)&state->f_val;
 
 
 #ifdef DEBUG_ME

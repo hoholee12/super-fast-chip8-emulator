@@ -23,6 +23,10 @@ typedef struct _translatorState{
 	uint32_t nnx = 0;
 	uint32_t nnnx = 0;
 
+	//immutable: do not modify!
+	uint32_t z_val = 0x0;
+	uint32_t f_val = 0xf;
+
 } TranslatorState;
 
 using vect8 = std::vector<uint8_t>;

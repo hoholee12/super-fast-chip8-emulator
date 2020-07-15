@@ -119,7 +119,6 @@ void Chip8::run(){
 		break;
 	case 4:
 		while (running){
-			
 			dynarec->updateRecompiler();
 			do{
 				dynarec->executeBlock();	//cpu & controller

@@ -257,7 +257,6 @@ public:
 
 #endif
 
-			/*TODO: leftoverCycle inaccurate*/
 
 			//keep running until its completely filled
 			if (leftoverCycle != 0) return true;
