@@ -363,6 +363,10 @@ public:
 		printf("executing fallback...\n");
 #endif
 		//delayNext for controllerOp
+
+		//fetch
+		previousOpcode = currentOpcode;
+		currentOpcode = cpu->fetch();
 		if(!delayNext) cpu->decode_jumboLUT();
 		//controller
 		if (cpu->controllerOp != ControllerOp::none)		//optimization

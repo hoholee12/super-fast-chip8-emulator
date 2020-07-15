@@ -119,16 +119,18 @@ void Chip8::run(){
 		break;
 	case 4:
 		while (running){
+			
 			dynarec->updateRecompiler();
 			do{
-				dynarec->executeBlock();	//cpu & controller
+				
 #ifdef DEBUG_ME
 				currentOpcode = dynarec->getCurrentOpcode();
-
 				//debugger
 				printf("delayReg = %x,\t", delayRegister);
 				debugMe();
 #endif
+
+				dynarec->executeBlock();	//cpu & controller
 			} while (dynarec->updateRecompiler());
 			dynarec->executeBlock();	//cpu & controller
 
