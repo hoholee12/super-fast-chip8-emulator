@@ -126,7 +126,7 @@ void Chip8::run(){
 #ifdef DEBUG_ME
 				currentOpcode = dynarec->getCurrentOpcode();
 				//debugger
-				printf("delayReg = %x,\t", delayRegister);
+				if(delayRegister != 0x0) printf("delayReg = %x\n", delayRegister);
 				debugMe();
 #endif
 
@@ -136,9 +136,8 @@ void Chip8::run(){
 
 #ifdef DEBUG_ME
 			//debugger
-			printf("delayReg = %x,\t", delayRegister);
+			if (delayRegister != 0x0) printf("delayReg = %x\n", delayRegister);
 			debugMe();
-			printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>run lowerhalf!!<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 #endif
 			
 			update_lowerhalf();
@@ -216,10 +215,8 @@ void Chip8::debugMe(){
 	static bool doOnce = false;
 	if (!isEndlessLoop){
 		doOnce = false;
-		//universal stuff to debug here
-		printf("indexRegister = %x\n", *cpu->getIndexRegister());
 
-		Debug::printDebug(cpu->v, *cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode, mainwindow, memory);
+		Debug::printDebug(cpu->v, *cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode, mainwindow, memory, audio);
 	}
 	else{
 		if (doOnce == false){

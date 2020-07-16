@@ -82,7 +82,7 @@ public:
 		stackPointer = (uint32_t)&cpu->stackPointer;
 		flag = (uint32_t)&cpu->flag;
 		jmpHint = (uint32_t)&cpu->jmpHint;
-		v = (uint32_t)&cpu->v;				//??
+		v = (uint32_t)cpu->v;				//??
 		indexRegister = (uint32_t)&cpu->indexRegister;
 		throwError = (uint32_t)&cpu->throwError;
 		currentOpcode = (uint32_t)&cpu->currentOpcode;
@@ -93,7 +93,7 @@ public:
 		delayRegister = (uint32_t)cpu->delayRegister;
 
 		//TODO
-		mem = (uint32_t)&cpu->memory->mem;
+		mem = (uint32_t)cpu->memory->mem;
 
 		this->interpreterSwitch = interpreterSwitch;
 		this->hintFallback = hintFallback;
@@ -157,7 +157,7 @@ public:
 #endif
 		
 		for (uint32_t i = 0x0; i < JUMBO_TABLE_SIZE; i++) jumbo_table[i] = &Translator::opcodefall;		//all fallback
-		
+
 		//TODO: fix all commented out opcodes
 		//		need to fix test_opcode.ch8 not displaying anything
 
@@ -210,14 +210,13 @@ public:
 			if ((i & 0x00ff) == 0x07) jumbo_table[i] = &Translator::opcodefx07;
 			if ((i & 0x00ff) == 0x0a) jumbo_table[i] = &Translator::opcodefx0a;
 			if ((i & 0x00ff) == 0x15) jumbo_table[i] = &Translator::opcodefx15;
-			if ((i & 0x00ff) == 0x18) jumbo_table[i] = &Translator::opcodefx18;
+			//if ((i & 0x00ff) == 0x18) jumbo_table[i] = &Translator::opcodefx18;
 			if ((i & 0x00ff) == 0x1e) jumbo_table[i] = &Translator::opcodefx1e;
 			//if ((i & 0x00ff) == 0x29) jumbo_table[i] = &Translator::opcodefx29;
 			if ((i & 0x00ff) == 0x33) jumbo_table[i] = &Translator::opcodefx33;
 			if ((i & 0x00ff) == 0x55) jumbo_table[i] = &Translator::opcodefx55;
 			if ((i & 0x00ff) == 0x65) jumbo_table[i] = &Translator::opcodefx65;
 		}
-
 
 	}
 

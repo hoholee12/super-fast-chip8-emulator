@@ -1,11 +1,12 @@
 #include"Debug.h"
 
-void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, defaults* mainwindow, Memory* memory){
+void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, defaults* mainwindow, Memory* memory, Audio* audio){
 	static int count = 0;
 	static bool inCall = false;
 
 	/*memory dump*/
-	int32_t spc = pc;
+	/*
+	int32_t spc = pc & 0xfff0;
 	
 	if ((spc -= 0x20) < 0) spc = 0;
 
@@ -16,21 +17,23 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, 
 		printf("%02X ", memory->read(spc + i));
 	}
 	printf(">\n");
-
+	*/
 
 
 
 
 	/*register dump*/
-	printf("\nregister dump: <");
+
+	printf("register dump: <");
 	for (int i = 0; i < 0x10; i++){
 		printf("%02X ", v[i]);
 	}
 	printf(">\n");
 
-
-
-
+	uint8_t soundtimer = audio->getSoundTimer();
+	if (soundtimer != 0){
+		printf("soundTimer = %x\n", soundtimer);
+	}
 	/*opcode parse*/
 	if (inCall) printf("(call)\t");
 	printf("%d:\tpc: %x\t\tstack: %x\topcode: %x\t", ++count, pc, stack, input);
@@ -103,5 +106,6 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, 
 	}
 
 	//debug time
+	if (soundtimer != 0)
 	mainwindow->delayTime(DEBUG_TIME);
 }

@@ -137,9 +137,7 @@ public:
 	-breakoff when prev leftover cycle is done
 	*/
 	bool updateRecompiler(){
-#ifdef DEBUG_ME
-		printf("==========================================================\nleftover cycle: %d\n", leftoverCycle);
-#endif
+
 		//ready icache
 
 
@@ -160,36 +158,25 @@ public:
 		use_bCache = false;
 
 		if (cache->checkCacheExists(cpu->programCounter)){
-#ifdef DEBUG_ME
-			printf("compiled block already exists!!\n");
-			cache->printCache(pcTemp);
-#endif
+
 			if (leftoverCycle == 0){
-#ifdef DEBUG_ME
-				printf("if leftoverCycle == 0...");
-#endif
+
 				leftoverCycle = baseClock - cache->getOpcodeCount(cpu->programCounter);
 			
 			}
 			else if ((leftoverCycle - cache->getOpcodeCount(cpu->programCounter)) >= 0){
-#ifdef DEBUG_ME
-				printf("if leftoverCycle - cache->getOpcodeCount(cpu->programCounter) >= 0...");
-#endif
+
 				leftoverCycle -= cache->getOpcodeCount(cpu->programCounter);
 				
 			}
 			else{
-#ifdef DEBUG_ME
-				printf("else...");
-#endif
+
 				//use bCache
 				leftoverCycle -= cache->getOpcodeCount(cpu->programCounter, true);
 				use_bCache = true;
 			}
 
-#ifdef DEBUG_ME
-			printf("after: %d\n", leftoverCycle);
-#endif
+
 			return (leftoverCycle != 0);	//loop if cycle remaining
 			
 		}
@@ -228,11 +215,7 @@ public:
 			//restore original pc
 			cpu->programCounter = pcTemp;
 
-			//if everything is filled
-#ifdef DEBUG_ME
-			cache->printCache(pcTemp);
 
-#endif
 
 
 		}
@@ -251,11 +234,7 @@ public:
 			//restore original pc
 			cpu->programCounter = pcTemp;
 
-			//if everything is filled
-#ifdef DEBUG_ME
-			cache->printCache(pcTemp);
 
-#endif
 
 
 			//keep running until its completely filled
@@ -300,10 +279,7 @@ public:
 		
 		ICache* temp = cache->getCache(cpu->programCounter, use_bCache);
 		
-#ifdef DEBUG_ME
-		if (!use_bCache) printf("executing iCache block...\n");
-		else printf("executing bCache block...\n");
-#endif
+
 #ifdef _WIN32
 
 		SYSTEM_INFO system_info;
@@ -359,9 +335,6 @@ public:
 		if (!hintFallback) return;
 
 
-#ifdef DEBUG_ME
-		printf("executing fallback...\n");
-#endif
 		//delayNext for controllerOp
 
 		//fetch

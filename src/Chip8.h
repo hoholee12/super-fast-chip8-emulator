@@ -162,9 +162,7 @@ inline void Chip8::update_lowerhalf(){
 
 	//delay timer - 60hz
 	if (scheduler->subCheck()){
-#ifdef DEBUG_ME
-		printf("delaytimer->subCheck()...");
-#endif
+
 		if (delayRegister > 0x0) delayRegister--;
 
 		//audio - 60hz
@@ -177,18 +175,14 @@ inline void Chip8::update_lowerhalf(){
 
 	//video - loop based on fskip hz value, may skip a bit more if indivisable
 	if (scheduler->subCheck()){
-#ifdef DEBUG_ME
-		printf("video->subCheck()...");
-#endif
+
 		if (isEndlessLoop) video->forceFlush(); //force flush if endlessloop
 		video->draw(mainwindow);	//draw
 	}
 
 	//window - 1hz
 	if (scheduler->subCheck()){
-#ifdef DEBUG_ME
-		printf("window->subCheck()...");
-#endif
+
 		mainwindow->updateTitle(title, fskip->getCpuSpeed(), fskip->getBackupFps(), fskip->getHoldTick());
 	}
 
@@ -196,9 +190,7 @@ inline void Chip8::update_lowerhalf(){
 
 	//120hz for extra cycle optimization
 	if (scheduler->subCheck()){
-#ifdef DEBUG_ME
-		printf("optimizations->subCheck()...");
-#endif
+
 		//cycle optimizations - 120hz
 		optimizations();
 		//useSpeedHack(); //quite buggy atm
@@ -209,9 +201,7 @@ inline void Chip8::update_lowerhalf(){
 	//frameskip
 	////user framerate most of the time indivisable by 60hz
 	if (scheduler->subCheck()){
-#ifdef DEBUG_ME
-		printf("frameskip->subCheck()...");
-#endif
+
 
 		fskip->endTime();			//end timer
 		fskip->calculateSkip();		//calculate
@@ -225,8 +215,6 @@ inline void Chip8::update_lowerhalf(){
 
 	if (keyinput == 0xff) running = false;	//shutdown emulator
 
-#ifdef DEBUG_ME
-	printf("\n");
-#endif
+
 
 }
