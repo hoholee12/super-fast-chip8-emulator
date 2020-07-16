@@ -1,17 +1,37 @@
 #include"Debug.h"
 
-void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, defaults* mainwindow){
+void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, defaults* mainwindow, Memory* memory){
 	static int count = 0;
 	static bool inCall = false;
 
-	mainwindow->delayTime(DEBUG_TIME);
+	/*memory dump*/
+	int32_t spc = pc;
+	
+	if ((spc -= 0x20) < 0) spc = 0;
 
+	printf("Memory dump %02X~%02X:\n<", spc, spc + 0x40);
+	printf("%02X ", memory->read(spc));
+	for (uint16_t i = 0x1; i < 0x40; i++){
+		if (i % 0x10 == 0) printf("\n");
+		printf("%02X ", memory->read(spc + i));
+	}
+	printf(">\n");
+
+
+
+
+
+	/*register dump*/
 	printf("\nregister dump: <");
 	for (int i = 0; i < 0x10; i++){
 		printf("%02X ", v[i]);
 	}
 	printf(">\n");
 
+
+
+
+	/*opcode parse*/
 	if (inCall) printf("(call)\t");
 	printf("%d:\tpc: %x\t\tstack: %x\topcode: %x\t", ++count, pc, stack, input);
 
@@ -81,4 +101,7 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, 
 	default:
 		break;
 	}
+
+	//debug time
+	mainwindow->delayTime(DEBUG_TIME);
 }

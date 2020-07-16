@@ -219,7 +219,7 @@ void Chip8::debugMe(){
 		//universal stuff to debug here
 		printf("indexRegister = %x\n", *cpu->getIndexRegister());
 
-		Debug::printDebug(cpu->v, *cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode, mainwindow);
+		Debug::printDebug(cpu->v, *cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode, mainwindow, memory);
 	}
 	else{
 		if (doOnce == false){

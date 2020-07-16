@@ -44,6 +44,7 @@ public:
 };
 
 inline uint8_t Memory::read(uint16_t addr){
-		return mem[addr];
+	if (addr >= FULL_MEM_SIZE) return 0x0;	//no OOB
+	return mem[addr];
 
 }

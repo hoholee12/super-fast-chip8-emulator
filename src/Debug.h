@@ -1,5 +1,6 @@
 #pragma once
 #include"defaults.h"
+#include"Memory.h"
 #ifndef DEBUG_TIME
 #define DEBUG_TIME 100
 #endif
@@ -9,7 +10,7 @@ private:
 public:
 
 	//put in: static int count++, programCounter, stack[sp - 1], and current opcode
-	void printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t opcode, defaults* mainwindow);
+	void printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t opcode, defaults* mainwindow, Memory* memory);
 
 
 };

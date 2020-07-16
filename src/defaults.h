@@ -30,7 +30,7 @@ extern "C"
 
 
 
-//#define DEBUG_ME
+#define DEBUG_ME
 #define DEBUG_TIME 100
 
 
