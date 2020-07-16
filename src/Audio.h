@@ -11,6 +11,6 @@ public:
 	void audioProcess();	//opcode and cpu
 
 	//setter
-	void setSoundTimer(uint16_t input, CPU* cpu);
+	void setSoundTimer(CPU* cpu);
 	uint8_t getSoundTimer(){ return soundTimer; }
 };

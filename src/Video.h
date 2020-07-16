@@ -121,7 +121,7 @@ public:
 
 	void clearVBuffer();
 
-	void copySprite(uint16_t opcode, CPU* cpu, Memory* memory, Video* video);
+	void copySprite(CPU* cpu, Memory* memory, Video* video);
 
 	//for chip8 endless looop
 	void forceFlush(){

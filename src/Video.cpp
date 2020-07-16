@@ -29,18 +29,18 @@ void Video::clearVBuffer(){
 	copyToFbuffer();
 }
 
-void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory, Video* video){
+void Video::copySprite(CPU* cpu, Memory* memory, Video* video){
 	//?x??
-	uint8_t *vx = cpu->getV((opcode & 0x0f00) >> 8);
+	uint8_t *vx = cpu->getV((cpu->currentOpcode & 0x0f00) >> 8);
 	
 	//??y?
-	uint8_t *vy = cpu->getV((opcode & 0x00f0) >> 4);
+	uint8_t *vy = cpu->getV((cpu->currentOpcode & 0x00f0) >> 4);
 
 	//vf
 	uint8_t *vf = cpu->getV(0xf);
 
 	//??nn
-	uint8_t n = opcode & 0x000f;
+	uint8_t n = cpu->currentOpcode & 0x000f;
 	*vf = 0x0; //default
 
 	//index register
@@ -54,7 +54,7 @@ void Video::copySprite(uint16_t opcode, CPU* cpu, Memory* memory, Video* video){
 #ifdef DEBUG_ME
 	if (temp) printf("overwrite hint!!!!\n");
 #endif
-	pre_optimizations(new QueueType{ opcode, cpu->prevJmpHint(), temp });
+	pre_optimizations(new QueueType{ cpu->currentOpcode, cpu->prevJmpHint(), temp });
 
 
 	for (int y = 0; y < n; y++){

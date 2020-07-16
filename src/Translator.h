@@ -210,7 +210,7 @@ public:
 			if ((i & 0x00ff) == 0x07) jumbo_table[i] = &Translator::opcodefx07;
 			if ((i & 0x00ff) == 0x0a) jumbo_table[i] = &Translator::opcodefx0a;
 			if ((i & 0x00ff) == 0x15) jumbo_table[i] = &Translator::opcodefx15;
-			//if ((i & 0x00ff) == 0x18) jumbo_table[i] = &Translator::opcodefx18;
+			if ((i & 0x00ff) == 0x18) jumbo_table[i] = &Translator::opcodefx18;
 			if ((i & 0x00ff) == 0x1e) jumbo_table[i] = &Translator::opcodefx1e;
 			//if ((i & 0x00ff) == 0x29) jumbo_table[i] = &Translator::opcodefx29;
 			if ((i & 0x00ff) == 0x33) jumbo_table[i] = &Translator::opcodefx33;
