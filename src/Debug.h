@@ -11,7 +11,7 @@ private:
 public:
 
 	//put in: static int count++, programCounter, stack[sp - 1], and current opcode
-	void printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t opcode, defaults* mainwindow, Memory* memory, Audio* audio);
+	void printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t opcode, defaults* mainwindow, Memory* memory, Audio* audio, uint8_t delayRegister);
 
 
 };

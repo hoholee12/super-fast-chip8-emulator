@@ -1,6 +1,6 @@
 #include"Debug.h"
 
-void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, defaults* mainwindow, Memory* memory, Audio* audio){
+void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, defaults* mainwindow, Memory* memory, Audio* audio, uint8_t delayRegister){
 	static int count = 0;
 	static bool inCall = false;
 
@@ -20,20 +20,30 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, 
 	*/
 
 
+	/*delay register*/
+	if (delayRegister != 0x0) printf("delayReg = %x\n", delayRegister);
+
+
 
 
 	/*Vreg dump*/
-
 	printf("Vreg dump: <");
 	for (int i = 0; i < 0x10; i++){
 		printf("%02X ", v[i]);
 	}
 	printf(">\n");
 
+
+
+
+	/*sound timer*/
 	uint8_t soundtimer = audio->getSoundTimer();
 	if (soundtimer != 0){
 		printf("soundTimer = %x\n", soundtimer);
 	}
+	
+	
+	
 	/*opcode parse*/
 	if (inCall) printf("(call)\t");
 	printf("%d:\tpc: %x\t\tstack: %x\topcode: %x\t", ++count, pc, stack, input);

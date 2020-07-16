@@ -122,11 +122,8 @@ void Chip8::run(){
 			
 			dynarec->updateRecompiler();
 			do{
-				
+				cpu->currentOpcode = dynarec->getCurrentOpcode();
 #ifdef DEBUG_ME
-				currentOpcode = dynarec->getCurrentOpcode();
-				//debugger
-				if(delayRegister != 0x0) printf("delayReg = %x\n", delayRegister);
 				debugMe();
 #endif
 
@@ -136,7 +133,6 @@ void Chip8::run(){
 
 #ifdef DEBUG_ME
 			//debugger
-			if (delayRegister != 0x0) printf("delayReg = %x\n", delayRegister);
 			debugMe();
 #endif
 			
@@ -216,7 +212,7 @@ void Chip8::debugMe(){
 	if (!isEndlessLoop){
 		doOnce = false;
 
-		Debug::printDebug(cpu->v, *cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode, mainwindow, memory, audio);
+		Debug::printDebug(cpu->v, *cpu->getProgramCounter(), *cpu->getStack(*cpu->getStackPointer() - 1), currentOpcode, mainwindow, memory, audio, delayRegister);
 	}
 	else{
 		if (doOnce == false){

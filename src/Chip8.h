@@ -85,8 +85,6 @@ inline void Chip8::updateInterpreter_switch(){
 	currentOpcode = cpu->fetch(memory);
 
 #ifdef DEBUG_ME
-	//debugger
-	printf("delayReg = %x,\t", delayRegister);
 	debugMe();
 
 #endif
@@ -105,8 +103,6 @@ inline void Chip8::updateInterpreter_LUT(){
 	currentOpcode = cpu->fetch();
 
 #ifdef DEBUG_ME
-	//debugger
-	printf("delayReg = %x,\t", delayRegister);
 	debugMe();
 	
 #endif
@@ -126,8 +122,7 @@ inline void Chip8::updateInterpreter_jumboLUT(){
 	currentOpcode = cpu->fetch();
 
 #ifdef DEBUG_ME
-	//debugger
-	printf("delayReg = %x,\t", delayRegister);
+
 	debugMe();
 
 #endif
