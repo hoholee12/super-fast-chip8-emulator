@@ -241,6 +241,7 @@ public:
 
 #ifdef DEBUG_ME
 		//for checking proper translator input
+		if (cpuOp != 0x0)
 		printf("compiled opcode: %02X, xPointer: %X, yPointer: %X, nnn: %X\n",
 			cpuOp,
 			*(uint8_t*)vxPointer,
@@ -762,7 +763,7 @@ private:
 	void opcodefall(){
 		hintFallback_func();
 		interpreterSwitch_func();
-#ifdef DEBUG_ME
+#ifdef NO
 		printf("immediate registers: vx = %01X, vy = %01X, n = %01X, nn = %02X, nnn = %03X, vz = %01X, vf = %01X\n",
 			*(uint8_t*)vxPointer,
 			*(uint8_t*)vyPointer, 

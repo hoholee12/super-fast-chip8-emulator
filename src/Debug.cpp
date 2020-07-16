@@ -22,9 +22,9 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, 
 
 
 
-	/*register dump*/
+	/*Vreg dump*/
 
-	printf("register dump: <");
+	printf("Vreg dump: <");
 	for (int i = 0; i < 0x10; i++){
 		printf("%02X ", v[i]);
 	}
