@@ -305,7 +305,6 @@ public:
 		movDwordMemToRegSize = 2,
 		movWordMemToRegSize = 3,
 		dwordMovImmToAregSize = 5,
-		dwordMovImmToBregSize = 5,
 		dwordMovImmToCregSize = 5,
 		dwordMovImmToDregSize = 5,
 		dwordAddSize = 2,
@@ -380,7 +379,6 @@ public:
 		movDwordMemToRegMode,
 		movWordMemToRegMode,
 		dwordMovImmToAregMode,
-		dwordMovImmToBregMode,
 		dwordMovImmToCregMode,
 		dwordMovImmToDregMode,
 		dwordAddMode,
@@ -490,7 +488,6 @@ public:
 		uint8_t opcode = 0xB8;
 		switch (opmode){
 		case dwordMovImmToAregMode: init(memoryBlock, dwordMovImmToAregSize); addOpcode(opcode, srcToDest, byteOnly); addDword(disp.dword); return dwordMovImmToAregSize;
-		case dwordMovImmToBregMode: init(memoryBlock, dwordMovImmToBregSize); addOpcode(opcode, destToSrc, wordAndDword); addDword(disp.dword); return dwordMovImmToBregSize;
 		case dwordMovImmToCregMode: init(memoryBlock, dwordMovImmToCregSize); addOpcode(opcode, srcToDest, wordAndDword); addDword(disp.dword); return dwordMovImmToCregSize;
 		case dwordMovImmToDregMode: init(memoryBlock, dwordMovImmToDregSize); addOpcode(opcode, destToSrc, byteOnly); addDword(disp.dword); return dwordMovImmToDregSize;
 
@@ -708,6 +705,8 @@ public:
 
 		shortcuts!
 
+		A, C, D registers are caller-saved (volatile)
+		B, SI, DI are callee-saved.
 
 		*/
 	//easy shortcut to load to register and expand
@@ -724,22 +723,22 @@ public:
 
 	OperandSizes loadArray_AregAsResult(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size) const{
 		Mov_imm(memoryBlock, dwordMovImmToAregMode, insertDisp(arr));
-		loadMemToDwordReg(memoryBlock, arrptr, Breg, Byte);
+		loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
 		switch (Size){
-		case Byte: Add(memoryBlock, dwordAddMode, Areg, Breg); Mov(memoryBlock, movByteMemToRegMode, Breg, Areg); Movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg); return loadByteArraySize;
-		case Word: Lea(memoryBlock, leaWithoutDispMode, Breg, x2, Breg, Areg); Mov(memoryBlock, movWordMemToRegMode, Breg, Areg); Movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg); return loadWordArraySize;
-		case Dword: Lea(memoryBlock, leaWithoutDispMode, Breg, x4, Breg, Areg); Mov(memoryBlock, movDwordMemToRegMode, Breg, Areg); return loadDwordArraySize;
+		case Byte: Add(memoryBlock, dwordAddMode, Areg, Creg); Mov(memoryBlock, movByteMemToRegMode, Creg, Areg); Movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg); return loadByteArraySize;
+		case Word: Lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Areg); Mov(memoryBlock, movWordMemToRegMode, Creg, Areg); Movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg); return loadWordArraySize;
+		case Dword: Lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Areg); Mov(memoryBlock, movDwordMemToRegMode, Creg, Areg); return loadDwordArraySize;
 		}
 		return none;
 	}
 
 	OperandSizes storeArray_AregAsInput(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size) const{
-		Mov_imm(memoryBlock, dwordMovImmToBregMode, insertDisp(arr));
+		Mov_imm(memoryBlock, dwordMovImmToDregMode, insertDisp(arr));
 		loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
 		switch (Size){
-		case Byte: Add(memoryBlock, dwordAddMode, Breg, Creg); Mov(memoryBlock, movByteRegToMemMode, Areg, Creg); return storeByteArraySize;
-		case Word: Lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Breg); Mov(memoryBlock, movWordRegToMemMode, Areg, Creg); return storeWordArraySize;
-		case Dword: Lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Breg); Mov(memoryBlock, movDwordRegToMemMode, Areg, Creg); return storeDwordArraySize;
+		case Byte: Add(memoryBlock, dwordAddMode, Dreg, Creg); Mov(memoryBlock, movByteRegToMemMode, Areg, Creg); return storeByteArraySize;
+		case Word: Lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Dreg); Mov(memoryBlock, movWordRegToMemMode, Areg, Creg); return storeWordArraySize;
+		case Dword: Lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Dreg); Mov(memoryBlock, movDwordRegToMemMode, Areg, Creg); return storeDwordArraySize;
 		}
 		return none;
 	}
@@ -911,7 +910,6 @@ public:
 				else if (isImm(src_str))insertImm(&parserType->disp, src_str);
 				insertDest(parserType, dest_str);
 				if (parserType->modrm.dest == Areg) parserType->opmode = dwordMovImmToAregMode;
-				else if (parserType->modrm.dest == Breg) parserType->opmode = dwordMovImmToBregMode;
 				else if (parserType->modrm.dest == Creg) parserType->opmode = dwordMovImmToCregMode;
 				else if (parserType->modrm.dest == Dreg) parserType->opmode = dwordMovImmToDregMode;
 
@@ -1111,7 +1109,6 @@ public:
 		case movDwordMemToRegMode: 
 		case movWordMemToRegMode: return Mov(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case dwordMovImmToAregMode: 
-		case dwordMovImmToBregMode: 
 		case dwordMovImmToCregMode: 
 		case dwordMovImmToDregMode: return Mov_imm(memoryBlock, parserType->opmode, parserType->disp);
 		case dwordAddMode: return Add(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
