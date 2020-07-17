@@ -122,8 +122,9 @@ void Chip8::run(){
 			
 			dynarec->updateRecompiler();
 			do{
-				cpu->currentOpcode = dynarec->getCurrentOpcode();
+				
 #ifdef DEBUG_ME
+				cpu->currentOpcode = dynarec->getCurrentOpcode();
 				debugMe();
 #endif
 

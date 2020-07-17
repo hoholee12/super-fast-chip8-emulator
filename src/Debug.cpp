@@ -116,6 +116,5 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, 
 	}
 
 	//debug time
-	if (soundtimer != 0)
 	mainwindow->delayTime(DEBUG_TIME);
 }

@@ -83,6 +83,7 @@ inline void Chip8::updateInterpreter_switch(){
 	//fetch
 	previousOpcode = currentOpcode;
 	currentOpcode = cpu->fetch(memory);
+	cpu->currentOpcode = currentOpcode;
 
 #ifdef DEBUG_ME
 	debugMe();
@@ -101,6 +102,7 @@ inline void Chip8::updateInterpreter_LUT(){
 	//fetch
 	previousOpcode = currentOpcode;
 	currentOpcode = cpu->fetch();
+	cpu->currentOpcode = currentOpcode;
 
 #ifdef DEBUG_ME
 	debugMe();
@@ -120,6 +122,7 @@ inline void Chip8::updateInterpreter_jumboLUT(){
 	//fetch
 	previousOpcode = currentOpcode;
 	currentOpcode = cpu->fetch();
+	cpu->currentOpcode = currentOpcode;
 
 #ifdef DEBUG_ME
 

@@ -279,6 +279,9 @@ public:
 		
 		ICache* temp = cache->getCache(cpu->programCounter, use_bCache);
 		
+#ifdef DEBUG_ME
+		cache->printCache(cpu->programCounter);
+#endif
 
 #ifdef _WIN32
 
@@ -340,6 +343,7 @@ public:
 		//fetch
 		previousOpcode = currentOpcode;
 		currentOpcode = cpu->fetch();
+		cpu->currentOpcode = currentOpcode;
 
 		if(!delayNext) cpu->decode_jumboLUT();
 		//controller
@@ -359,6 +363,8 @@ public:
 				audio->setSoundTimer(cpu);
 				break;
 		}
+
+		cpu->controllerOp = ControllerOp::none;
 
 		//reset
 		switchToInterpreter = false;
