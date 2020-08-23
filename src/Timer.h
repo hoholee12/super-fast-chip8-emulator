@@ -3,7 +3,7 @@
 
 //wrote this to make it faster than modulo op... instead it has become slower epic fail lol
 //but im keeping it for readability, and overflow prevention sake
-class Timer final{
+class Timer{
 private:
 	uint32_t *delayTimerPerFrame; //delay timer
 	uint32_t *secondaryInput;

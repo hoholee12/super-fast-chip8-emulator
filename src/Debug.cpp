@@ -1,6 +1,6 @@
 #include"Debug.h"
 
-void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, defaults* mainwindow, Memory* memory, Audio* audio, uint8_t delayRegister){
+void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t* stack, uint8_t stackptr, uint16_t input, defaults* mainwindow, Memory* memory, Audio* audio, uint8_t delayRegister){
 	static int count = 0;
 	static bool inCall = false;
 
@@ -46,7 +46,11 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t stack, uint16_t input, 
 	
 	/*opcode parse*/
 	if (inCall) printf("(call)\t");
-	printf("%d:\tpc: %x\t\tstack: %x\topcode: %x\t", ++count, pc, stack, input);
+	printf("%d:\tpc: %x\topcode: %x\tstack:<", ++count, pc, input);
+	for (int i = 0; i < stackptr; i++){
+		printf("%02X ", stack[i]);
+	}
+	printf(">\n");
 
 	switch ((input & 0xf000) >> 12){
 	case 0x0:

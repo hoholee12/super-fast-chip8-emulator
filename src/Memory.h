@@ -29,7 +29,7 @@ const uint8_t fontSet[FONT_COUNT * 5] = {
 	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-class Memory final{
+class Memory{
 public:
 	uint8_t mem[FULL_MEM_SIZE];
 

@@ -37,7 +37,7 @@ typedef struct _QueueType{
 
 
 
-class Video final{
+class Video{
 private:
 
 	uint8_t videoBuffer[SCREEN_WIDTH * SCREEN_HEIGHT]; //video buffer

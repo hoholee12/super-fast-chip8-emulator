@@ -78,15 +78,18 @@ public:
 		){
 		controllerOp = (uint32_t)&cpu->controllerOp;
 		programCounter = (uint32_t)&cpu->programCounter;
-		stack = (uint32_t)&cpu->stack;
+		
 		stackPointer = (uint32_t)&cpu->stackPointer;
 		flag = (uint32_t)&cpu->flag;
 		jmpHint = (uint32_t)&cpu->jmpHint;
-		v = (uint32_t)cpu->v;				//??
+		
 		indexRegister = (uint32_t)&cpu->indexRegister;
 		throwError = (uint32_t)&cpu->throwError;
 		currentOpcode = (uint32_t)&cpu->currentOpcode;
 
+		//arrays
+		v = (uint32_t)cpu->v;
+		stack = (uint32_t)cpu->stack;
 
 		//these are chip8 variables referenced from cpu
 		pressedKey = (uint32_t)cpu->pressedKey;
@@ -160,13 +163,13 @@ public:
 
 		//TODO: fix all commented out opcodes
 		//		need to fix test_opcode.ch8 not displaying anything
-		/*
+		
 		jumbo_table[0x00e0] = &Translator::opcode00e0;
 		jumbo_table[0x00ee] = &Translator::opcode00ee;
 		
 		for (uint32_t i = 0x1000; i < 0x2000; i++) jumbo_table[i] = &Translator::opcode1nnn;
 		
-		for (uint32_t i = 0x2000; i < 0x3000; i++) jumbo_table[i] = &Translator::opcode2nnn;
+		//for (uint32_t i = 0x2000; i < 0x3000; i++) jumbo_table[i] = &Translator::opcode2nnn;
 		
 		//for (uint32_t i = 0x3000; i < 0x4000; i++) jumbo_table[i] = &Translator::opcode3xnn;
 		
@@ -216,7 +219,7 @@ public:
 			if ((i & 0x00ff) == 0x55) jumbo_table[i] = &Translator::opcodefx55;
 			if ((i & 0x00ff) == 0x65) jumbo_table[i] = &Translator::opcodefx65;
 		}
-		*/
+		
 	}
 
 
@@ -262,6 +265,9 @@ public:
 	void endBlock(){
 		interpreterSwitch_func();
 	}
+	void startBlock(){
+		X86Emitter::BlockInitializer(&memoryBlock->cache);
+	}
 
 private:
 
@@ -292,7 +298,7 @@ private:
 	}
 	void interpreterSwitch_func(){
 		X86Emitter::setToMemaddr(&memoryBlock->cache, interpreterSwitch, 0x1, Byte);
-		X86Emitter::Ret(&memoryBlock->cache);
+		X86Emitter::BlockFinisher(&memoryBlock->cache);
 		endDecode = true;
 	}
 
@@ -587,26 +593,25 @@ private:
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 		
-		X86Emitter::Mov(&memoryBlock->cache, movDwordRegToRegMode, Areg, Breg);
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, eax");
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
 		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
-		X86Emitter::Add(&memoryBlock->cache, dwordAddMode, Areg, Breg);
+		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 
 		//ecx = 0xff
-		X86Emitter::Mov_imm(&memoryBlock->cache, dwordMovImmToCregMode, insertDisp(0xff));
-		//X86Emitter::mov_imm_to_ecx(&memoryBlock->cache, 0xff);
+		X86Emitter::parse(&memoryBlock->cache, "mov ecx, 0xff");
 
 		//>?
-		X86Emitter::Mov_imm(&memoryBlock->cache, dwordMovImmToAregMode, insertDisp(0x0));
+		X86Emitter::parse(&memoryBlock->cache, "mov eax, 0");
 		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Breg, Creg);
 		X86Emitter::parse(&memoryBlock->cache, "jbe extra", insertDisp(dwordAddImmToRegSize));
 		//X86Emitter::Jcc(&memoryBlock->cache, byteRelJbeMode, insertDisp(dwordAddImmToRegSize));
 
-		X86Emitter::Add_imm(&memoryBlock->cache, dwordAddImmToRegMode, insertDisp(1), Areg);
+		X86Emitter::parse(&memoryBlock->cache, "add eax, 1");
 
 		//=
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vfPointer, Byte);
@@ -623,7 +628,7 @@ private:
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
-		X86Emitter::Mov(&memoryBlock->cache, movDwordRegToRegMode, Areg, Breg);
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, eax");
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
@@ -651,7 +656,7 @@ private:
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
-		X86Emitter::Mov(&memoryBlock->cache, movDwordRegToRegMode, Areg, Breg);
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, eax");
 
 		//ecx = vx
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
@@ -660,11 +665,11 @@ private:
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
-		X86Emitter::Mov(&memoryBlock->cache, movDwordRegToRegMode, Areg, Creg);
+		X86Emitter::parse(&memoryBlock->cache, "mov ecx, eax");
 
 
 		//<?
-		X86Emitter::Mov_imm(&memoryBlock->cache, dwordMovImmToAregMode, insertDisp(1));
+		X86Emitter::parse(&memoryBlock->cache, "mov eax, 1");
 		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Creg, Breg);
 		X86Emitter::parse(&memoryBlock->cache, "ja extra", insertDisp(dwordAddImmToRegSize));
 		//X86Emitter::Jcc(&memoryBlock->cache, byteRelJaMode, insertDisp(dwordAddImmToRegSize));
@@ -764,7 +769,7 @@ private:
 
 
 		//<?
-		X86Emitter::Mov_imm(&memoryBlock->cache, dwordMovImmToAregMode, insertDisp(1));
+		X86Emitter::parse(&memoryBlock->cache, "mov eax, 1");
 		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Creg, Breg);
 		X86Emitter::parse(&memoryBlock->cache, "jb extra", insertDisp(dwordAddImmToRegSize));
 		//X86Emitter::Jcc(&memoryBlock->cache, byteRelJbMode, insertDisp(dwordAddImmToRegSize));

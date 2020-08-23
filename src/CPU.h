@@ -43,14 +43,14 @@ class CPU;	//forward declaration for cputable
 typedef void			(CPU::*CPUTable)	(void);
 //		^return type	^function name		^dont take parameter
 
-class CPU final: public Input{
+class CPU: public Input{
 public:
-	uint16_t currentOpcode;
-	uint16_t programCounter;
-	uint8_t stackPointer;
-	uint16_t indexRegister;	//I register
-	uint16_t stack[STACK_SIZE];
-	uint8_t v[V_REGISTER_SIZE];
+	volatile uint16_t currentOpcode;
+	volatile uint16_t programCounter;
+	volatile uint8_t stackPointer;
+	volatile uint16_t indexRegister;	//I register
+	volatile uint16_t stack[STACK_SIZE];
+	volatile uint8_t v[V_REGISTER_SIZE];
 
 
 
@@ -70,9 +70,9 @@ public:
 #define JUMBO_TABLE_SIZE 0x10000
 	CPUTable jumbo_table[JUMBO_TABLE_SIZE];
 	
-	ControllerOp controllerOp;
+	volatile ControllerOp controllerOp;
 	//TODO
-	bool throwError;
+	volatile bool throwError;
 
 	/*	===replaced by macros===
 	uint8_t head;
@@ -87,21 +87,21 @@ public:
 	*/
 
 	//1 = is a jump; dont increment pc
-	int flag;
+	volatile int flag;
 
 	Memory* memory;
 	uint8_t* delayRegister;
 	uint8_t* pressedKey;
 
-	bool jmpHint = false;
+	volatile bool jmpHint = false;
 
 public:
 	//inline getters
-	uint16_t* getProgramCounter(){ return &programCounter; }
-	uint8_t* getStackPointer(){ return &stackPointer; }
-	uint16_t* getIndexRegister(){ return &indexRegister; }
-	uint16_t* getStack(uint8_t input){ return &stack[input]; }
-	uint8_t* getV(uint8_t input){ return &v[input]; }
+	uint16_t* getProgramCounter(){ return (uint16_t*)&programCounter; }
+	uint8_t* getStackPointer(){ return (uint8_t*)&stackPointer; }
+	uint16_t* getIndexRegister(){ return (uint16_t*)&indexRegister; }
+	uint16_t* getStack(uint8_t input){ return (uint16_t*)&stack[input]; }
+	uint8_t* getV(uint8_t input){ return (uint8_t*)&v[input]; }
 
 
 	//return previous jmp state and reset

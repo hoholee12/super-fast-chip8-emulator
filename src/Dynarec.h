@@ -109,6 +109,7 @@ public:
 		for (; cpu->programCounter < FULL_MEM_SIZE;){
 			translator->init(cache->createCache(cpu->programCounter, true));
 			cache->getCache(cpu->programCounter, true)->TScache.resize(1);
+			translator->startBlock();
 			internalLoop(0, cpu->programCounter, true);
 
 			// ensure block is closed
@@ -198,6 +199,7 @@ public:
 		//update xyn for next opcode
 		cache->getCache(pcTemp)->TScache.resize(baseClock);
 		
+		translator->startBlock();
 
 		//recompile n opcodes
 		int i = 0;
@@ -332,6 +334,7 @@ public:
 
 		function_ptr();
 
+		munmap(buffer, 0);
 #endif
 
 		//if hintFallback flipped, continue to execute fallback

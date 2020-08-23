@@ -9,7 +9,7 @@
 #define WINDOW_FPS 1	//window - do not go over TIMER_SPEED
 #define SKIP_VALUE 2	//fps / skipValue
 
-class Frameskip final:public defaults{
+class Frameskip: public defaults{
 private:
 	//fps timer
 	uint32_t cpuSpeed = CPU_SPEED;

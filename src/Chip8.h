@@ -16,7 +16,7 @@
 
 
 
-class Chip8 final:public defaults, Debug{
+class Chip8: public defaults, Debug{
 private:
 	char* title;
 	int cpuspeed;
