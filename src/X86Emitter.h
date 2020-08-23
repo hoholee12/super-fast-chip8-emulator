@@ -195,7 +195,7 @@ public:
 	enum Mod{ forDisp = 0x0, byteSignedDisp = 0x1, dwordSignedDisp = 0x2, forReg = 0x3 };
 
 	//X86Regs -> Areg = 000, Creg = 001, Dreg = 010 //// Breg = 011, illegal(stackP) = 100, memaddr(baseP) = 101, Sidx = 110, Didx = 111
-	//caution: Areg, Creg, Dreg are volatile registers, and may not retain original value on context switch
+	//caution: Areg, Creg, Dreg are volatile registers, and may not retain original value on some of these provided features
 	//tip: IP register is controlled via jmp, call, ret
 	enum X86Regs{ Areg = 0x0, Creg = 0x1, Dreg = 0x2, Breg = 0x3, illegal = 0x4, memaddr = 0x5, Sidx = 0x6, Didx = 0x7 };
 
@@ -733,8 +733,7 @@ public:
 		shortcuts!
 
 		caution:
-		A, C, D registers are caller-saved (volatile)
-		B, SI, DI are callee-saved.
+		A, C, D registers are used
 
 		*/
 	//easy shortcut to load to register and expand
@@ -751,22 +750,22 @@ public:
 
 	OperandSizes loadArray_AregAsResult(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size) const{
 		Mov_imm(memoryBlock, dwordMovImmToRegMode, Areg, insertDisp(arr));
-		loadMemToDwordReg(memoryBlock, arrptr, Breg, Byte);
+		loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
 		switch (Size){
-		case Byte: Add(memoryBlock, dwordAddMode, Areg, Breg); Mov(memoryBlock, movByteMemToRegMode, Breg, Areg); Movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg); return loadByteArraySize;
-		case Word: Lea(memoryBlock, leaWithoutDispMode, Breg, x2, Breg, Areg); Mov(memoryBlock, movWordMemToRegMode, Breg, Areg); Movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg); return loadWordArraySize;
-		case Dword: Lea(memoryBlock, leaWithoutDispMode, Breg, x4, Breg, Areg); Mov(memoryBlock, movDwordMemToRegMode, Breg, Areg); return loadDwordArraySize;
+		case Byte: Add(memoryBlock, dwordAddMode, Areg, Creg); Mov(memoryBlock, movByteMemToRegMode, Creg, Areg); Movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg); return loadByteArraySize;
+		case Word: Lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Areg); Mov(memoryBlock, movWordMemToRegMode, Creg, Areg); Movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg); return loadWordArraySize;
+		case Dword: Lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Areg); Mov(memoryBlock, movDwordMemToRegMode, Creg, Areg); return loadDwordArraySize;
 		}
 		return none;
 	}
 
 	OperandSizes storeArray_AregAsInput(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size) const{
 		Mov_imm(memoryBlock, dwordMovImmToRegMode, Dreg, insertDisp(arr));
-		loadMemToDwordReg(memoryBlock, arrptr, Breg, Byte);
+		loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
 		switch (Size){
-		case Byte: Add(memoryBlock, dwordAddMode, Dreg, Breg); Mov(memoryBlock, movByteRegToMemMode, Areg, Breg); return storeByteArraySize;
-		case Word: Lea(memoryBlock, leaWithoutDispMode, Breg, x2, Breg, Dreg); Mov(memoryBlock, movWordRegToMemMode, Areg, Breg); return storeWordArraySize;
-		case Dword: Lea(memoryBlock, leaWithoutDispMode, Breg, x4, Breg, Dreg); Mov(memoryBlock, movDwordRegToMemMode, Areg, Breg); return storeDwordArraySize;
+		case Byte: Add(memoryBlock, dwordAddMode, Dreg, Creg); Mov(memoryBlock, movByteRegToMemMode, Areg, Creg); return storeByteArraySize;
+		case Word: Lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Dreg); Mov(memoryBlock, movWordRegToMemMode, Areg, Creg); return storeWordArraySize;
+		case Dword: Lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Dreg); Mov(memoryBlock, movDwordRegToMemMode, Areg, Creg); return storeDwordArraySize;
 		}
 		return none;
 	}
@@ -802,7 +801,7 @@ public:
 	
 		text assembler(please dont write bs in it error checking is hard af)
 	
-		TODO: implement
+		TODO: seperate it later
 	*/
 
 
