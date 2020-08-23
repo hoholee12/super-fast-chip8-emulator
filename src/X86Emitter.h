@@ -447,12 +447,27 @@ public:
 	OperandSizes opmodeError(const char* str, std::string str2 = std::string()) const{ fprintf(stderr, "%s", str); fprintf(stderr, ": incompatible opmode! -> "); fprintf(stderr, "%s", str2.c_str()); exit(1); return none; }
 
 
+	OperandSizes BlockInitializer(vect8* memoryBlock) const{
+		int count = 0;
+		count += Push(memoryBlock, pushDwordMode, memaddr);
+		count += parse(memoryBlock, "mov ebp, esp");
+		return (OperandSizes)count;
+	
+	}
+	OperandSizes BlockFinisher(vect8* memoryBlock) const{
+		int count = 0;
+		count += Pop(memoryBlock, popDwordMode, memaddr);
+		count += Ret(memoryBlock);
+		return (OperandSizes)count;
+
+	}
+
 	//ALWAYS PUSH EVERYTHING BEFORE RUNNING COMPILED BLOCK!!!
 	OperandSizes Push(vect8* memoryBlock, OperandModes opmode, X86Regs src) const{
 		uint8_t opcode = 0x50;
 		switch (opmode){
-		case pushWordMode: addExtension(); addOpcode(opcode | src, srcToDest, byteOnly); return pushWordSize;
-		case pushDwordMode: addOpcode(opcode | src, srcToDest, byteOnly); return pushDwordSize;
+		case pushWordMode: init(memoryBlock, pushWordSize); addExtension(); addOpcode(opcode | src, srcToDest, byteOnly); return pushWordSize;
+		case pushDwordMode: init(memoryBlock, pushDwordSize); addOpcode(opcode | src, srcToDest, byteOnly); return pushDwordSize;
 		}
 		return none;
 	}
@@ -460,8 +475,8 @@ public:
 	OperandSizes Pop(vect8* memoryBlock, OperandModes opmode, X86Regs src) const{
 		uint8_t opcode = 0x58;
 		switch (opmode){
-		case popWordMode: addExtension(); addOpcode(opcode | src, srcToDest, byteOnly); return popWordSize;
-		case popDwordMode: addOpcode(opcode | src, srcToDest, byteOnly); return popDwordSize;
+		case popWordMode: init(memoryBlock, popWordSize); addExtension(); addOpcode(opcode | src, srcToDest, byteOnly); return popWordSize;
+		case popDwordMode: init(memoryBlock, popDwordSize); addOpcode(opcode | src, srcToDest, byteOnly); return popDwordSize;
 		}
 		return none;
 	}
