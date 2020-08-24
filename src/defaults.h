@@ -8,8 +8,19 @@
 */
 
 
+//first declaration
+#ifdef __linux__
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <sys/mman.h>
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
 #ifdef __cplusplus
 extern "C"
+#endif
 #endif
 
 #pragma warning(disable:4018; disable:4996; disable:4244)
@@ -21,6 +32,7 @@ extern "C"
 #include<SDL2/SDL.h>
 #include<SDL2/SDL_mixer.h>
 #endif
+
 
 #include<stdlib.h>
 #include<stdio.h>

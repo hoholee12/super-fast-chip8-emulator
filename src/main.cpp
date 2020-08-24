@@ -1,5 +1,4 @@
 #include"Chip8.h"
-#include<stdio.h>
 
 //argc argv is essential for SDL program!!!
 int main(int argc, char** argv){

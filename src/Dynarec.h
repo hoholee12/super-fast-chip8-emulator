@@ -1,11 +1,5 @@
 #pragma once
 
-//windows.h header MUST BE DECLARED FIRST!!
-#ifdef _WIN32
-#include <windows.h>
-#elif __LINUX__
-#include <sys/mman.h>
-#endif
 
 /*
 	Dynarec main core

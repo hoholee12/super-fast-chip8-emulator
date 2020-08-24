@@ -9,7 +9,7 @@ OBJECTS=$(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
 DEPENDS=$(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.d,$(SOURCES))
 
 CXXFLAGS=-g -O2 -Wno-unused-result -m32
-LDFLAGS=`pkg-config --cflags --libs sdl2` -lSDL2main -lSDL2 -lSDL2_mixer
+LDFLAGS=`pkg-config --cflags --libs sdl2` -lSDL2main -lSDL2 -lSDL2_mixer -m32
 
 default: $(OBJDIR)/chip8-emu
 
