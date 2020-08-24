@@ -163,20 +163,20 @@ public:
 
 		//TODO: fix all commented out opcodes
 		//		need to fix test_opcode.ch8 not displaying anything
-		
+		/*
 		jumbo_table[0x00e0] = &Translator::opcode00e0;
 		jumbo_table[0x00ee] = &Translator::opcode00ee;
 		
 		for (uint32_t i = 0x1000; i < 0x2000; i++) jumbo_table[i] = &Translator::opcode1nnn;
-		
-		//for (uint32_t i = 0x2000; i < 0x3000; i++) jumbo_table[i] = &Translator::opcode2nnn;
+		*/
+		for (uint32_t i = 0x2000; i < 0x3000; i++) jumbo_table[i] = &Translator::opcode2nnn;
 		
 		//for (uint32_t i = 0x3000; i < 0x4000; i++) jumbo_table[i] = &Translator::opcode3xnn;
 		
 		//for (uint32_t i = 0x4000; i < 0x5000; i++) jumbo_table[i] = &Translator::opcode4xnn;
 		
 		//for (uint32_t i = 0x5000; i < 0x6000; i++) if ((i & 0x000f) == 0x0) jumbo_table[i] = &Translator::opcode5xy0;
-		
+		/*
 		for (uint32_t i = 0x6000; i < 0x7000; i++) jumbo_table[i] = &Translator::opcode6xnn;
 		
 		for (uint32_t i = 0x7000; i < 0x8000; i++) jumbo_table[i] = &Translator::opcode7xnn;
@@ -219,6 +219,7 @@ public:
 			if ((i & 0x00ff) == 0x55) jumbo_table[i] = &Translator::opcodefx55;
 			if ((i & 0x00ff) == 0x65) jumbo_table[i] = &Translator::opcodefx65;
 		}
+		*/
 		
 	}
 
@@ -368,6 +369,7 @@ private:
 		//jmpHint = true; //hint for video flicker loop
 	}
 	void opcode2nnn(){
+		//Breakpoint(&memoryBlock->cache);
 		//= programCounter
 		loadMemToDwordReg(&memoryBlock->cache, programCounter, Areg, Word);
 

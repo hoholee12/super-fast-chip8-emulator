@@ -980,9 +980,9 @@ public:
 				if (isPtr(dest_str)){	//from Memaddr
 					insertSrc(parserType, src_str);
 					if (isReg(src_str) && !isPtr(src_str)){
-						if (isByte(src_str)) parserType->opmode = movToMemaddrByteMode;
-						else if (isWord(src_str)) parserType->opmode = movToMemaddrWordMode;
-						else if (isDword(src_str)) parserType->opmode = movToMemaddrDwordMode;
+						if (isByte(dest_str)) parserType->opmode = movToMemaddrByteMode;
+						else if (isWord(dest_str)) parserType->opmode = movToMemaddrWordMode;
+						else if (isDword(dest_str)) parserType->opmode = movToMemaddrDwordMode;
 					}
 				}
 				//mov extra, reg

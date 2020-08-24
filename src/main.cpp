@@ -3,7 +3,7 @@
 
 //argc argv is essential for SDL program!!!
 int main(int argc, char** argv){
-	Chip8 chip;
+	Chip8* chip = new Chip8();
 	int clockspeed;
 	int fps;
 	int method;
@@ -27,7 +27,7 @@ int main(int argc, char** argv){
 		printf("\nLOAD.\n");
 
 
-		chip.start(argv[1], clockspeed, fps, method, flickerOffset);
+		chip->start(argv[1], clockspeed, fps, method, flickerOffset);
 		break;
 	default:
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv){
 		printf("\nLOAD.\n");
 
 
-		chip.start(argv[1]);
+		chip->start(argv[1]);
 	}
 
 	return 0;
