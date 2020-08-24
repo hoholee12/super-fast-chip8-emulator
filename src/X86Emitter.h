@@ -447,6 +447,10 @@ public:
 	OperandSizes opmodeError(const char* str, std::string str2 = std::string()) const{ fprintf(stderr, "%s", str); fprintf(stderr, ": incompatible opmode! -> "); fprintf(stderr, "%s", str2.c_str()); exit(1); return none; }
 
 
+	OperandSizes Breakpoint(vect8* memoryBlock) const{
+		init(memoryBlock, 1); addByte(0xCC); return (OperandSizes)1;
+	}
+
 	OperandSizes BlockInitializer(vect8* memoryBlock) const{
 		int count = 0;
 		count += Push(memoryBlock, pushDwordMode, memaddr);
