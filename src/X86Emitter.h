@@ -940,7 +940,7 @@ public:
 		parse_op
 		-check opcode
 		-----check type/get (src/dest)
-		---------check size (src/dest)
+		---------check size (src/dest) - always ptr first!!!
 		-------------set opmode
 	*/
 	void parse_op(ParserType* parserType, string* op_str, string* src_str, string* dest_str, Disp extra) const{
@@ -963,9 +963,9 @@ public:
 				if (isPtr(src_str)){	//from Memaddr
 					insertDest(parserType, dest_str);
 					if (isReg(dest_str) && !isPtr(dest_str)){
-						if (isByte(dest_str)) parserType->opmode = movFromMemaddrByteMode;
-						else if (isWord(dest_str)) parserType->opmode = movFromMemaddrWordMode;
-						else if (isDword(dest_str)) parserType->opmode = movFromMemaddrDwordMode;
+						if (isByte(src_str)) parserType->opmode = movFromMemaddrByteMode;
+						else if (isWord(src_str)) parserType->opmode = movFromMemaddrWordMode;
+						else if (isDword(src_str)) parserType->opmode = movFromMemaddrDwordMode;
 					}
 				}
 				//mov reg, extra
@@ -995,11 +995,11 @@ public:
 			else if (isReg(src_str) && isReg(dest_str)){
 				insertSrc(parserType, src_str); insertDest(parserType, dest_str);
 				//mov [reg], reg
-				if (isByte(src_str) && isDword(dest_str) && isPtr(dest_str))
+				if (isByte(dest_str) && isPtr(dest_str))
 					parserType->opmode = movByteRegToMemMode;
-				else if (isWord(src_str) && isDword(dest_str) && isPtr(dest_str))
+				else if (isWord(dest_str) && isPtr(dest_str))
 					parserType->opmode = movWordRegToMemMode;
-				else if (isDword(src_str) && isDword(dest_str) && isPtr(dest_str))
+				else if (isDword(dest_str) && isPtr(dest_str))
 					parserType->opmode = movDwordRegToMemMode;
 
 				//mov reg, reg
@@ -1007,11 +1007,11 @@ public:
 					parserType->opmode = movDwordRegToRegMode;
 
 				//mov reg, [reg]
-				else if (isByte(dest_str) && isDword(src_str) && isPtr(src_str))
+				else if (isByte(src_str) && isPtr(src_str))
 					parserType->opmode = movByteMemToRegMode;
-				else if (isWord(dest_str) && isDword(src_str) && isPtr(src_str))
+				else if (isWord(src_str) && isPtr(src_str))
 					parserType->opmode = movWordMemToRegMode;
-				else if (isDword(dest_str) && isDword(src_str) && isPtr(src_str))
+				else if (isDword(src_str) && isPtr(src_str))
 					parserType->opmode = movDwordMemToRegMode;
 
 				

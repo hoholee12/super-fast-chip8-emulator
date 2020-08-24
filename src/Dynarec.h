@@ -281,7 +281,7 @@ public:
 		
 		ICache* temp = cache->getCache(cpu->programCounter, use_bCache);
 		
-#ifdef DEBUG_ME
+#ifdef NO
 		cache->printCache(cpu->programCounter);
 #endif
 

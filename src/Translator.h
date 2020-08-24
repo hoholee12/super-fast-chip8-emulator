@@ -163,12 +163,12 @@ public:
 
 		//TODO: fix all commented out opcodes
 		//		need to fix test_opcode.ch8 not displaying anything
-		/*
+		
 		jumbo_table[0x00e0] = &Translator::opcode00e0;
 		jumbo_table[0x00ee] = &Translator::opcode00ee;
 		
 		for (uint32_t i = 0x1000; i < 0x2000; i++) jumbo_table[i] = &Translator::opcode1nnn;
-		*/
+		
 		for (uint32_t i = 0x2000; i < 0x3000; i++) jumbo_table[i] = &Translator::opcode2nnn;
 		
 		//for (uint32_t i = 0x3000; i < 0x4000; i++) jumbo_table[i] = &Translator::opcode3xnn;
@@ -392,12 +392,13 @@ private:
 
 	void opcode3xnn(){
 		//vx = eax, nn = ebx
-
+		//Breakpoint(&memoryBlock->cache);
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
 		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
+		X86Emitter::parse(&memoryBlock->cache, "mov al, BYTE PTR [ebx]"); //eax,dword ptr [ebx]
+		X86Emitter::parse(&memoryBlock->cache, "movzx eax, al");
 
 		X86Emitter::loadMemToDwordReg(&memoryBlock->cache, nn, Breg, Word);
 
@@ -417,7 +418,8 @@ private:
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
 		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
+		X86Emitter::parse(&memoryBlock->cache, "mov al, BYTE PTR [ebx]");
+		X86Emitter::parse(&memoryBlock->cache, "movzx eax, al");
 
 		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)nn));
 
