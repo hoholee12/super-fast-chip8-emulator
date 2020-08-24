@@ -4,15 +4,11 @@
 SRCDIR=$(CURDIR)/src
 OBJDIR=$(CURDIR)/build
 
-SOURCES=$(filter-out $(SRCDIR)/X86Emitter.cpp,\
-	$(filter-out $(SRCDIR)/Translator.cpp,\
-	$(filter-out $(SRCDIR)/Dynarec.cpp,\
-	$(filter-out $(SRCDIR)/Cache.cpp,\
-	$(wildcard $(SRCDIR)/*.cpp)))))
+SOURCES=$(wildcard $(SRCDIR)/*.cpp)
 OBJECTS=$(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
 DEPENDS=$(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.d,$(SOURCES))
 
-CXXFLAGS=-g -O2 -Wno-unused-result
+CXXFLAGS=-g -O2 -Wno-unused-result -m32
 LDFLAGS=`pkg-config --cflags --libs sdl2` -lSDL2main -lSDL2 -lSDL2_mixer
 
 default: $(OBJDIR)/chip8-emu
