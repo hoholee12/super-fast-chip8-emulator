@@ -18,6 +18,32 @@ interpreter is done. recompiler is in the works
 
 (performance improved alot after implementing time scheduling)
 
+## How to compile
+
+### before compiling:
+
+install/reinstall 32bit libs
+
+```
+sudo apt install libsdl2-dev:i386 libsdl2-2.0-0:i386 -y;
+
+sudo apt install libjpeg-dev:i386 libwebp-dev:i386 libtiff5-dev:i386 libsdl2-image-dev:i386 libsdl2-image-2.0-0:i386 -y;
+
+sudo apt install libmikmod-dev:i386 libfishsound1-dev:i386 libsmpeg-dev:i386 liboggz2-dev:i386 libflac-dev:i386 libfluidsynth-dev:i386 libsdl2-mixer-dev:i386 libsdl2-mixer-2.0-0:i386 -y;
+
+sudo apt install libfreetype6-dev:i386 libsdl2-ttf-dev:i386 libsdl2-ttf-2.0-0:i386 -y;
+
+sudo apt install g++-multilib -y;
+
+sudo apt install pkg-config:i386 -y;
+```
+
+### to compile:
+
+simply run ./build.sh
+
+and do as it says to run it.
+
 ## How to play
 
 pass your rom location to program parameter.
@@ -33,13 +59,7 @@ keyinput goes like this:
 |a|s|d|f|
 |z|x|c|v|
 
-## Build?
-
--this code requires sdl2 and sdl2_mixer to compile(look into defaults.h if you encounter location problems)
-
--you also need data/sound/klik.wav in same directory format for sound.
-
-please help me make my project run faster :D
+## Reference?
 
 this project follows:
 http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
