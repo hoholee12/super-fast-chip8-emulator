@@ -15,7 +15,9 @@
 
 //replace updateInterpreter_??()
 
-
+//function type
+typedef uint32_t(*func_ptr)(void);
+//using func_ptr = uint32_t(*)(void);
 
 class Dynarec{
 	Cache* cache;
@@ -279,57 +281,17 @@ public:
 		cache->printCache(cpu->programCounter);
 #endif
 
-#ifdef _WIN32
 
-		SYSTEM_INFO system_info;
-		GetSystemInfo(&system_info);
-		auto const page_size = system_info.dwPageSize;
+		//TODO
+		cache->autoMarkExec(cpu->programCounter, use_bCache);
 
-		// prepare the memory in which the machine code will be put (it's not executable yet):
-		void* buffer = VirtualAlloc(nullptr, page_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-
-		// copy the machine code into that memory:
-		memcpy(buffer, temp->cache.data(), temp->cache.size());
-
-		// mark the memory as executable:
-		DWORD dummy;
-		VirtualProtect(buffer, temp->cache.size(), PAGE_EXECUTE_READ, &dummy);
-
-		// interpret the beginning of the (now) executable memory as the entry
-		// point of a function taking no arguments and returning a 4-byte int:
-
-
-		typedef int32_t(*dank)(void);
-		using weed = int32_t(*)(void);
-		dank function_ptr = (weed)buffer;
-
-		//auto const function_ptr = reinterpret_cast<std::int32_t(*)()>(buffer);
-
-
-		// call the function and store the result in a local std::int32_t object:
-		function_ptr();
-
-		// free the executable memory:
-		VirtualFree(buffer, 0, MEM_RELEASE);
-
-#elif __LINUX__
-		void *buffer = mmap(NULL,             // address
-			4096,             // size
-			PROT_READ | PROT_WRITE | PROT_EXEC,
-			MAP_PRIVATE | MAP_ANONYMOUS,
-			-1,               // fd (not used here)
-			0);               // offset (not used here)
-
-		memcpy(buffer, temp->cache.data(), temp->cache.size());
-
-		typedef int32_t(*dank)(void);
-		using weed = int32_t(*)(void);
-		dank function_ptr = (weed)buffer;
-
-		function_ptr();
-
-		munmap(buffer, 0);
-#endif
+		//execute
+		func_ptr executeFunc = (func_ptr)cache->getCache(cpu->programCounter, use_bCache)->execBlock;
+		executeFunc();
+		
+		
+		
+		
 
 		//if hintFallback flipped, continue to execute fallback
 		if (!hintFallback) return;

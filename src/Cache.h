@@ -37,13 +37,17 @@ using ICache = struct _ICache{
 	bool check = false;
 	uint32_t opcodeCount = 0;
 	vectTS TScache;	//Translator.h does reference to these variables, not copy.
+
+	//executable block ptr
+	void* execBlock = NULL;
 };
 
-class Cache{
+class Cache: public defaults{
 
 	ICache iCache[FULL_MEM_SIZE];
 	ICache bCache[FULL_MEM_SIZE];	//for individual opcodes
 public:
+
 
 	//switch i(default)/b(true) cache
 	ICache* whichCache(int pc, bool flag = false){ return flag ? &bCache[pc] : &iCache[pc]; }
@@ -79,5 +83,30 @@ public:
 		printf("\n");
 	}
 
+
+	//mark executable if not
+	void autoMarkExec(int pc, bool flag = false){
+		if (!whichCache(pc, flag)->execBlock){
+			
+			int i = 0;
+			do{
+				whichCache(pc, flag)->execBlock = defaults::getExecBuffer();
+				
+				switch (i){
+				case 0: break;
+				case 11: printf("fuck\n"); exit(1);
+				case 1: printf("couldn't allocate executable memory for the %dst time. trying again\n", i); break;
+				case 2: printf("couldn't allocate executable memory for the %dnd time. trying again\n", i); break;
+				case 3: printf("couldn't allocate executable memory for the %drd time. trying again\n", i); break;
+				default: printf("couldn't allocate executable memory for the %dth time. trying again\n", i); break;
+				}
+				i++;
+
+			}while(!whichCache(pc, flag)->execBlock);
+
+			//copy buffer
+			memcpy(whichCache(pc, flag)->execBlock, whichCache(pc, flag)->cache.data(), whichCache(pc, flag)->cache.size());
+		}
+	}
 
 };

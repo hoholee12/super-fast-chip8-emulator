@@ -43,7 +43,7 @@ extern "C"
 
 
 //#define DEBUG_ME
-#define DEBUG_TIME 0
+#define DEBUG_TIME 100
 
 
 class defaults{
@@ -86,6 +86,8 @@ public:
 	void delayTime(uint32_t input) const; //sleep
 
 	void updateTitle(char* str, int cpuspeed, int fps, int frametime) const;
+
+	void* getExecBuffer() const;
 };
 
 //inline getters
@@ -140,3 +142,14 @@ inline uint8_t defaults::getInput() const{
 	return pressedKey;
 }
 
+
+//execute a executable block
+inline void* defaults::getExecBuffer() const{
+	static const int pagesize = 1024 * 4;	//4k
+#ifdef _WIN32
+	return VirtualAlloc(nullptr, pagesize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+#elif __linux__
+	return mmap(NULL, pagesize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#endif
+
+}
