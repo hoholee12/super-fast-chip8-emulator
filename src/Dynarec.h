@@ -104,7 +104,7 @@ public:
 
 		for (; cpu->programCounter < FULL_MEM_SIZE;){
 			translator->init(cache->createCache(cpu->programCounter, true));
-			cache->getCache(cpu->programCounter, true)->TScache.resize(1);
+			//cache->getCache(cpu->programCounter, true)->TScache.resize(1);
 			translator->startBlock();
 			internalLoop(0, cpu->programCounter, true);
 
@@ -193,7 +193,7 @@ public:
 		translator->init(cache->createCache(pcTemp));
 
 		//update xyn for next opcode
-		cache->getCache(pcTemp)->TScache.resize(baseClock);
+		//cache->getCache(pcTemp)->TScache.resize(baseClock);
 		
 		translator->startBlock();
 
@@ -251,17 +251,25 @@ public:
 		previousOpcode = currentOpcode;
 		currentOpcode = cpu->fetch();
 
+		TranslatorState TScache;
+		TScache.x_val = (currentOpcode & 0x0f00) >> 8;
+		TScache.y_val = (currentOpcode & 0x00f0) >> 4;
+		TScache.nx = currentOpcode & 0x000F;
+		TScache.nnx = currentOpcode & 0x00FF;
+		TScache.nnnx = currentOpcode & 0x0FFF;
 
+		/*
 		cache->getCache(pcTemp, flag)->TScache[i].x_val = (currentOpcode & 0x0f00) >> 8;
 		cache->getCache(pcTemp, flag)->TScache[i].y_val = (currentOpcode & 0x00f0) >> 4;
 		cache->getCache(pcTemp, flag)->TScache[i].nx = currentOpcode & 0x000F;
 		cache->getCache(pcTemp, flag)->TScache[i].nnx = currentOpcode & 0x00FF;
 		cache->getCache(pcTemp, flag)->TScache[i].nnnx = currentOpcode & 0x0FFF;
+		*/
 
 		//cut one full jiffy
 		//ret at the end
-		if (i == baseClock - 1) translator->decode(&cache->getCache(pcTemp, flag)->TScache[i], true);
-		else translator->decode(&cache->getCache(pcTemp, flag)->TScache[i]);
+		if (i == baseClock - 1) translator->decode(&TScache, true);
+		else translator->decode(&TScache);
 
 		//one opcode into icache count
 		cache->setOpcodeCount(pcTemp, cache->getOpcodeCount(pcTemp, flag) + 1, flag);

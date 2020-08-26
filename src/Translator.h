@@ -35,14 +35,14 @@ private:
 	uint32_t interpreterSwitch;	//byte
 	uint32_t delayNext;			//byte
 
-	uint32_t vxPointer;			//byte
-	uint32_t vyPointer;			//byte
-	uint32_t vfPointer;			//byte
-	uint32_t vzPointer;			//byte
-
-	uint32_t n;					//word
-	uint32_t nn;				//word
-	uint32_t nnn;				//word
+	//static vars
+	uint8_t vxPointer;			//byte
+	uint8_t vyPointer;			//byte
+	uint8_t vfPointer;			//byte
+	uint8_t vzPointer;			//byte
+	uint16_t n;					//word
+	uint16_t nn;				//word
+	uint16_t nnn;				//word
 
 	int* index;
 	ICache* memoryBlock;
@@ -233,13 +233,13 @@ public:
 		uint16_t cpuOp = *(uint16_t*)currentOpcode;
 
 		//to each state
-		vxPointer = (uint32_t)&state->x_val;
-		vyPointer = (uint32_t)&state->y_val;
-		n = (uint32_t)&state->nx;
-		nn = (uint32_t)&state->nnx;
-		nnn = (uint32_t)&state->nnnx;
-		vzPointer = (uint32_t)&state->z_val;
-		vfPointer = (uint32_t)&state->f_val;
+		vxPointer = state->x_val;
+		vyPointer = state->y_val;
+		n = state->nx;
+		nn = state->nnx;
+		nnn = state->nnnx;
+		vzPointer = state->z_val;
+		vfPointer = state->f_val;
 
 
 #ifdef DEBUG_CACHE
@@ -247,9 +247,9 @@ public:
 		if (cpuOp != 0x0){
 			defaults::debugmsg("compiled opcode: %02X, xPointer: %X, yPointer: %X, nnn: %X\n",
 			cpuOp,
-			*(uint8_t*)vxPointer,
-			*(uint8_t*)vyPointer,
-			*(uint16_t*)nnn);
+			vxPointer,
+			vyPointer,
+			nnn);
 		}
 #endif
 
@@ -347,9 +347,9 @@ private:
 		//X86Emitter::inc_byte_memaddr(&memoryBlock->cache, stackPointer);
 
 		//NNN(is an immediate) to programCounter
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(*(uint32_t*)nnn));
+		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(nnn));
 		X86Emitter::parse(&memoryBlock->cache, "mov WORD PTR [extra], eax", insertDisp(programCounter));
-		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
+		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
 		//X86Emitter::setWordToMemaddr(&memoryBlock->cache, programCounter, nnn);
 
 		interpreterSwitch_func();
@@ -357,9 +357,9 @@ private:
 	}
 	void opcode1nnn(){
 		//NNN to programCounter
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(*(uint32_t*)nnn));
+		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(nnn));
 		X86Emitter::parse(&memoryBlock->cache, "mov WORD PTR [extra], eax", insertDisp(programCounter));
-		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
+		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
 
 		//jmpHint = true
 		X86Emitter::setToMemaddr(&memoryBlock->cache, jmpHint, 1, Byte);
@@ -382,10 +382,10 @@ private:
 		//X86Emitter::inc_byte_memaddr(&memoryBlock->cache, stackPointer);
 
 		//NNN(is an immediate) to programCounter
-		//printf("2nnn: %02X\n", *(uint32_t*)nnn);
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(*(uint32_t*)nnn));
+		//printf("2nnn: %02X\n", nnn);
+		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(nnn));
 		X86Emitter::parse(&memoryBlock->cache, "mov WORD PTR [extra], eax", insertDisp(programCounter));
-		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
+		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
 
 		interpreterSwitch_func();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
@@ -396,7 +396,7 @@ private:
 		//Breakpoint(&memoryBlock->cache);
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov al, BYTE PTR [ebx]"); //eax,dword ptr [ebx]
 		X86Emitter::parse(&memoryBlock->cache, "movzx eax, al");
@@ -417,12 +417,12 @@ private:
 		//vx = eax, nn = ebx
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov al, BYTE PTR [ebx]");
 		X86Emitter::parse(&memoryBlock->cache, "movzx eax, al");
 
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)nn));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(nn));
 
 		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Areg, Breg);
 		X86Emitter::parse(&memoryBlock->cache, "je extra", insertDisp(addWordToMemaddrSize));
@@ -436,7 +436,7 @@ private:
 		//vx = eax, vy = edx
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -444,7 +444,7 @@ private:
 		//X86Emitter::mov_eax_to_edx(&memoryBlock->cache);
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -458,11 +458,11 @@ private:
 	}
 	void opcode6xnn(){
 
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(*(uint32_t*)nn));
+		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(nn));
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -473,18 +473,18 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)nn));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(nn));
 
 		X86Emitter::Add(&memoryBlock->cache, dwordAddMode, Breg, Areg);
 		//X86Emitter::add_ebx_to_eax(&memoryBlock->cache);
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -495,13 +495,13 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -512,7 +512,7 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -520,7 +520,7 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -529,7 +529,7 @@ private:
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -540,7 +540,7 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -548,7 +548,7 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -556,7 +556,7 @@ private:
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -567,7 +567,7 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -575,7 +575,7 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -583,7 +583,7 @@ private:
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -594,14 +594,14 @@ private:
 		//ebx = vx + vy
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 		
 		X86Emitter::parse(&memoryBlock->cache, "mov ebx, eax");
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -621,7 +621,7 @@ private:
 		//=
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vfPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vfPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vfPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 		
@@ -629,7 +629,7 @@ private:
 		//vx += vy
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -637,7 +637,7 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -645,7 +645,7 @@ private:
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -657,7 +657,7 @@ private:
 		//ebx = vy
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -666,7 +666,7 @@ private:
 		//ecx = vx
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -684,14 +684,14 @@ private:
 		//=
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vfPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vfPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vfPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
 		//vx -= vy
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -699,7 +699,7 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -707,7 +707,7 @@ private:
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -718,7 +718,7 @@ private:
 		//vf = vx << 7
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -730,14 +730,14 @@ private:
 		
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vfPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vfPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vfPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
 		//vx >>= 1
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -745,7 +745,7 @@ private:
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -757,7 +757,7 @@ private:
 		//ebx = vy
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -766,7 +766,7 @@ private:
 		//ecx = vx
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -784,14 +784,14 @@ private:
 		//=
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vfPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vfPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vfPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
 		//vx -= vy
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -799,7 +799,7 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -807,7 +807,7 @@ private:
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -819,7 +819,7 @@ private:
 		//vf = vx >> 7
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -829,7 +829,7 @@ private:
 		//vx <<= 1
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -837,7 +837,7 @@ private:
 
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -849,7 +849,7 @@ private:
 		//vx = eax, vy = edx
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vyPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vyPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vyPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -857,7 +857,7 @@ private:
 
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -873,17 +873,17 @@ private:
 	}
 	void opcodeannn(){
 
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(*(uint32_t*)nnn));
+		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(nnn));
 		//X86Emitter::parse(&memoryBlock->cache, "mov WORD PTR [extra], eax", insertDisp(indexRegister));
-		//X86Emitter::setToMemaddr(&memoryBlock->cache, indexRegister, *(uint32_t*)nnn, Word);
+		//X86Emitter::setToMemaddr(&memoryBlock->cache, indexRegister, nnn, Word);
 
 		incrementPC();
 		//indexRegister = NNN;
 	}
 	void opcodebnnn(){
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(*(uint32_t*)nnn));
+		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(nnn));
 		X86Emitter::parse(&memoryBlock->cache, "mov WORD PTR [extra], eax", insertDisp(programCounter));
-		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, *(uint32_t*)nnn, Word);
+		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
 		X86Emitter::parse(&memoryBlock->cache, "mov ebx, BYTE PTR [extra]", insertDisp(v));
 		X86Emitter::parse(&memoryBlock->cache, "add WORD PTR [extra], ebx", insertDisp(programCounter));
 		//X86Emitter::addToMemaddr(&memoryBlock->cache, programCounter, v, Word);
@@ -932,7 +932,7 @@ private:
 		
 		//X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, ecx");
 		X86Emitter::parse(&memoryBlock->cache, "mov BYTE PTR [ebx], eax");
 
@@ -948,7 +948,7 @@ private:
 	void opcodefx15(){
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -970,7 +970,7 @@ private:
 	void opcodefx1e(){
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 
@@ -982,7 +982,7 @@ private:
 	void opcodefx29(){
 		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(*(uint32_t*)vxPointer));
+		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
 		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
 		X86Emitter::parse(&memoryBlock->cache, "mov eax, BYTE PTR [ebx]");
 

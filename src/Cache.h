@@ -30,13 +30,13 @@ typedef struct _translatorState{
 } TranslatorState;
 
 using vect8 = std::vector<uint8_t>;
-using vectTS = std::vector<TranslatorState>;
+//using vectTS = std::vector<TranslatorState>;
 
 using ICache = struct _ICache{
 	vect8 cache;
 	bool check = false;
 	uint32_t opcodeCount = 0;
-	vectTS TScache;	//Translator.h does reference to these variables, not copy.
+	//vectTS TScache;	//Translator.h does reference to these variables, not copy.
 
 	//executable block ptr
 	void* execBlock = NULL;
@@ -61,7 +61,7 @@ public:
 		whichCache(pc, flag)->opcodeCount = 0;
 		whichCache(pc, flag)->check = true;
 		whichCache(pc, flag)->cache.clear();
-		whichCache(pc, flag)->TScache.clear();
+		//whichCache(pc, flag)->TScache.clear();
 		return whichCache(pc, flag);
 	}
 
