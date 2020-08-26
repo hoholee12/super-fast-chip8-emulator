@@ -95,16 +95,21 @@ public:
 				switch (i){
 				case 0: break;
 				case 11: printf("fuck\n"); exit(1);
-				case 1: printf("couldn't allocate executable memory for the %dst time. trying again\n", i); break;
-				case 2: printf("couldn't allocate executable memory for the %dnd time. trying again\n", i); break;
-				case 3: printf("couldn't allocate executable memory for the %drd time. trying again\n", i); break;
-				default: printf("couldn't allocate executable memory for the %dth time. trying again\n", i); break;
+#ifdef DEBUG_CACHE
+				case 1: defaults::debugmsg("couldn't allocate executable memory for the %dst time. trying again\n", i); break;
+				case 2: defaults::debugmsg("couldn't allocate executable memory for the %dnd time. trying again\n", i); break;
+				case 3: defaults::debugmsg("couldn't allocate executable memory for the %drd time. trying again\n", i); break;
+				default: defaults::debugmsg("couldn't allocate executable memory for the %dth time. trying again\n", i); break;
+#endif
 				}
 				i++;
 
 			}while(!whichCache(pc, flag)->execBlock);
 
 			//copy buffer
+#ifdef DEBUG_CACHE
+			defaults::debugmsg("sizeof buffer to be marked = %d\n", whichCache(pc, flag)->cache.size());
+#endif
 			memcpy(whichCache(pc, flag)->execBlock, whichCache(pc, flag)->cache.data(), whichCache(pc, flag)->cache.size());
 			//free old buffer
 			whichCache(pc, flag)->cache.clear();

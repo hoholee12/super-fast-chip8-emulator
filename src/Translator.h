@@ -12,7 +12,7 @@
 class Translator;
 typedef void(Translator::*Table) (void);
 
-class Translator: public X86Emitter{
+class Translator: public X86Emitter, public defaults{
 
 private:
 	//big endians(will be converted automatically on X86Emitter.h)
@@ -242,14 +242,15 @@ public:
 		vfPointer = (uint32_t)&state->f_val;
 
 
-#ifdef DEBUG_ME
+#ifdef DEBUG_CACHE
 		//for checking proper translator input
-		if (cpuOp != 0x0)
-		printf("compiled opcode: %02X, xPointer: %X, yPointer: %X, nnn: %X\n",
+		if (cpuOp != 0x0){
+			defaults::debugmsg("compiled opcode: %02X, xPointer: %X, yPointer: %X, nnn: %X\n",
 			cpuOp,
 			*(uint8_t*)vxPointer,
 			*(uint8_t*)vyPointer,
 			*(uint16_t*)nnn);
+		}
 #endif
 
 		(this->*(jumbo_table[cpuOp]))();

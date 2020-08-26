@@ -43,6 +43,7 @@ extern "C"
 
 
 //#define DEBUG_ME
+#define DEBUG_CACHE
 #define DEBUG_TIME 100
 
 
@@ -70,8 +71,6 @@ public:
 	const char* a3 = " frametime=";
 	const char* a4 = "ms";
 
-
-
 	void audioInit() const;
 	void playAudio() const;
 
@@ -88,6 +87,18 @@ public:
 	void updateTitle(char* str, int cpuspeed, int fps, int frametime) const;
 
 	void* getExecBuffer() const;
+
+	//print debug with ticks
+	void debugmsg(const char* str, ...){
+		va_list args;
+		va_start(args, str);
+
+		printf("(debug:%dums): ", checkTime());
+		vprintf(str, args);
+		
+		va_end(args);
+
+	}
 };
 
 //inline getters
@@ -143,13 +154,19 @@ inline uint8_t defaults::getInput() const{
 }
 
 
+
+
 //execute a executable block
 inline void* defaults::getExecBuffer() const{
 	static const int pagesize = 1024 * 4;	//4k
+	void* buffer = NULL;
 #ifdef _WIN32
-	return VirtualAlloc(nullptr, pagesize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	buffer = VirtualAlloc(nullptr, pagesize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 #elif __linux__
-	return mmap(NULL, pagesize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	buffer = mmap(NULL, pagesize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	//make sure failed alloc returns zero
+	if(buffer == MAP_FAILED) buffer = NULL;
 #endif
-
+	
+	return buffer;
 }
