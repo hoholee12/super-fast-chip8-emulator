@@ -106,6 +106,8 @@ public:
 
 			//copy buffer
 			memcpy(whichCache(pc, flag)->execBlock, whichCache(pc, flag)->cache.data(), whichCache(pc, flag)->cache.size());
+			//free old buffer
+			whichCache(pc, flag)->cache.clear();
 		}
 	}
 
