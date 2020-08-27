@@ -5,3 +5,4 @@ build/*
 chip8-emu
 pong.ch8
 perf.data
+dump.txt
