@@ -140,26 +140,34 @@ void CPU::opcode00e0(){
 	controllerOp = ControllerOp::clearScreen;
 }
 void CPU::opcode00ee(){
-	programCounter = stack[--stackPointer]; //return from SUBroutine	(and increment pc after to get out of loop)
+	stackPointer--;
+	programCounter = stack[stackPointer]; //return from SUBroutine	(and increment pc after to get out of loop)
 }
 void CPU::opcode0nnn(){
-	stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
+	stack[stackPointer] = programCounter;
+	stackPointer++;
+	programCounter = NNN;
+	flag = 1;	//call SUBroutine from nnn	(dont increment pc)
 }
 void CPU::opcode1nnn(){
-	programCounter = NNN; flag = 1;//jump to nnn	(dont increment pc)
-	jmpHint = true; //hint for video flicker loop
+	programCounter = NNN;
+	flag = 1;	//jump to nnn	(dont increment pc)
+	jmpHint = true;	//hint for video flicker loop
 }
 void CPU::opcode2nnn(){
-	stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
+	opcode0nnn(); //call SUBroutine from nnn	(dont increment pc)
 }
 void CPU::opcode3xnn(){
-	if (VX == NN) programCounter += 2; //skip if ==
+	if (VX == NN)
+		programCounter += 2; //skip if ==
 }
 void CPU::opcode4xnn(){
-	if (VX != NN) programCounter += 2; //skip if !=
+	if (VX != NN)
+		programCounter += 2; //skip if !=
 }
 void CPU::opcode5xy0(){
-	if (VX == VY) programCounter += 2; //skip if vx == vy
+	if (VX == VY)
+		programCounter += 2; //skip if vx == vy
 }
 void CPU::opcode6xnn(){
 	VX = NN; //into
@@ -180,28 +188,36 @@ void CPU::opcode8xy3(){
 	VX ^= VY;
 }
 void CPU::opcode8xy4(){
-	VF = (VX + VY > 0xff) ? 0x1 : 0x0; VX += VY;
+	VF = (VX + VY > 0xff);
+	VX += VY;
 }
 void CPU::opcode8xy5(){
-	VF = (VX < VY) ? 0x0 : 0x1; VX -= VY;
+	VF = !(VX < VY);
+	VX -= VY;
 }
 void CPU::opcode8xy6(){
-	VF = VX << 7; VF >>= 7; VX >>= 1;
+	VF = VX << 7;
+	VF >>= 7;
+	VX >>= 1;
 }
 void CPU::opcode8xy7(){
-	VF = (VY < VX) ? 0x0 : 0x1; VX = VY - VX;
+	VF = !(VY < VX);
+	VX = VY - VX;
 }
 void CPU::opcode8xye(){
-	VF = VX >> 7; VX <<= 1;
+	VF = VX >> 7;
+	VX <<= 1;
 }
 void CPU::opcode9xy0(){
-	if (VX != VY) programCounter += 2; //skip if vx != vy
+	if (VX != VY)
+		programCounter += 2; //skip if vx != vy
 }
 void CPU::opcodeannn(){
 	indexRegister = NNN;
 }
 void CPU::opcodebnnn(){
-	programCounter = NNN + v[0]; flag = 1; //(dont increment pc)
+	programCounter = NNN + v[0];
+	flag = 1; //(dont increment pc)
 }
 void CPU::opcodecxnn(){
 	VX = (rand() % 0x100) & NN;	//random
@@ -210,16 +226,21 @@ void CPU::opcodedxyn(){
 	controllerOp = ControllerOp::drawVideo;
 }
 void CPU::opcodeex9e(){
-	if (*pressedKey == VX) programCounter += 2;
+	if (*pressedKey == VX)
+		programCounter += 2;
 }
 void CPU::opcodeexa1(){
-	if (*pressedKey != VX) programCounter += 2;
+	if (*pressedKey != VX)
+		programCounter += 2;
 }
 void CPU::opcodefx07(){
 	VX = *delayRegister;
 }
 void CPU::opcodefx0a(){
-	if (Input::isKeyPressed(*pressedKey) == true) VX = *pressedKey; else flag = 1; //wait again	(dont increment pc)
+	if (Input::isKeyPressed(*pressedKey) == true)
+		VX = *pressedKey;
+	else
+		flag = 1; //wait again	(dont increment pc)
 }
 void CPU::opcodefx15(){
 	*delayRegister = VX;
@@ -239,10 +260,12 @@ void CPU::opcodefx33(){
 	memory->write(indexRegister + 2, VX % 10);
 }
 void CPU::opcodefx55(){
-	for (int i = 0; i <= (currentOpcode & 0x0f00) >> 8; i++) memory->write(indexRegister + i, v[i]);
+	for (int i = 0; i <= (currentOpcode & 0x0f00) >> 8; i++)
+		memory->write(indexRegister + i, v[i]);
 }
 void CPU::opcodefx65(){
-	for (int i = 0; i <= (currentOpcode & 0x0f00) >> 8; i++) v[i] = memory->read(indexRegister + i);
+	for (int i = 0; i <= (currentOpcode & 0x0f00) >> 8; i++)
+		v[i] = memory->read(indexRegister + i);
 }
 
 //exception
