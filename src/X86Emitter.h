@@ -328,6 +328,7 @@ public:
 		dwordXorSize = 2,
 		dwordShiftLeftSize = 3,
 		dwordShiftRightSize = 3,
+		dwordShiftArithRightSize = 3,
 		cmpSize = 2,
 		byteRelJmpSize = 2,
 		wordRelJmpSize = 4,
@@ -405,6 +406,7 @@ public:
 		dwordXorMode,
 		dwordShiftLeftMode,
 		dwordShiftRightMode,
+		dwordShiftArithRightMode,
 		cmpMode,
 		byteRelJmpMode,
 		wordRelJmpMode,
@@ -657,6 +659,7 @@ public:
 		switch (opmode){
 		case dwordShiftLeftMode: init(memoryBlock, dwordShiftLeftSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, illegal, dest); addByte(disp.byte); return dwordShiftLeftSize;
 		case dwordShiftRightMode: init(memoryBlock, dwordShiftRightSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, memaddr, dest); addByte(disp.byte); return dwordShiftRightSize;
+		case dwordShiftArithRightMode: init(memoryBlock, dwordShiftArithRightSize); addOpcode(opcode, srcToDest, wordAndDword); addModrm(forReg, Didx, dest); addByte(disp.byte); return dwordShiftArithRightSize;
 		default: opmodeError("shift");
 		}
 		return none;
@@ -1103,7 +1106,7 @@ public:
 				
 			}
 		}
-		else if(!op_str->compare("shl")){ 
+		else if(!op_str->compare("shl") || !op_str->compare("sal")){	//shl == sal
 			if (isImm(src_str) && !isPtr(src_str) && isReg(dest_str) && !isPtr(dest_str)){
 				insertImm(&parserType->disp, src_str); insertDest(parserType, dest_str);
 				if (isDword(dest_str)) parserType->opmode = dwordShiftLeftMode;
@@ -1117,6 +1120,12 @@ public:
 				if (isDword(dest_str)) parserType->opmode = dwordShiftRightMode;
 
 				
+			}
+		}
+		else if (!op_str->compare("sar")){
+			if (isImm(src_str) && !isPtr(src_str) && isReg(dest_str) && !isPtr(dest_str)){
+				insertImm(&parserType->disp, src_str); insertDest(parserType, dest_str);
+				if (isDword(dest_str)) parserType->opmode = dwordShiftArithRightMode;
 			}
 		}
 		else if(!op_str->compare("cmp")){
@@ -1244,7 +1253,8 @@ public:
 		case dwordOrMode: return Or(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case dwordXorMode: return Xor(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case dwordShiftLeftMode: 
-		case dwordShiftRightMode: return Shift(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
+		case dwordShiftRightMode:
+		case dwordShiftArithRightMode: return Shift(memoryBlock, parserType->opmode, parserType->disp, parserType->modrm.dest);
 		case cmpMode: return Cmp(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case byteRelJmpMode: 
 		case wordRelJmpMode: 
