@@ -4,6 +4,11 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t* stack, uint8_t stackpt
 	static int count = 0;
 	static bool inCall = false;
 
+
+	//opcode filter
+	//if ((pc >> 6) != 6) return;
+
+
 	/*memory dump*/
 	/*
 	int32_t spc = pc & 0xfff0;

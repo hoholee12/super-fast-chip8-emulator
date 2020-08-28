@@ -307,7 +307,11 @@ public:
 		movByteMemToRegSize = 2,
 		movDwordMemToRegSize = 2,
 		movWordMemToRegSize = 3,
-		dwordMovImmToRegSize = 5,
+
+		movDwordImmToRegSize = 5,
+		movWordImmToRegSize = 6,
+		movByteImmToRegSize = 5,
+		
 		dwordAddSize = 2,
 		dwordAddImmToRegSize = 6,
 		byteAddImmToMemaddrSize = 7,
@@ -363,9 +367,9 @@ public:
 		addByteToMemaddrSize = loadByteShortcutSize + dwordAddImmToRegSize + movToMemaddrByteSize,
 		addWordToMemaddrSize = loadWordShortcutSize + dwordAddImmToRegSize + movToMemaddrWordSize,
 		addDwordToMemaddrSize = loadDwordShortcutSize + dwordAddImmToRegSize + movToMemaddrDwordSize,
-		setByteToMemaddrSize = dwordMovImmToRegSize + movToMemaddrByteSize,
-		setWordToMemaddrSize = dwordMovImmToRegSize + movToMemaddrWordSize,
-		setDwordToMemaddrSize = dwordMovImmToRegSize + movToMemaddrDwordSize,
+		setByteToMemaddrSize = movDwordImmToRegSize + movToMemaddrByteSize,
+		setWordToMemaddrSize = movDwordImmToRegSize + movToMemaddrWordSize,
+		setDwordToMemaddrSize = movDwordImmToRegSize + movToMemaddrDwordSize,
 	};
 
 	using OperandModes = enum{
@@ -385,7 +389,11 @@ public:
 		movByteMemToRegMode,
 		movDwordMemToRegMode,
 		movWordMemToRegMode,
-		dwordMovImmToRegMode,
+
+		movDwordImmToRegMode,
+		movWordImmToRegMode,
+		movByteImmToRegMode,
+		
 		dwordAddMode,
 		dwordAddImmToRegMode,
 		byteAddImmToMemaddrMode,
@@ -537,8 +545,9 @@ public:
 	OperandSizes Mov_imm(vect8* memoryBlock, OperandModes opmode, X86Regs dest, Disp disp) const{
 		uint8_t opcode = 0xB8;
 		switch (opmode){
-		case dwordMovImmToRegMode: init(memoryBlock, dwordMovImmToRegSize); addOpcode(opcode | dest, srcToDest, byteOnly); addDword(disp.dword); return dwordMovImmToRegSize;
-		
+		case movDwordImmToRegMode: init(memoryBlock, movDwordImmToRegSize); addOpcode(opcode | dest, srcToDest, byteOnly); addDword(disp.dword); return movDwordImmToRegSize;
+		case movWordImmToRegMode: init(memoryBlock, movWordImmToRegSize); addPrefix(); addOpcode(opcode | dest, srcToDest, byteOnly); addWord(disp.word); return movWordImmToRegSize;
+		case movByteImmToRegMode: opcode = 0xB0; init(memoryBlock, movByteImmToRegSize); addOpcode(opcode | dest, srcToDest, byteOnly); addByte(disp.byte); return movByteImmToRegSize;
 		default: opmodeError("mov_imm");
 		}
 		return none;
@@ -772,8 +781,8 @@ public:
 
 	OperandSizes loadArray_AregAsResult(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, bool arrptr_is_immval, ExpandSizes Size) const{
 		int count = 0;
-		count += Mov_imm(memoryBlock, dwordMovImmToRegMode, Areg, insertDisp(arr));
-		if (arrptr_is_immval) count += Mov_imm(memoryBlock, dwordMovImmToRegMode, Creg, insertDisp(arrptr));
+		count += Mov_imm(memoryBlock, movDwordImmToRegMode, Areg, insertDisp(arr));
+		if (arrptr_is_immval) count += Mov_imm(memoryBlock, movDwordImmToRegMode, Creg, insertDisp(arrptr));
 		else count += loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
 		switch (Size){
 		case Byte: count += Add(memoryBlock, dwordAddMode, Areg, Creg); count += Mov(memoryBlock, movByteMemToRegMode, Creg, Areg); count += Movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg); return (OperandSizes)count;
@@ -785,8 +794,8 @@ public:
 
 	OperandSizes storeArray_AregAsInput(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, bool arrptr_is_immval, ExpandSizes Size) const{
 		int count = 0;
-		count += Mov_imm(memoryBlock, dwordMovImmToRegMode, Dreg, insertDisp(arr));
-		if (arrptr_is_immval) count += Mov_imm(memoryBlock, dwordMovImmToRegMode, Creg, insertDisp(arrptr));
+		count += Mov_imm(memoryBlock, movDwordImmToRegMode, Dreg, insertDisp(arr));
+		if (arrptr_is_immval) count += Mov_imm(memoryBlock, movDwordImmToRegMode, Creg, insertDisp(arrptr));
 		else count += loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
 		switch (Size){
 		case Byte: count += Add(memoryBlock, dwordAddMode, Dreg, Creg); count += Mov(memoryBlock, movByteRegToMemMode, Areg, Creg); return (OperandSizes)count;
@@ -813,7 +822,7 @@ public:
 	}
 
 	OperandSizes setToMemaddr(vect8* memoryBlock, uint32_t memvar, uint32_t immval, ExpandSizes Size) const{
-		Mov_imm(memoryBlock, dwordMovImmToRegMode, Areg, insertDisp(immval));
+		Mov_imm(memoryBlock, movDwordImmToRegMode, Areg, insertDisp(immval));
 		switch (Size){
 		case Byte: Mov(memoryBlock, movToMemaddrByteMode, Areg, insertDisp(memvar)); return setByteToMemaddrSize;
 		case Word: Mov(memoryBlock, movToMemaddrWordMode, Areg, insertDisp(memvar)); return setWordToMemaddrSize;
@@ -976,9 +985,22 @@ public:
 					}
 				}
 				//mov reg, extra
-				else if(!isPtr(src_str) && isDword(dest_str)){	//from Imm
-					insertDest(parserType, dest_str);
-					parserType->opmode = dwordMovImmToRegMode;
+				else if(!isPtr(src_str)){	//from Imm
+					if (isByte(dest_str)){
+						insertDest(parserType, dest_str);
+						parserType->opmode = movByteImmToRegMode;
+					}
+					else if (isWord(dest_str)){
+						insertDest(parserType, dest_str);
+						parserType->opmode = movWordImmToRegMode;
+					
+					}
+					else if (isDword(dest_str)){
+						insertDest(parserType, dest_str);
+						parserType->opmode = movDwordImmToRegMode;
+					
+					}
+					
 				}
 			
 			}
@@ -1027,7 +1049,7 @@ public:
 			else if (isReg(dest_str) && !isPtr(dest_str) && isImm(src_str)){
 				insertDest(parserType, dest_str);
 				insertImm(&parserType->disp, src_str);
-				parserType->opmode = dwordMovImmToRegMode;
+				parserType->opmode = movDwordImmToRegMode;
 			
 			}
 			//mov [reg], imm
@@ -1240,7 +1262,9 @@ public:
 		case movByteMemToRegMode: 
 		case movDwordMemToRegMode: 
 		case movWordMemToRegMode: return Mov(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
-		case dwordMovImmToRegMode: return Mov_imm(memoryBlock, parserType->opmode, parserType->modrm.dest, parserType->disp);
+		case movByteImmToRegMode:
+		case movWordImmToRegMode:
+		case movDwordImmToRegMode: return Mov_imm(memoryBlock, parserType->opmode, parserType->modrm.dest, parserType->disp);
 		case dwordAddMode: return Add(memoryBlock, parserType->opmode, parserType->modrm.src, parserType->modrm.dest);
 		case dwordAddRegToMemaddrMode:
 		case wordAddRegToMemaddrMode:
