@@ -5,6 +5,8 @@
 
 	TODO: convert g++ -O1 dump to proper assembly for translator
 
+	caution: any opcode that mingles with programCounter must call interpreterSwitch_func()!
+
 */
 
 #include "X86Emitter.h"
@@ -38,13 +40,13 @@ private:
 	uint32_t delayNext;			//byte
 
 	//static vars
-	uint8_t vxPointer;			//byte
-	uint8_t vyPointer;			//byte
-	uint8_t vfPointer;			//byte
-	uint8_t vzPointer;			//byte
-	uint16_t n;					//word
-	uint16_t nn;				//word
-	uint16_t nnn;				//word
+	uint8_t vxPointer;			//byte static
+	uint8_t vyPointer;			//byte static
+	uint8_t vfPointer;			//byte static
+	uint8_t vzPointer;			//byte static
+	uint16_t n;					//word static
+	uint16_t nn;				//word static
+	uint16_t nnn;				//word static
 
 	int* index;
 	ICache* memoryBlock;
@@ -173,9 +175,9 @@ public:
 		
 		for (uint32_t i = 0x2000; i < 0x3000; i++) jumbo_table[i] = &Translator::opcode2nnn;
 		
-		//for (uint32_t i = 0x3000; i < 0x4000; i++) jumbo_table[i] = &Translator::opcode3xnn;
+		for (uint32_t i = 0x3000; i < 0x4000; i++) jumbo_table[i] = &Translator::opcode3xnn;
 		
-		//for (uint32_t i = 0x4000; i < 0x5000; i++) jumbo_table[i] = &Translator::opcode4xnn;
+		for (uint32_t i = 0x4000; i < 0x5000; i++) jumbo_table[i] = &Translator::opcode4xnn;
 		
 		//for (uint32_t i = 0x5000; i < 0x6000; i++) if ((i & 0x000f) == 0x0) jumbo_table[i] = &Translator::opcode5xy0;
 		/*
@@ -348,17 +350,14 @@ private:
 			1a23:	c3                   	ret
 		*/
 
-		//stack = ebx, stackptr = eax, pc = ecx
 		//--stackPointer
-		X86Emitter::Add_imm(&memoryBlock->cache, byteAddImmToMemaddrMode, insertAddr(stackPointer), insertDisp(-1));
-		//X86Emitter::dec_byte_memaddr(&memoryBlock->cache, stackPointer);
+		X86Emitter::parse(&memoryBlock->cache, "add BYTE PTR [extra], -1", insertAddr(stackPointer));
 
 		//stack[stackPointer]
-		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, stack, stackPointer, Word);
+		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, stack, stackPointer, false, Word);
 
 		//to programCounter
-		X86Emitter::Mov(&memoryBlock->cache, movToMemaddrWordMode, Areg, insertAddr(programCounter));
-		//X86Emitter::mov_ax_to_memoryaddr(&memoryBlock->cache, programCounter);
+		X86Emitter::parse(&memoryBlock->cache, "mov WORD PTR [extra], ax", insertAddr(programCounter));
 
 		incrementPC();
 		interpreterSwitch_func();
@@ -394,17 +393,13 @@ private:
 		X86Emitter::loadMemToDwordReg(&memoryBlock->cache, programCounter, Areg, Word);
 
 		//stack[stackpointer]
-		X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, stack, stackPointer, Word);
+		X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, stack, stackPointer, false, Word);
 
 		//stackPointer++
-		X86Emitter::Add_imm(&memoryBlock->cache, byteAddImmToMemaddrMode, insertAddr(stackPointer), insertDisp(1));
-		//X86Emitter::inc_byte_memaddr(&memoryBlock->cache, stackPointer);
+		X86Emitter::parse(&memoryBlock->cache, "add BYTE PTR [extra], 1", insertAddr(stackPointer));
 
 		//NNN(is an immediate) to programCounter
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(nnn));
-		X86Emitter::parse(&memoryBlock->cache, "mov WORD PTR [extra], eax", insertDisp(programCounter));
-		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
-		//X86Emitter::setWordToMemaddr(&memoryBlock->cache, programCounter, nnn);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
 
 		interpreterSwitch_func();
 		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
@@ -429,13 +424,10 @@ private:
 
 
 		//NNN to programCounter
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(nnn));
-		X86Emitter::parse(&memoryBlock->cache, "mov WORD PTR [extra], eax", insertDisp(programCounter));
-		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
+		X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
 
 		//jmpHint = true
 		X86Emitter::setToMemaddr(&memoryBlock->cache, jmpHint, 1, Byte);
-		//X86Emitter::setByteToMemaddr(&memoryBlock->cache, jmpHint, 1);
 
 		interpreterSwitch_func();
 		//programCounter = NNN; flag = 1;//jump to nnn	(dont increment pc)
@@ -451,26 +443,7 @@ private:
 			2afa:	c3                   	ret    
 			2afb:	90                   	nop
 		*/
-
-		//Breakpoint(&memoryBlock->cache);
-		//= programCounter
-		loadMemToDwordReg(&memoryBlock->cache, programCounter, Areg, Word);
-
-		//stack[stackpointer]
-		X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, stack, stackPointer, Word);
-
-		//stackPointer++
-		X86Emitter::Add_imm(&memoryBlock->cache, byteAddImmToMemaddrMode, insertAddr(stackPointer), insertDisp(1));
-		//X86Emitter::inc_byte_memaddr(&memoryBlock->cache, stackPointer);
-
-		//NNN(is an immediate) to programCounter
-		//printf("2nnn: %02X\n", nnn);
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(nnn));
-		X86Emitter::parse(&memoryBlock->cache, "mov WORD PTR [extra], eax", insertDisp(programCounter));
-		//X86Emitter::setToMemaddr(&memoryBlock->cache, programCounter, nnn, Word);
-
-		interpreterSwitch_func();
-		//stack[stackPointer++] = programCounter; programCounter = NNN; flag = 1;//call SUBroutine from nnn	(dont increment pc)
+		opcode0nnn();
 	}
 
 	void opcode3xnn(){
@@ -500,25 +473,21 @@ private:
 			1a8d:	90                   	nop
 		*/
 
-		//vx = eax, nn = ebx
-		//Breakpoint(&memoryBlock->cache);
-		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
-		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
-		X86Emitter::parse(&memoryBlock->cache, "mov al, BYTE PTR [ebx]"); //eax,dword ptr [ebx]
-		X86Emitter::parse(&memoryBlock->cache, "movzx eax, al");
+		//vx = eax
+		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, true, Byte);
 
-		X86Emitter::loadMemToDwordReg(&memoryBlock->cache, nn, Breg, Word);
+		//nn = ecx
+		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(nn));
 
-		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Areg, Breg);
-		//X86Emitter::cmp_eax_to_ebx(&memoryBlock->cache);
+		X86Emitter::parse(&memoryBlock->cache, "cmp eax, ecx");
+
 		X86Emitter::parse(&memoryBlock->cache, "jne extra", insertDisp(addWordToMemaddrSize));
-		//X86Emitter::Jcc(&memoryBlock->cache, byteRelJneMode, insertDisp(addWordToMemaddrSize));
-		//X86Emitter::short_jne(&memoryBlock->cache, addWordToMemaddrSize);
+
 		X86Emitter::addToMemaddr(&memoryBlock->cache, programCounter, 2, Word);
 
 		incrementPC();
+
+		interpreterSwitch_func();
 		//if (VX == NN) programCounter += 2; //skip if ==
 	}
 	void opcode4xnn(){
@@ -545,22 +514,21 @@ private:
 			1acb:	90                   	nop
 		*/
 
-		//vx = eax, nn = ebx
-		//X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, Byte);
-		X86Emitter::parse(&memoryBlock->cache, "mov eax, extra", insertDisp(v));
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(vxPointer));
-		X86Emitter::parse(&memoryBlock->cache, "add ebx, eax");
-		X86Emitter::parse(&memoryBlock->cache, "mov al, BYTE PTR [ebx]");
-		X86Emitter::parse(&memoryBlock->cache, "movzx eax, al");
+		//vx = eax
+		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, v, vxPointer, true, Byte);
 
-		X86Emitter::parse(&memoryBlock->cache, "mov ebx, extra", insertDisp(nn));
+		//nn = ecx
+		X86Emitter::parse(&memoryBlock->cache, "mov ecx, extra", insertDisp(nn));
 
-		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Areg, Breg);
+		X86Emitter::parse(&memoryBlock->cache, "cmp eax, ecx");
+
 		X86Emitter::parse(&memoryBlock->cache, "je extra", insertDisp(addWordToMemaddrSize));
-		//X86Emitter::Jcc(&memoryBlock->cache, byteRelJeMode, insertDisp(addWordToMemaddrSize));
+
 		X86Emitter::addToMemaddr(&memoryBlock->cache, programCounter, 2, Word);
 
 		incrementPC();
+
+		interpreterSwitch_func();
 		//if (VX != NN) programCounter += 2; //skip if !=
 	}
 	void opcode5xy0(){
@@ -1455,7 +1423,7 @@ private:
 		*/
 
 		X86Emitter::Mov(&memoryBlock->cache, movFromMemaddrByteMode, Breg, insertAddr(pressedKey));
-		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, stack, stackPointer, Word);
+		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, stack, stackPointer, true, Word);
 		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Areg, Breg);
 		X86Emitter::parse(&memoryBlock->cache, "jne extra", insertDisp(addWordToMemaddrSize));
 		//X86Emitter::Jcc(&memoryBlock->cache, byteRelJneMode, insertDisp(addWordToMemaddrSize));
@@ -1486,7 +1454,7 @@ private:
 		*/
 
 		X86Emitter::Mov(&memoryBlock->cache, movFromMemaddrByteMode, Breg, insertAddr(pressedKey));
-		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, stack, stackPointer, Word);
+		X86Emitter::loadArray_AregAsResult(&memoryBlock->cache, stack, stackPointer, true, Word);
 		X86Emitter::Cmp(&memoryBlock->cache, cmpMode, Areg, Breg);
 		X86Emitter::parse(&memoryBlock->cache, "je extra", insertDisp(addWordToMemaddrSize));
 		//X86Emitter::Jcc(&memoryBlock->cache, byteRelJeMode, insertDisp(addWordToMemaddrSize));

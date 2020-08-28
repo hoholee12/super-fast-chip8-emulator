@@ -354,12 +354,12 @@ public:
 		loadByteShortcutSize = movFromMemaddrByteSize + movzxByteToDwordSize,
 		loadWordShortcutSize = movFromMemaddrWordSize + movzxWordToDwordSize,
 		loadDwordShortcutSize = movFromMemaddrDwordSize,
-		loadByteArraySize = dwordMovImmToRegSize + loadByteShortcutSize + dwordAddSize + movByteMemToRegSize + movzxByteToDwordSize,
-		loadWordArraySize = dwordMovImmToRegSize + loadByteShortcutSize + leaWithoutDispSize + movWordMemToRegSize + movzxWordToDwordSize,
-		loadDwordArraySize = dwordMovImmToRegSize + loadByteShortcutSize + leaWithoutDispSize + movDwordMemToRegSize,
-		storeByteArraySize = dwordMovImmToRegSize + loadByteShortcutSize + dwordAddSize + movByteRegToMemSize,
-		storeWordArraySize = dwordMovImmToRegSize + loadByteShortcutSize + leaWithoutDispSize + movWordRegToMemSize,
-		storeDwordArraySize = dwordMovImmToRegSize + loadByteShortcutSize + leaWithoutDispSize + movDwordRegToMemSize,
+		//loadByteArraySize = dwordMovImmToRegSize + loadByteShortcutSize + dwordAddSize + movByteMemToRegSize + movzxByteToDwordSize,
+		//loadWordArraySize = dwordMovImmToRegSize + loadByteShortcutSize + leaWithoutDispSize + movWordMemToRegSize + movzxWordToDwordSize,
+		//loadDwordArraySize = dwordMovImmToRegSize + loadByteShortcutSize + leaWithoutDispSize + movDwordMemToRegSize,
+		//storeByteArraySize = dwordMovImmToRegSize + loadByteShortcutSize + dwordAddSize + movByteRegToMemSize,
+		//storeWordArraySize = dwordMovImmToRegSize + loadByteShortcutSize + leaWithoutDispSize + movWordRegToMemSize,
+		//storeDwordArraySize = dwordMovImmToRegSize + loadByteShortcutSize + leaWithoutDispSize + movDwordRegToMemSize,
 		addByteToMemaddrSize = loadByteShortcutSize + dwordAddImmToRegSize + movToMemaddrByteSize,
 		addWordToMemaddrSize = loadWordShortcutSize + dwordAddImmToRegSize + movToMemaddrWordSize,
 		addDwordToMemaddrSize = loadDwordShortcutSize + dwordAddImmToRegSize + movToMemaddrDwordSize,
@@ -770,24 +770,28 @@ public:
 		return none;
 	}
 
-	OperandSizes loadArray_AregAsResult(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size) const{
-		Mov_imm(memoryBlock, dwordMovImmToRegMode, Areg, insertDisp(arr));
-		loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
+	OperandSizes loadArray_AregAsResult(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, bool arrptr_is_immval, ExpandSizes Size) const{
+		int count = 0;
+		count += Mov_imm(memoryBlock, dwordMovImmToRegMode, Areg, insertDisp(arr));
+		if (arrptr_is_immval) count += Mov_imm(memoryBlock, dwordMovImmToRegMode, Creg, insertDisp(arrptr));
+		else count += loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
 		switch (Size){
-		case Byte: Add(memoryBlock, dwordAddMode, Areg, Creg); Mov(memoryBlock, movByteMemToRegMode, Creg, Areg); Movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg); return loadByteArraySize;
-		case Word: Lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Areg); Mov(memoryBlock, movWordMemToRegMode, Creg, Areg); Movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg); return loadWordArraySize;
-		case Dword: Lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Areg); Mov(memoryBlock, movDwordMemToRegMode, Creg, Areg); return loadDwordArraySize;
+		case Byte: count += Add(memoryBlock, dwordAddMode, Areg, Creg); count += Mov(memoryBlock, movByteMemToRegMode, Creg, Areg); count += Movzx(memoryBlock, movzxByteToDwordMode, Areg, Areg); return (OperandSizes)count;
+		case Word: count += Lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Areg); count += Mov(memoryBlock, movWordMemToRegMode, Creg, Areg); count += Movzx(memoryBlock, movzxWordToDwordMode, Areg, Areg); return (OperandSizes)count;
+		case Dword: count += Lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Areg); count += Mov(memoryBlock, movDwordMemToRegMode, Creg, Areg); return (OperandSizes)count;
 		}
 		return none;
 	}
 
-	OperandSizes storeArray_AregAsInput(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, ExpandSizes Size) const{
-		Mov_imm(memoryBlock, dwordMovImmToRegMode, Dreg, insertDisp(arr));
-		loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
+	OperandSizes storeArray_AregAsInput(vect8* memoryBlock, uint32_t arr, uint32_t arrptr, bool arrptr_is_immval, ExpandSizes Size) const{
+		int count = 0;
+		count += Mov_imm(memoryBlock, dwordMovImmToRegMode, Dreg, insertDisp(arr));
+		if (arrptr_is_immval) count += Mov_imm(memoryBlock, dwordMovImmToRegMode, Creg, insertDisp(arrptr));
+		else count += loadMemToDwordReg(memoryBlock, arrptr, Creg, Byte);
 		switch (Size){
-		case Byte: Add(memoryBlock, dwordAddMode, Dreg, Creg); Mov(memoryBlock, movByteRegToMemMode, Areg, Creg); return storeByteArraySize;
-		case Word: Lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Dreg); Mov(memoryBlock, movWordRegToMemMode, Areg, Creg); return storeWordArraySize;
-		case Dword: Lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Dreg); Mov(memoryBlock, movDwordRegToMemMode, Areg, Creg); return storeDwordArraySize;
+		case Byte: count += Add(memoryBlock, dwordAddMode, Dreg, Creg); count += Mov(memoryBlock, movByteRegToMemMode, Areg, Creg); return (OperandSizes)count;
+		case Word: count += Lea(memoryBlock, leaWithoutDispMode, Creg, x2, Creg, Dreg); count += Mov(memoryBlock, movWordRegToMemMode, Areg, Creg); return (OperandSizes)count;
+		case Dword: count += Lea(memoryBlock, leaWithoutDispMode, Creg, x4, Creg, Dreg); count += Mov(memoryBlock, movDwordRegToMemMode, Areg, Creg); return (OperandSizes)count;
 		}
 		return none;
 	}

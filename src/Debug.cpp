@@ -27,13 +27,12 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t* stack, uint8_t stackpt
 
 
 	/*Vreg dump*/
-	/*
+	
 	printf("Vreg dump: <");
 	for (int i = 0; i < 0x10; i++){
 		printf("%02X ", v[i]);
 	}
 	printf(">\n");
-	*/
 
 
 
