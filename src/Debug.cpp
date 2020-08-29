@@ -1,12 +1,17 @@
 #include"Debug.h"
 
-void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t* stack, uint8_t stackptr, uint16_t input, defaults* mainwindow, Memory* memory, Audio* audio, uint8_t delayRegister){
+void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t* stack, uint8_t stackptr, uint16_t opcode, defaults* mainwindow, Memory* memory, Audio* audio, uint8_t delayRegister){
 	static int count = 0;
 	static bool inCall = false;
 
 
+	//pc will not be accurate if theres more than one opcode compiled
+	//fprintf(debugtext, "op:%X pc:%2X\n", input, pc);
+
+
+
 	//opcode filter
-	//if ((pc >> 6) != 6) return;
+	//if ((opcode >> 12) == 6) return;
 
 
 	/*memory dump*/
@@ -26,37 +31,41 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t* stack, uint8_t stackpt
 
 
 	/*delay register*/
-	if (delayRegister != 0x0) printf("delayReg = %x\n", delayRegister);
+	//if (delayRegister != 0x0) printf("delayReg = %x\n", delayRegister);
 
 
 
 
 	/*Vreg dump*/
-	
-	printf("Vreg dump: <");
+	/*printf("Vreg dump: <");
 	for (int i = 0; i < 0x10; i++){
 		printf("%02X ", v[i]);
 	}
 	printf(">\n");
-
+	*/
 
 
 	/*sound timer*/
-	uint8_t soundtimer = audio->getSoundTimer();
+	/*uint8_t soundtimer = audio->getSoundTimer();
 	if (soundtimer != 0){
 		printf("soundTimer = %x\n", soundtimer);
 	}
-	
+	*/
 	
 	
 	/*opcode parse*/
-	if (inCall) printf("(call)\t");
-	printf("%d:\tpc: %x\topcode: %x\tstack:<", ++count, pc, input);
+	//if (inCall) fprintf(debugtext, "(call)\t");
+	fprintf(debugtext, "pc:%X\top:%X\tst:<", pc, opcode);
 	for (int i = 0; i < stackptr; i++){
-		printf("%02X ", stack[i]);
+		fprintf(debugtext, "%02X ", stack[i]);
 	}
-	printf(">\n");
-
+	fprintf(debugtext, ">\tv:<");
+	for (int i = 0; i < 0x10; i++){
+		fprintf(debugtext, "%02X ", v[i]);
+	}
+	fprintf(debugtext, ">\n");
+	fflush(debugtext);
+	/*
 	switch ((input & 0xf000) >> 12){
 	case 0x0:
 		switch (input & 0x00ff){
@@ -123,7 +132,7 @@ void Debug::printDebug(uint8_t* v, uint16_t pc, uint16_t* stack, uint8_t stackpt
 	default:
 		break;
 	}
-
+	*/
 	//debug time
-	mainwindow->delayTime(DEBUG_TIME);
+	if (DEBUG_TIME) mainwindow->delayTime(DEBUG_TIME);
 }

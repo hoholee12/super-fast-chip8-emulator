@@ -104,7 +104,6 @@ public:
 
 		for (; cpu->programCounter < FULL_MEM_SIZE;){
 			translator->init(cache->createCache(cpu->programCounter, true));
-			//cache->getCache(cpu->programCounter, true)->TScache.resize(1);
 			translator->startBlock();
 			internalLoop(0, cpu->programCounter, true);
 
@@ -117,13 +116,6 @@ public:
 		cpu->programCounter = pcTemp;
 
 	}
-
-#ifdef DEBUG_ME
-	uint16_t getCurrentOpcode(){
-		return currentOpcode;
-	}
-
-#endif
 
 	/*
 	updateRecompiler
@@ -258,14 +250,6 @@ public:
 		TScache.nnx = currentOpcode & 0x00FF;
 		TScache.nnnx = currentOpcode & 0x0FFF;
 
-		/*
-		cache->getCache(pcTemp, flag)->TScache[i].x_val = (currentOpcode & 0x0f00) >> 8;
-		cache->getCache(pcTemp, flag)->TScache[i].y_val = (currentOpcode & 0x00f0) >> 4;
-		cache->getCache(pcTemp, flag)->TScache[i].nx = currentOpcode & 0x000F;
-		cache->getCache(pcTemp, flag)->TScache[i].nnx = currentOpcode & 0x00FF;
-		cache->getCache(pcTemp, flag)->TScache[i].nnnx = currentOpcode & 0x0FFF;
-		*/
-
 		//cut one full jiffy
 		//ret at the end
 		if (i == baseClock - 1) translator->decode(&TScache, true);
@@ -284,22 +268,13 @@ public:
 	void executeBlock(){
 		
 		ICache* temp = cache->getCache(cpu->programCounter, use_bCache);
-		
-#ifdef NO
-		cache->printCache(cpu->programCounter);
-#endif
 
-
-		//TODO
+		//produce executable page
 		cache->autoMarkExec(cpu->programCounter, use_bCache);
 
 		//execute
 		func_ptr executeFunc = (func_ptr)cache->getCache(cpu->programCounter, use_bCache)->execBlock;
 		executeFunc();
-		
-		
-		
-		
 
 		//if hintFallback flipped, continue to execute fallback
 		if (!hintFallback) return;

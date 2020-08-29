@@ -95,6 +95,9 @@ void Chip8::run(){
 			while (scheduler->baseLoop()){
 				updateInterpreter_switch();
 				update_controller();
+#ifdef DEBUG_ME
+				debugMe();
+#endif
 			}
 			update_lowerhalf();
 		}
@@ -104,6 +107,9 @@ void Chip8::run(){
 			while (scheduler->baseLoop()){
 				updateInterpreter_LUT();
 				update_controller();
+#ifdef DEBUG_ME
+				debugMe();
+#endif
 			}
 			update_lowerhalf();
 		}
@@ -113,6 +119,9 @@ void Chip8::run(){
 			while (scheduler->baseLoop()){
 				updateInterpreter_jumboLUT();
 				update_controller();
+#ifdef DEBUG_ME
+				debugMe();
+#endif
 			}
 			update_lowerhalf();
 		}
@@ -122,21 +131,15 @@ void Chip8::run(){
 			
 			dynarec->updateRecompiler();
 			do{
-				
+				dynarec->executeBlock();	//cpu & controller
 #ifdef DEBUG_ME
-				cpu->currentOpcode = dynarec->getCurrentOpcode();
 				debugMe();
 #endif
-
-				dynarec->executeBlock();	//cpu & controller
 			} while (dynarec->updateRecompiler());
 			dynarec->executeBlock();	//cpu & controller
-
 #ifdef DEBUG_ME
-			//debugger
 			debugMe();
 #endif
-			
 			update_lowerhalf();
 		}
 		break;
@@ -206,14 +209,14 @@ void Chip8::optimizations(){
 	
 }
 
+#ifdef DEBUG_ME
 void Chip8::debugMe(){
 	//debugger
 	static int count = 0;
 	static bool doOnce = false;
 	if (!isEndlessLoop){
 		doOnce = false;
-
-		Debug::printDebug(cpu->getV(0x0), *cpu->getProgramCounter(), cpu->getStack(0x0), *cpu->getStackPointer(), cpu->currentOpcode, mainwindow, memory, audio, delayRegister);
+		debug->printDebug(cpu->getV(0x0), *cpu->getProgramCounter(), cpu->getStack(0x0), *cpu->getStackPointer(), cpu->currentOpcode, mainwindow, memory, audio, delayRegister);
 	}
 	else{
 		if (doOnce == false){
@@ -222,3 +225,4 @@ void Chip8::debugMe(){
 		}
 	}
 }
+#endif

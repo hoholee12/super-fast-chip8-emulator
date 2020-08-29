@@ -17,26 +17,24 @@
 
 typedef struct _translatorState{
 
-	uint32_t x_val = 0;
-	uint32_t y_val = 0;
-	uint32_t nx = 0;
-	uint32_t nnx = 0;
-	uint32_t nnnx = 0;
+	uint8_t x_val = 0;
+	uint8_t y_val = 0;
+	uint16_t nx = 0;
+	uint16_t nnx = 0;
+	uint16_t nnnx = 0;
 
 	//immutable: do not modify!
-	uint32_t z_val = 0x0;
-	uint32_t f_val = 0xf;
+	uint8_t z_val = 0x0;
+	uint8_t f_val = 0xf;
 
 } TranslatorState;
 
 using vect8 = std::vector<uint8_t>;
-//using vectTS = std::vector<TranslatorState>;
 
 using ICache = struct _ICache{
 	vect8 cache;
 	bool check = false;
 	uint32_t opcodeCount = 0;
-	//vectTS TScache;	//Translator.h does reference to these variables, not copy.
 
 	//executable block ptr
 	void* execBlock = NULL;
@@ -61,7 +59,6 @@ public:
 		whichCache(pc, flag)->opcodeCount = 0;
 		whichCache(pc, flag)->check = true;
 		whichCache(pc, flag)->cache.clear();
-		//whichCache(pc, flag)->TScache.clear();
 		return whichCache(pc, flag);
 	}
 

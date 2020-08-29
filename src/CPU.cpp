@@ -107,7 +107,9 @@ void CPU::init(Memory* memory, uint8_t* delayRegister, uint8_t* pressedKey){
 		if ((i & 0x00ff) == 0x65) jumbo_table[i] = &CPU::opcodefx65;
 	}
 
+#ifndef DEBUG_ME
 	srand(time(NULL));	//random seed
+#endif
 
 	programCounter = 0x200; //start at 0x200
 	stackPointer = 0x0;

@@ -41,10 +41,9 @@ extern "C"
 #include<stdint.h>
 
 
-
 //#define DEBUG_ME
 #define DEBUG_CACHE
-#define DEBUG_TIME 100
+#define DEBUG_TIME 0
 
 
 class defaults{

@@ -14,7 +14,7 @@
 
 
 
-class Chip8: public defaults, Debug{
+class Chip8: public defaults{
 private:
 	char* title;
 	int cpuspeed;
@@ -46,6 +46,8 @@ private:
 	Timer* windowTimerInstance;
 
 	TimeSched* scheduler;
+
+	Debug* debug = new Debug();
 
 	int speedHack = -1; // -1: neutral, 0: low, 0<: high
 
@@ -83,11 +85,6 @@ inline void Chip8::updateInterpreter_switch(){
 	currentOpcode = cpu->fetch(memory);
 	cpu->currentOpcode = currentOpcode;
 
-#ifdef DEBUG_ME
-	debugMe();
-
-#endif
-
 	//decode
 	controllerOp = cpu->decode(memory, &delayRegister, currentOpcode, keyinput);
 
@@ -101,11 +98,6 @@ inline void Chip8::updateInterpreter_LUT(){
 	previousOpcode = currentOpcode;
 	currentOpcode = cpu->fetch();
 	cpu->currentOpcode = currentOpcode;
-
-#ifdef DEBUG_ME
-	debugMe();
-	
-#endif
 
 	//decode
 	controllerOp = cpu->decode();
@@ -121,12 +113,6 @@ inline void Chip8::updateInterpreter_jumboLUT(){
 	previousOpcode = currentOpcode;
 	currentOpcode = cpu->fetch();
 	cpu->currentOpcode = currentOpcode;
-
-#ifdef DEBUG_ME
-
-	debugMe();
-
-#endif
 
 	//decode
 	controllerOp = cpu->decode_jumboLUT();
@@ -209,7 +195,12 @@ inline void Chip8::update_lowerhalf(){
 	}
 
 
-	if (keyinput == 0xff) running = false;	//shutdown emulator
+	if (keyinput == 0xff){
+#ifdef DEBUG_ME
+		debug->closeDebug();
+#endif
+		running = false;
+	}// running = false;	//shutdown emulator
 
 
 

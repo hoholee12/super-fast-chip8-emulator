@@ -180,8 +180,8 @@ public:
 		for (uint32_t i = 0x4000; i < 0x5000; i++) jumbo_table[i] = &Translator::opcode4xnn;
 		
 		for (uint32_t i = 0x5000; i < 0x6000; i++) if ((i & 0x000f) == 0x0) jumbo_table[i] = &Translator::opcode5xy0;
-		/*
-		for (uint32_t i = 0x6000; i < 0x7000; i++) jumbo_table[i] = &Translator::opcode6xnn;
+		
+		//for (uint32_t i = 0x6000; i < 0x7000; i++) jumbo_table[i] = &Translator::opcode6xnn;
 		
 		for (uint32_t i = 0x7000; i < 0x8000; i++) jumbo_table[i] = &Translator::opcode7xnn;
 		
@@ -196,7 +196,7 @@ public:
 			//if ((i & 0x000f) == 0x7) jumbo_table[i] = &Translator::opcode8xy7;
 			//if ((i & 0x000f) == 0xe) jumbo_table[i] = &Translator::opcode8xye;
 		}
-		
+		/*
 		for (uint32_t i = 0x9000; i < 0xa000; i++) if (i % 0x10 == 0x0) jumbo_table[i] = &Translator::opcode9xy0;
 		
 		for (uint32_t i = 0xa000; i < 0xb000; i++) jumbo_table[i] = &Translator::opcodeannn;
@@ -596,10 +596,9 @@ private:
 		}
 			1b33:	c3                   	ret
 		*/
-		
+		X86Emitter::Breakpoint(&memoryBlock->cache);
 
 		X86Emitter::parse(&memoryBlock->cache, "mov ax, extra", insertDisp(nn));
-		X86Emitter::parse(&memoryBlock->cache, "movzx eax, ax");
 
 		X86Emitter::storeArray_AregAsInput(&memoryBlock->cache, v, vxPointer, true, Byte);
 
