@@ -456,26 +456,6 @@ public:
 
 	OperandSizes opmodeError(const char* str, std::string str2 = std::string()) const{ fprintf(stderr, "%s", str); fprintf(stderr, ": incompatible opmode! -> "); fprintf(stderr, "%s", str2.c_str()); exit(1); return none; }
 
-
-	OperandSizes Breakpoint(vect8* memoryBlock) const{
-		init(memoryBlock, 1); addByte(0xCC); return (OperandSizes)1;
-	}
-
-	OperandSizes BlockInitializer(vect8* memoryBlock) const{
-		int count = 0;
-		count += Push(memoryBlock, pushDwordMode, memaddr);
-		count += parse(memoryBlock, "mov ebp, esp");
-		return (OperandSizes)count;
-	
-	}
-	OperandSizes BlockFinisher(vect8* memoryBlock) const{
-		int count = 0;
-		count += Pop(memoryBlock, popDwordMode, memaddr);
-		count += Ret(memoryBlock);
-		return (OperandSizes)count;
-
-	}
-
 	//ALWAYS PUSH EVERYTHING BEFORE RUNNING COMPILED BLOCK!!!
 	OperandSizes Push(vect8* memoryBlock, OperandModes opmode, X86Regs src) const{
 		uint8_t opcode = 0x50;
@@ -831,6 +811,31 @@ public:
 		return none;
 	}
 
+	OperandSizes Breakpoint(vect8* memoryBlock) const{
+		init(memoryBlock, 1); addByte(0xCC); return (OperandSizes)1;
+	}
+
+	OperandSizes BlockInitializer(vect8* memoryBlock) const{
+		int count = 0;
+		count += Push(memoryBlock, pushDwordMode, memaddr);
+		count += parse(memoryBlock, "mov ebp, esp");
+		return (OperandSizes)count;
+
+	}
+	OperandSizes BlockFinisher(vect8* memoryBlock) const{
+		int count = 0;
+		count += Pop(memoryBlock, popDwordMode, memaddr);
+		count += Ret(memoryBlock);
+		return (OperandSizes)count;
+
+	}
+	OperandSizes CallerFlusher(vect8* memoryBlock) const{
+		int count = 0;
+		count += parse(memoryBlock, "xor eax, eax");
+		count += parse(memoryBlock, "xor ecx, ecx");
+		count += parse(memoryBlock, "xor edx, edx");
+		return (OperandSizes)count;
+	}
 
 	/*
 	
