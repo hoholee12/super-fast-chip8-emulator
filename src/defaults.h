@@ -42,7 +42,7 @@ extern "C"
 
 
 //#define DEBUG_ME
-#define DEBUG_CACHE
+//#define DEBUG_CACHE
 #define DEBUG_TIME 0
 
 

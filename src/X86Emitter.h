@@ -350,6 +350,7 @@ public:
 		leaWithDispSize = 7,
 		leaWithoutDispSize = 3,
 
+		dwordCallSize = 2,
 		retSize = 1,
 		nopSize = 1,
 
@@ -432,6 +433,7 @@ public:
 		leaWithDispMode,
 		leaWithoutDispMode,
 
+		dwordCallMode,
 		retMode,
 		nopMode,
 
@@ -713,7 +715,10 @@ public:
 	//ja	jump greater unsigned
 	//jae	jump greater equals unsigned
 	
-	
+	//far call
+	OperandSizes Call(vect8* memoryBlock, OperandModes opmode, X86Regs dest) const{ 
+		init(memoryBlock, dwordCallSize); addByte(0xFF); addByte(0xD0 | dest); return dwordCallSize;
+	}
 	
 
 	//return from eax
@@ -967,6 +972,9 @@ public:
 		-----check type/get (src/dest)
 		---------check size (src/dest) - always ptr first!!!
 		-------------set opmode
+
+		*only two operands allowed
+		*one operand opcodes will use dest_src
 	*/
 	void parse_op(ParserType* parserType, string* op_str, string* src_str, string* dest_str, Disp extra) const{
 		if (!op_str->compare("movzx")){
@@ -1247,6 +1255,14 @@ public:
 		else if(!op_str->compare("lea")){
 			parserType->opmode = leaWithDispMode;
 		}
+		else if (!op_str->compare("call")){
+			if (isReg(dest_str)){
+				if (isDword(dest_str)){
+					parserType->opmode = dwordCallMode;
+					insertDest(parserType, dest_str);
+				}
+			}
+		}
 
 	}
 
@@ -1310,6 +1326,7 @@ public:
 
 		case retMode: return Ret(memoryBlock);
 		case nopMode: return Nop(memoryBlock);
+		case dwordCallMode: return Call(memoryBlock, parserType->opmode, parserType->modrm.dest);
 		
 		default: opmodeError("parse", str); return none;
 		}

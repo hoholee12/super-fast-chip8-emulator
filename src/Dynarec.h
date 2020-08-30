@@ -191,7 +191,9 @@ public:
 
 		//recompile n opcodes
 		int i = 0;
-
+#ifdef DEBUG_CACHE
+		printf("\n");
+#endif
 		//no leftover
 		if (leftoverCycle == 0){
 			for (; i < baseClock && !translator->checkFallback() && !translator->checkEndDecode(); i++) internalLoop(i, pcTemp);
@@ -239,9 +241,19 @@ public:
 	//one opcode into icache
 	void internalLoop(int i, uint16_t pcTemp, bool flag = false){
 
+
 		//fetch
 		previousOpcode = currentOpcode;
 		currentOpcode = cpu->fetch();
+
+#ifdef DEBUG_CACHE
+		//for checking proper translator input
+		if (cpu->programCounter != 0x0){
+			printf("compiled opcode: %02X, pc: %03x\n",
+				currentOpcode,
+				cpu->programCounter);
+		}
+#endif
 
 		TranslatorState TScache;
 		TScache.x_val = (currentOpcode & 0x0f00) >> 8;
@@ -252,8 +264,14 @@ public:
 
 		//cut one full jiffy
 		//ret at the end
-		if (i == baseClock - 1) translator->decode(&TScache, true);
-		else translator->decode(&TScache);
+		int opsize = 0;
+		if (i == baseClock - 1) opsize = translator->decode(&TScache, true);
+		else opsize = translator->decode(&TScache);
+
+		//insert opcode to list
+		cache->insertClist(currentOpcode, opsize, pcTemp, flag);
+
+
 
 		//one opcode into icache count
 		cache->setOpcodeCount(pcTemp, cache->getOpcodeCount(pcTemp, flag) + 1, flag);
@@ -261,6 +279,8 @@ public:
 		//won't reach if translator decodes a fallback
 		//next opcode
 		cpu->programCounter += 2;
+
+
 	}
 
 
@@ -270,9 +290,15 @@ public:
 		ICache* temp = cache->getCache(cpu->programCounter, use_bCache);
 
 		//produce executable page
+		//cache->populateLocal(cpu->programCounter, use_bCache);
 		cache->autoMarkExec(cpu->programCounter, use_bCache);
 
 		//execute
+#ifdef DEBUG_CACHE
+		printf("execute op:%08X, pc:%3x", cache->getCache(cpu->programCounter, use_bCache)->execBlock, cpu->programCounter);
+		if (cache->getCache(cpu->programCounter, use_bCache)->linkedPC) printf(" -> linked block!\n");
+		else printf("\n");
+#endif
 		func_ptr executeFunc = (func_ptr)cache->getCache(cpu->programCounter, use_bCache)->execBlock;
 		executeFunc();
 
