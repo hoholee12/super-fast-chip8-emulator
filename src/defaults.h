@@ -86,6 +86,8 @@ public:
 	void updateTitle(char* str, int cpuspeed, int fps, int frametime) const;
 
 	void* getExecBuffer() const;
+	void purgeExecBuffer(void* addr) const;
+	static const int pagesize = 1024 * 4;	//4k
 
 	//print debug with ticks
 	void debugmsg(const char* str, ...){
@@ -152,15 +154,12 @@ inline uint8_t defaults::getInput() const{
 	return pressedKey;
 }
 
-
-
-
 //execute a executable block
 inline void* defaults::getExecBuffer() const{
-	static const int pagesize = 1024 * 4;	//4k
+	
 	void* buffer = NULL;
 #ifdef _WIN32
-	buffer = VirtualAlloc(nullptr, pagesize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	buffer = VirtualAlloc(NULL, pagesize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 #elif __linux__
 	buffer = mmap(NULL, pagesize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	//make sure failed alloc returns zero
@@ -169,3 +168,17 @@ inline void* defaults::getExecBuffer() const{
 	
 	return buffer;
 }
+
+inline void defaults::purgeExecBuffer(void* addr) const{ 
+
+#ifdef _WIN32
+	VirtualFree(addr, pagesize, MEM_RELEASE);
+#elif __linux__
+	munmap(addr, pagesize);
+#endif
+
+}
+
+
+
+

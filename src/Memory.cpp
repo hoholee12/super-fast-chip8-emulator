@@ -1,11 +1,11 @@
 #include"Memory.h"
 
-void Memory::write(uint16_t addr, uint8_t input){
+void MemoryInstance::write(uint16_t addr, uint8_t input){
 	mem[addr] = input;
 
 }
 
-void Memory::init(char* str){
+void MemoryInstance::init(const char* str){
 	//init memory
 	for (int i = 0; i < FULL_MEM_SIZE; i++) mem[i] = 0;
 

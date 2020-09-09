@@ -38,6 +38,7 @@ private:
 	uint32_t hintFallback;		//byte
 	uint32_t interpreterSwitch;	//byte
 	uint32_t delayNext;			//byte
+	uint32_t hintSMC;			//byte
 
 	//static vars
 	uint8_t vxPointer;			//byte static
@@ -80,7 +81,8 @@ public:
 	Translator(CPU* cpu,
 		uint32_t interpreterSwitch,
 		uint32_t hintFallback,
-		uint32_t delayNext
+		uint32_t delayNext,
+		uint32_t hintSMC
 		){
 		controllerOp = (uint32_t)&cpu->controllerOp;
 		programCounter = (uint32_t)&cpu->programCounter;
@@ -102,12 +104,12 @@ public:
 		delayRegister = (uint32_t)cpu->delayRegister;
 
 		//TODO
-		mem = (uint32_t)cpu->memory->mem;
+		mem = (uint32_t)cpu->memory->whichMemory();
 
 		this->interpreterSwitch = interpreterSwitch;
 		this->hintFallback = hintFallback;
 		this->delayNext = delayNext;
-		
+		this->hintSMC = hintSMC;
 
 
 #ifdef DEBUG_ME
@@ -279,7 +281,7 @@ private:
 		opsize += X86Emitter::addToMemaddr(&memoryBlock->cache, programCounter, 2, Word);
 		
 		//clear caller regs
-		opsize += X86Emitter::CallerFlusher(&memoryBlock->cache);
+		//opsize += X86Emitter::CallerFlusher(&memoryBlock->cache);
 		
 		doIncrementPC = true;
 		
@@ -307,6 +309,10 @@ private:
 		//opsize += X86Emitter::BlockFinisher(&memoryBlock->cache);
 		opsize += X86Emitter::parse(&memoryBlock->cache, "ret");
 		endDecode = true;
+	}
+	void hintSMC_func(){
+		opsize += X86Emitter::setToMemaddr(&memoryBlock->cache, hintSMC, 0x1, Byte);
+		//for use with hintFallback
 	}
 
 	//opcodes
@@ -1655,6 +1661,7 @@ private:
 			21cd:	c3                   	ret    
 		*/
 
+		hintSMC_func();
 		hintFallback_func();
 		interpreterSwitch_func();
 		//incrementPC();
@@ -1701,6 +1708,7 @@ private:
 			222d:	c3                   	ret    
 		*/
 
+		hintSMC_func();
 		hintFallback_func();
 		interpreterSwitch_func();
 		//incrementPC();

@@ -44,7 +44,7 @@ class Dynarec{
 	bool switchToInterpreter = false;
 	bool hintFallback = false;
 	bool delayNext = false;
-
+	bool hintSMC = false;
 	
 	uint32_t baseClock;
 
@@ -89,7 +89,8 @@ public:
 		translator = new Translator(cpu,	//cpu variables
 			(uint32_t)&switchToInterpreter,
 			(uint32_t)&hintFallback,
-			(uint32_t)&delayNext);	//core variables
+			(uint32_t)&delayNext,
+			(uint32_t)&hintSMC);	//core variables
 
 
 		//precompile single opcodes
@@ -269,7 +270,7 @@ public:
 		else opsize = translator->decode(&TScache);
 
 		//insert opcode to list
-		cache->insertClist(currentOpcode, opsize, pcTemp, flag);
+		cache->insertOplist(currentOpcode, opsize, pcTemp, flag);
 
 
 
@@ -283,7 +284,19 @@ public:
 
 	}
 
-
+	//smc checker
+	//assuming fx33, fx55 falls back before indexReg opcodes
+	void checkMainMemory(uint16_t indexRegister, Cache* cache){
+		
+		for (int i = indexRegister; i < 0x10; i++){
+			if (memory->read(i) != memory->read(i, true)){
+				cache->destroyCache(i, false);
+				memory->write(i, memory->read(i), true); //update backupMemory
+			}
+		}
+		
+	
+	}
 
 	void executeBlock(){
 		
@@ -305,6 +318,8 @@ public:
 		//if hintFallback flipped, continue to execute fallback
 		if (!hintFallback) return;
 
+		//if SMC suspicious, check index area of the memory, and flag slots that needs to be recompiled
+		if (!hintSMC) checkMainMemory(cpu->indexRegister, cache);
 
 		//delayNext for controllerOp
 
@@ -338,6 +353,7 @@ public:
 		switchToInterpreter = false;
 		hintFallback = false;
 		delayNext = false;
+		hintSMC = false;
 	}
 
 };

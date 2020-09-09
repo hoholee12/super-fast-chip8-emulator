@@ -41,7 +41,7 @@ using vectCO = std::vector<CompOps>;
 
 using ICache = struct _ICache{
 	vect8 cache;
-	vectCO clist;
+	vectCO oplist;
 	bool check = false;
 	uint16_t linkedPC = 0;
 	uint32_t opcodeCount = 0;
@@ -90,6 +90,8 @@ public:
 		}
 		return whichCache(pc, flag);
 	}
+
+	
 
 	void printCache(int pc, bool flag = false){
 		if (!whichCache(pc, flag)->check) return;
@@ -143,12 +145,12 @@ public:
 	}
 
 
-	void insertClist(uint16_t opcode, uint32_t opsize, int pc, bool flag = false){
+	void insertOplist(uint16_t opcode, uint32_t opsize, int pc, bool flag = false){
 		if (flag) return; //not for bCache
 		CompOps temp;
 		temp.opcode = opcode;
 		temp.opsize = opsize;
-		whichCache(pc, flag)->clist.push_back(temp);
+		whichCache(pc, flag)->oplist.push_back(temp);
 		whichCache(pc, flag)->bytesize += opsize;
 	}
 
@@ -167,7 +169,7 @@ public:
 		if (autoMarkExec(pc, flag)) return; //do not touch if block already exists
 
 		int localpc = pc + 2; //start on next opcode
-		int limit = whichCache(pc, flag)->clist.size() - 1;
+		int limit = whichCache(pc, flag)->oplist.size() - 1;
 
 		char* appendtemp = (char*)whichCache(pc, flag)->execBlock;
 #ifdef DEBUG_CACHE
@@ -177,7 +179,7 @@ public:
 
 			if (!whichCache(localpc, flag)->execBlock){	//if empty
 				whichCache(localpc, flag)->check = true;
-				appendtemp += whichCache(pc, flag)->clist[i].opsize;
+				appendtemp += whichCache(pc, flag)->oplist[i].opsize;
 #ifdef DEBUG_CACHE
 				printf("appending:\n", whichCache(pc, flag)->clist[i].opsize);
 #endif
@@ -189,4 +191,27 @@ public:
 			}
 		}
 	}
+
+	//recursive
+	void destroyCache(int pc, bool flag = false){
+		//recursion to root
+		if (whichCache(pc, flag)->linkedPC != 0) destroyCache(whichCache(pc, flag)->linkedPC, flag);
+		else{
+			//if root
+			//purge
+			defaults::purgeExecBuffer(whichCache(pc, flag)->execBlock);
+
+		}
+		whichCache(pc, flag)->cache.clear();
+		whichCache(pc, flag)->oplist.clear();
+		whichCache(pc, flag)->check = false;
+		whichCache(pc, flag)->linkedPC = 0;
+		whichCache(pc, flag)->opcodeCount = 0;
+
+		whichCache(pc, flag)->bytesize = 0;
+		//executable block ptr
+		whichCache(pc, flag)->execBlock = NULL;
+
+	}
+
 };

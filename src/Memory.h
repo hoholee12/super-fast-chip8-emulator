@@ -29,7 +29,7 @@ const uint8_t fontSet[FONT_COUNT * 5] = {
 	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-class Memory{
+class MemoryInstance{
 public:
 	uint8_t mem[FULL_MEM_SIZE];
 
@@ -38,13 +38,54 @@ public:
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t input);
 
-	void init(char* str);	//file load included
+	void init(const char* str);	//file load included
 
+	//copy initializer
+	MemoryInstance(){}
+	MemoryInstance(const MemoryInstance& obj){
+		for (int i = 0; i < FULL_MEM_SIZE; i++){
+			mem[i] = obj.mem[i];
+		}
+	}
 
 };
 
-inline uint8_t Memory::read(uint16_t addr){
+inline uint8_t MemoryInstance::read(uint16_t addr){
 	if (addr >= FULL_MEM_SIZE) return 0x0;	//no OOB
 	return mem[addr];
 
 }
+
+//RAII
+class Memory{
+	MemoryInstance* a;
+	MemoryInstance* b;
+public:
+	Memory(){
+		a = new MemoryInstance();
+		b = new MemoryInstance();
+	}
+	~Memory(){
+		delete(a);
+		delete(b);
+	}
+	void init(const char* str){
+		a->init(str);
+		for (int i = 0; i < FULL_MEM_SIZE; i++){
+			b->write(i, a->read(i));
+		}
+	}
+
+	//flag = true: backup memory
+	MemoryInstance* whichMemory(bool flag = false){ return (!flag) ? a : b; }
+
+	uint8_t read(uint16_t addr, bool flag = false){ return whichMemory(flag)->read(addr); }
+
+	void write(uint16_t addr, uint8_t input, bool flag = false){ whichMemory(flag)->write(addr, input); }
+
+	uint8_t& operator[](uint16_t addr){ return a->mem[addr]; }
+
+
+
+};
+
