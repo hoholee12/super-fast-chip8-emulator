@@ -59,6 +59,15 @@ class Cache: public defaults{
 	ICache bCache[FULL_MEM_SIZE / 2];	//for individual opcodes
 public:
 	
+	Cache(){
+#ifdef DEBUG_CACHE
+		printf("iCache starting point: %08X\n"
+			"bCache starting point: %08X\n", iCache, bCache);
+		uint16_t offender = 0x246;
+		printf("offending pc(%03X): %08X\n", offender, iCache + sizeof(ICache) * offender / 2);
+
+#endif
+	}
 
 	//switch i(default)/b(true) cache
 	ICache* whichCache(int pc, bool flag = false){ return flag ? &bCache[pc / 2] : &iCache[pc / 2]; }
@@ -97,7 +106,6 @@ public:
 	//mark executable if not, return true if already filled
 	bool autoMarkExec(int pc, bool flag = false){
 		if (!whichCache(pc, flag)->execBlock){
-			
 			int i = 0;
 			do{
 				whichCache(pc, flag)->execBlock = defaults::getExecBuffer();
@@ -145,7 +153,16 @@ public:
 	}
 
 	void populateLocal(int pc, bool flag = false){
-		if (flag) return; //not for bCache
+		if (flag){
+			//OOPSIE
+			autoMarkExec(pc, flag);
+			return;
+		}
+
+#ifdef DEBUG_CACHE
+		if (pc == 0x246) 
+			printf("break here: %08X\n", &whichCache(pc, flag)->execBlock);
+#endif
 
 		if (autoMarkExec(pc, flag)) return; //do not touch if block already exists
 

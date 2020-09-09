@@ -290,8 +290,8 @@ public:
 		ICache* temp = cache->getCache(cpu->programCounter, use_bCache);
 
 		//produce executable page
-		//cache->populateLocal(cpu->programCounter, use_bCache);
-		cache->autoMarkExec(cpu->programCounter, use_bCache);
+		cache->populateLocal(cpu->programCounter, use_bCache);
+		//cache->autoMarkExec(cpu->programCounter, use_bCache);
 
 		//execute
 #ifdef DEBUG_CACHE
