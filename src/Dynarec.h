@@ -287,9 +287,14 @@ public:
 	//smc checker
 	//assuming fx33, fx55 falls back before indexReg opcodes
 	void checkMainMemory(uint16_t indexRegister, Cache* cache){
-		
+#ifdef DEBUG_CACHE
+		printf("smc check!!\n");
+#endif
 		for (int i = indexRegister; i < 0x10; i++){
 			if (memory->read(i) != memory->read(i, true)){
+#ifdef DEBUG_CACHE
+				printf("rewriting pc:%02X\n", i);
+#endif
 				cache->destroyCache(i, false);
 				memory->write(i, memory->read(i), true); //update backupMemory
 			}
@@ -312,9 +317,10 @@ public:
 		if (cache->getCache(cpu->programCounter, use_bCache)->linkedPC) printf(" -> linked block!\n");
 		else printf("\n");
 #endif
+
 		func_ptr executeFunc = (func_ptr)cache->getCache(cpu->programCounter, use_bCache)->execBlock;
 		executeFunc();
-
+		
 		//if hintFallback flipped, continue to execute fallback
 		if (!hintFallback) return;
 

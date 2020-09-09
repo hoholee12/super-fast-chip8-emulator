@@ -95,7 +95,8 @@ public:
 
 	void printCache(int pc, bool flag = false){
 		if (!whichCache(pc, flag)->check) return;
-		printf("pc = %02X cache dump:\n", pc);
+		if (whichCache(pc, flag)->execBlock) return;
+		printf("pc = %02X cache dump:", pc);
 		for (int i = 0; i < whichCache(pc, flag)->cache.size(); i++){ 
 			if (i % 0x10 == 0) printf("\n");
 			printf("%02X ", whichCache(pc, flag)->cache.at(i));
@@ -103,7 +104,23 @@ public:
 		}
 		printf("\n");
 	}
+	void printCBlock(int pc, bool flag = false){
+		if (!whichCache(pc, flag)->check) return;
+		if (!whichCache(pc, flag)->execBlock) return;
+		if (whichCache(pc, flag)->linkedPC != 0){
+			printCBlock(whichCache(pc, flag)->linkedPC, flag);
+			return;
+		}
 
+		//lets print iCache instead
+		printf("pc = %02X block dump:", pc);
+		for (int i = 0; i < whichCache(pc, flag)->cache.size(); i++){
+			if (i % 0x10 == 0) printf("\n");
+			printf("%02X ", whichCache(pc, flag)->cache.at(i));
+
+		}
+		printf("\n");
+	}
 
 	//mark executable if not, return true if already filled
 	bool autoMarkExec(int pc, bool flag = false){
@@ -134,8 +151,9 @@ public:
 #endif
 			memcpy(whichCache(pc, flag)->execBlock, whichCache(pc, flag)->cache.data(), whichCache(pc, flag)->cache.size());
 			//free old buffer
+#ifndef DEBUG_ME
 			whichCache(pc, flag)->cache.clear();
-
+#endif
 			return false;
 		}
 #ifdef DEBUG_CACHE
@@ -181,7 +199,7 @@ public:
 				whichCache(localpc, flag)->check = true;
 				appendtemp += whichCache(pc, flag)->oplist[i].opsize;
 #ifdef DEBUG_CACHE
-				printf("appending:\n", whichCache(pc, flag)->clist[i].opsize);
+				printf("appending:\n", whichCache(pc, flag)->oplist[i].opsize);
 #endif
 				whichCache(localpc, flag)->execBlock = (void*)appendtemp;
 				whichCache(localpc, flag)->linkedPC = pc;
