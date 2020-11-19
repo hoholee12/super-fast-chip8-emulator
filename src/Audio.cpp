@@ -13,8 +13,12 @@ void Audio::audioProcess(){
 	//beep until down to 0
 	if (soundTimer > 0x1){
 		defaults::playAudio();
-		
+		soundFlag = true;
 		soundTimer--;
+	}
+	else if (soundFlag){
+		defaults::pauseAudio();
+		soundFlag = false;
 	}
 
 }

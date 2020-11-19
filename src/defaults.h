@@ -27,10 +27,8 @@ extern "C"
 
 #ifdef _WIN32
 #include<SDL.h>
-#include<SDL_mixer.h>	//this guy apparently requires SDL.h not SDL/SDL.h
 #else
 #include<SDL2/SDL.h>
-#include<SDL2/SDL_mixer.h>
 #endif
 
 
@@ -48,9 +46,9 @@ extern "C"
 
 class defaults{
 public:
-	mutable Mix_Chunk* sound = NULL;
-	const char* sound_file = "data/sound/klik.wav";
 
+	mutable SDL_AudioDeviceID audio_device;
+	mutable SDL_AudioSpec want, have;
 
 	//SDL stuff
 	mutable SDL_Renderer* renderer;
@@ -72,6 +70,7 @@ public:
 
 	void audioInit() const;
 	void playAudio() const;
+	void pauseAudio() const;
 
 	void videoInit(char* str, int w, int h, int scale) const;
 	void drawVideo(uint8_t* videoBuffer) const;
@@ -101,6 +100,137 @@ public:
 
 	}
 };
+
+static void audio_callback(void* user, uint8_t* buf, int size){
+	//signed 16bit
+	int16_t* buffer = (int16_t*)buf;
+	int length = size / 2;	//16 -> 2 x 8 bit sample
+	int counter = (int)user;
+
+	double samplerate = 44100;
+	double gain = 28000;
+
+	for (int i = 0; i < length; i++, counter++){
+		double time = (double)counter / samplerate;
+		buffer[i] = (int16_t)(gain * sin(2.0f * M_PI * 441.0f * time));
+	}
+
+}
+
+inline void defaults::audioInit() const{
+#ifdef _WIN32
+	//SDL stuff
+	putenv("SDL_AUDIODRIVER=DirectSound");
+#endif
+	SDL_Init(SDL_INIT_AUDIO);
+	//printf("%s\n", SDL_GetError());
+	//SDL_ClearError();
+
+	//init audio device
+	SDL_memset((void*)&want, 0, sizeof(want));
+	want.freq = 44100;
+	want.format = AUDIO_S16SYS;	//signed 16bit
+	want.channels = 1;
+	want.samples = 2048;
+	want.callback = audio_callback;
+	audio_device = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+	if (want.format != have.format){
+		fprintf(stderr, "%s", SDL_GetError());
+		exit(1);
+	}
+
+}
+
+inline void defaults::playAudio() const{
+	//play audio
+	SDL_PauseAudioDevice(audio_device, 0);
+}
+inline void defaults::pauseAudio() const{
+	//pause audio
+	SDL_PauseAudioDevice(audio_device, 1);
+}
+
+
+inline void defaults::videoInit(char* str, int w, int h, int scale) const{
+	screenWidth = w;
+	screenHeight = h;
+
+	//SDL stuff
+	SDL_Init(SDL_INIT_VIDEO);
+
+	window = SDL_CreateWindow(str, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w * scale, h * scale, SDL_WINDOW_SHOWN);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+	pixelRect = new SDL_Rect[w * h];
+
+	int scan = 0;
+	for (int y = 0; y < h; y++){
+		for (int x = 0; x < w; x++){
+			scan = w * y + x;
+			pixelRect[scan].x = x * scale;
+			pixelRect[scan].y = y * scale;
+			pixelRect[scan].w = scale;
+			pixelRect[scan].h = scale;
+		}
+
+	}
+
+
+
+}
+
+inline void defaults::drawVideo(uint8_t* videoBuffer) const{
+
+	int scan = 0;
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer); //clear to blackscreen
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	for (int y = 0; y < screenHeight; y++){
+		for (int x = 0; x < screenWidth; x++){
+			scan = screenWidth * y + x;
+			if (videoBuffer[scan] > 0) SDL_SetRenderDrawColor(renderer, x * 4, y * 4, x * y * 16, 255);
+			else SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+			SDL_RenderFillRect(renderer, &pixelRect[scan]);
+		}
+
+	}
+
+	SDL_RenderPresent(renderer); //update
+
+}
+
+inline void defaults::inputInit() const{
+	pressedKey = 0xfe;
+
+}
+
+inline void defaults::delayTime(uint32_t input) const{
+	SDL_Delay(input);
+}
+
+inline void defaults::updateTitle(char* str, int cpuspeed, int fps, int frametime) const{
+	using namespace std;
+
+
+	strcpy(a0, str);
+	strcat(a0, a1);
+	strcat(a0, to_string(cpuspeed).c_str());
+	//strcat(a0, a5);
+	strcat(a0, a2);
+	strcat(a0, to_string(fps).c_str());
+	//strcat(a0, a5);
+	strcat(a0, a3);
+	strcat(a0, to_string(frametime).c_str());
+	//strcat(a0, a5);
+	strcat(a0, a4);
+
+	//printf("%s\n", a0);
+
+	SDL_SetWindowTitle(window, a0);
+
+}
+
 
 //inline getters
 inline uint32_t defaults::checkTime() const{
