@@ -47,7 +47,9 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 	keyinput = input->getKey();
 	video->init(title, mainwindow, flickerOffset);
 	audio->init();
-	audio->playAudio(); //test
+	//test
+	audio->playAudio();
+	audio->pauseAudio();
 
 	dynarec->init(cpu, video, memory, audio, scheduler->getBaseClock());
 
