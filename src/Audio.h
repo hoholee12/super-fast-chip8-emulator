@@ -5,6 +5,7 @@
 class Audio: public defaults{
 private:
 	uint8_t soundTimer;
+	bool soundFlag;
 	
 public:
 	void init();
