@@ -206,34 +206,11 @@ inline void defaults::videoInit(char* str, int w, int h, int scale) const{
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-
+	/*
 
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, w * scale, h * scale);
 	SDL_SetRenderTarget(renderer, texture);
-	pixelRect = new SDL_Rect[w * h];
-
-	int scan = 0;
-	for (int y = 0; y < h; y++){
-		for (int x = 0; x < w; x++){
-			scan = w * y + x;
-			pixelRect[scan].x = x * scale;
-			pixelRect[scan].y = y * scale;
-			pixelRect[scan].w = scale;
-			pixelRect[scan].h = scale;
-		}
-
-	}
-	/*
-	screenWidth = w;
-	screenHeight = h;
-
-	//SDL stuff
-	SDL_Init(SDL_INIT_VIDEO);
-
-	window = SDL_CreateWindow(str, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w * scale, h * scale, SDL_WINDOW_SHOWN);
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-
 	pixelRect = new SDL_Rect[w * h];
 
 	int scan = 0;
@@ -365,23 +342,7 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
-	//render me
-	int scan = 0;
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer); //clear to blackscreen
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	for (int y = 0; y < screenHeight; y++){
-		for (int x = 0; x < screenWidth; x++){
-			scan = screenWidth * y + x;
-			if (videoBuffer[scan] > 0) SDL_SetRenderDrawColor(renderer, x * 4, y * 4, x * y * 16, 255);
-			else SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-			SDL_RenderFillRect(renderer, &pixelRect[scan]);
-		}
-
-	}
-	SDL_RenderPresent(renderer); //update
-	
 	//imgui render
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	
