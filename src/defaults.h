@@ -67,8 +67,30 @@ public:
     mutable bool show_another_window = false;
     mutable ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
 	//opengl stuff
+	mutable float vertices[4290];
+	mutable uint8_t tempBuffer[64 * 32] = {0};
 	mutable unsigned int VBO, VAO, EBO;
 	mutable int shaderProgram;
+	mutable unsigned int indices[12288] = {0};	//square for each pixel
+	
+	/*
+	int scan = 0;
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer); //clear to blackscreen
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	for (int y = 0; y < screenHeight; y++){
+		for (int x = 0; x < screenWidth; x++){
+			scan = screenWidth * y + x;
+			if (videoBuffer[scan] > 0) SDL_SetRenderDrawColor(renderer, x * 4, y * 4, x * y * 16, 255);
+			else SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+			SDL_RenderFillRect(renderer, &pixelRect[scan]);
+		}
+
+	}
+
+	SDL_RenderPresent(renderer); //update
+	*/
 
 	mutable int screenWidth;
 	mutable int screenHeight;
@@ -115,54 +137,31 @@ public:
 	}
 };
 
-static void audio_callback(void* user, uint8_t* buf, int size){
-	//signed 16bit
-	int16_t* buffer = (int16_t*)buf;
-	int length = size / 2;	//16 -> 2 x 8 bit sample
-	int counter = (int)user;
-
-	double samplerate = 44100;
-	double gain = 28000;
-
-	for (int i = 0; i < length; i++, counter++){
-		double time = (double)counter / samplerate;
-		buffer[i] = (int16_t)(gain * sin(2.0f * M_PI * 441.0f * time));
+static int convertVideoToIndices(uint8_t* videoBuffer, unsigned int* indices, int screenHeight, int screenWidth){
+		memset(indices, 0, 12288 * sizeof(unsigned int));
+		int scan = 0;
+		int currentIndex = 0;
+		for(int y = 0; y < screenHeight; y++){
+			for(int x = 0; x < screenWidth; x++){
+				scan = screenWidth * y + x;
+				if(videoBuffer[scan] > 0){
+					//triangle 1
+					indices[currentIndex++] = 65 * y + x;
+					indices[currentIndex++] = 65 * y + x + 1;
+					indices[currentIndex++] = 65 * (y + 1) + x;
+					//triangle 2
+					indices[currentIndex++] = 65 * (y + 1) + x;
+					indices[currentIndex++] = 65 * (y + 1) + x + 1;
+					indices[currentIndex++] = 65 * y + x + 1;
+				}
+				else{
+					currentIndex += 6;
+				}
+			}
+		}
+		//printf("currentIndex = %d\n", currentIndex);
+		return currentIndex;	//indices length
 	}
-
-}
-
-inline void defaults::audioInit() const{
-#ifdef _WIN32
-	//SDL stuff
-	putenv("SDL_AUDIODRIVER=DirectSound");
-#endif
-	SDL_Init(SDL_INIT_AUDIO);
-	//printf("%s\n", SDL_GetError());
-	//SDL_ClearError();
-
-	//init audio device
-	SDL_memset((void*)&want, 0, sizeof(want));
-	want.freq = 44100;
-	want.format = AUDIO_S16SYS;	//signed 16bit
-	want.channels = 1;
-	want.samples = 2048;
-	want.callback = audio_callback;
-	audio_device = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
-	if (want.format != have.format){
-		fprintf(stderr, "%s", SDL_GetError());
-		exit(1);
-	}
-
-}
-
-inline void defaults::playAudio() const{
-	//play audio
-	SDL_PauseAudioDevice(audio_device, 0);
-}
-inline void defaults::pauseAudio() const{
-	//pause audio
-	SDL_PauseAudioDevice(audio_device, 1);
-}
 
 
 inline void defaults::videoInit(char* str, int w, int h, int scale) const{
@@ -205,6 +204,8 @@ inline void defaults::videoInit(char* str, int w, int h, int scale) const{
     // Setup Platform/Renderer backends
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init(glsl_version);
+
+
 
 	/*
 
@@ -258,24 +259,22 @@ inline void defaults::videoInit(char* str, int w, int h, int scale) const{
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	//data for square
-	float vertices[] = {
-		1.0f,  1.0f, 0.0f,  // top right
-		1.0f, -1.0f, 0.0f,  // bottom right
-		-1.0f, -1.0f, 0.0f,  // bottom left
-		-1.0f,  1.0f, 0.0f   // top left 
-	};
-	//data to divide it to two triangles
-	unsigned int indices[] = { 
-		// note that we start from 0!
-		0, 1, 3,   // first triangle
-		1, 2, 3    // second triangle
-	};
+	//vertices for 64x32 display
+	for(int y = 0; y < h + 1; y++){
+		for(int x = 0; x < w + 1; x++){
+			vertices[y * 130 + (x * 2)] = (-1.0f + x * 2.0f / 64.0f);
+			printf("vertices[%d] = %lf, ", y * 130 + (x * 2), vertices[y * 130 + (x * 2)]);
+			vertices[y * 130 + (x * 2) + 1] = (0.5f - y * 2.0f / 64.0f);
+			printf("vertices[%d] = %lf\n", y * 130 + (x * 2) + 1, vertices[y * 130 + (x * 2) + 1]);
+		}
+	}
+
+	int indicesLength = convertVideoToIndices(tempBuffer, indices, screenHeight, screenWidth);
 
 	//generate EBO, VAO, VBO
-	glGenBuffers(1, &EBO);
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
 
 	// 1. bind Vertex Array Object
 	glBindVertexArray(VAO);
@@ -284,10 +283,10 @@ inline void defaults::videoInit(char* str, int w, int h, int scale) const{
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	// 3. copy our index array in a element buffer for OpenGL to use
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indicesLength, indices, GL_DYNAMIC_DRAW);
 	// 4. then set the vertex attributes pointers
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0); 
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
 }
 
@@ -342,9 +341,15 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	//video render
+	int indicesLength = convertVideoToIndices(videoBuffer, indices, screenHeight, screenWidth);
+	// 3. copy our index array in a element buffer for OpenGL to use
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indicesLength, indices, GL_DYNAMIC_DRAW);
+
+	//run shader
 	glUseProgram(shaderProgram);
 	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, indicesLength, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 
 
@@ -485,3 +490,52 @@ inline void defaults::purgeExecBuffer(void* addr) const{
 
 
 
+
+static void audio_callback(void* user, uint8_t* buf, int size){
+	//signed 16bit
+	int16_t* buffer = (int16_t*)buf;
+	int length = size / 2;	//16 -> 2 x 8 bit sample
+	int counter = (int)user;
+
+	double samplerate = 44100;
+	double gain = 28000;
+
+	for (int i = 0; i < length; i++, counter++){
+		double time = (double)counter / samplerate;
+		buffer[i] = (int16_t)(gain * sin(2.0f * M_PI * 441.0f * time));
+	}
+
+}
+
+inline void defaults::audioInit() const{
+#ifdef _WIN32
+	//SDL stuff
+	putenv("SDL_AUDIODRIVER=DirectSound");
+#endif
+	SDL_Init(SDL_INIT_AUDIO);
+	//printf("%s\n", SDL_GetError());
+	//SDL_ClearError();
+
+	//init audio device
+	SDL_memset((void*)&want, 0, sizeof(want));
+	want.freq = 44100;
+	want.format = AUDIO_S16SYS;	//signed 16bit
+	want.channels = 1;
+	want.samples = 2048;
+	want.callback = audio_callback;
+	audio_device = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+	if (want.format != have.format){
+		fprintf(stderr, "%s", SDL_GetError());
+		exit(1);
+	}
+
+}
+
+inline void defaults::playAudio() const{
+	//play audio
+	SDL_PauseAudioDevice(audio_device, 0);
+}
+inline void defaults::pauseAudio() const{
+	//pause audio
+	SDL_PauseAudioDevice(audio_device, 1);
+}
