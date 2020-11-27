@@ -223,7 +223,7 @@ inline void defaults::videoInit(char* str, int w, int h, int scale) const{
 		for(int x = 0; x < w + 1; x++){
 			vertices[y * 130 + (x * 2)] = (-1.0f + x * 2.0f / 64.0f);
 			//printf("vertices[%d] = %lf, ", y * 130 + (x * 2), vertices[y * 130 + (x * 2)]);
-			vertices[y * 130 + (x * 2) + 1] = (1.0f - y * 4.0f / 64.0f);
+			vertices[y * 130 + (x * 2) + 1] = (1.0f - y * 2.0f / 32.0f);
 			//printf("vertices[%d] = %lf\n", y * 130 + (x * 2) + 1, vertices[y * 130 + (x * 2) + 1]);
 		}
 	}
@@ -256,25 +256,37 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 	ImGui_ImplSDL2_NewFrame(window);
 	ImGui::NewFrame();
 
-	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+	// imgui frame
 	if (show_demo_window)
 		if (ImGui::BeginMainMenuBar())
     {
-        if (ImGui::BeginMenu("File"))
+        if (ImGui::BeginMenu("Settings"))
         {
-            
+            if(ImGui::MenuItem("load rom", "")){
+
+
+			}
+			if(ImGui::MenuItem("reset", "")){
+
+
+
+			}
+			ImGui::Separator();
+			if(ImGui::MenuItem("quit", "")){
+				exit(0);
+			}
+
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Edit"))
+        if (ImGui::BeginMenu("Info"))
         {
-			/*
-            if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-            if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
-            ImGui::Separator();
-            if (ImGui::MenuItem("Cut", "CTRL+X")) {}
-            if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-            if (ImGui::MenuItem("Paste", "CTRL+V")) {}
-			*/
+			if(ImGui::MenuItem("vm status", "")){
+
+			}
+			if(ImGui::MenuItem("info", "")){
+				
+
+			}
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
