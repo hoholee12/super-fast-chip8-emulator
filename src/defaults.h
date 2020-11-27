@@ -72,25 +72,6 @@ public:
 	mutable unsigned int VBO, VAO, EBO;
 	mutable int shaderProgram;
 	mutable unsigned int indices[12288] = {0};	//square for each pixel
-	
-	/*
-	int scan = 0;
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer); //clear to blackscreen
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	for (int y = 0; y < screenHeight; y++){
-		for (int x = 0; x < screenWidth; x++){
-			scan = screenWidth * y + x;
-			if (videoBuffer[scan] > 0) SDL_SetRenderDrawColor(renderer, x * 4, y * 4, x * y * 16, 255);
-			else SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
-			SDL_RenderFillRect(renderer, &pixelRect[scan]);
-		}
-
-	}
-
-	SDL_RenderPresent(renderer); //update
-	*/
 
 	mutable int screenWidth;
 	mutable int screenHeight;
@@ -206,28 +187,6 @@ inline void defaults::videoInit(char* str, int w, int h, int scale) const{
     ImGui_ImplOpenGL3_Init(glsl_version);
 
 
-
-	/*
-
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, w * scale, h * scale);
-	SDL_SetRenderTarget(renderer, texture);
-	pixelRect = new SDL_Rect[w * h];
-
-	int scan = 0;
-	for (int y = 0; y < h; y++){
-		for (int x = 0; x < w; x++){
-			scan = w * y + x;
-			pixelRect[scan].x = x * scale;
-			pixelRect[scan].y = y * scale;
-			pixelRect[scan].w = scale;
-			pixelRect[scan].h = scale;
-		}
-
-	}
-
-	*/
-
 	//vertex shader
 	const char *vertexShaderSource = "#version 330 core\n"
     "layout (location = 0) in vec3 aPos;\n"
@@ -263,9 +222,9 @@ inline void defaults::videoInit(char* str, int w, int h, int scale) const{
 	for(int y = 0; y < h + 1; y++){
 		for(int x = 0; x < w + 1; x++){
 			vertices[y * 130 + (x * 2)] = (-1.0f + x * 2.0f / 64.0f);
-			printf("vertices[%d] = %lf, ", y * 130 + (x * 2), vertices[y * 130 + (x * 2)]);
-			vertices[y * 130 + (x * 2) + 1] = (0.5f - y * 2.0f / 64.0f);
-			printf("vertices[%d] = %lf\n", y * 130 + (x * 2) + 1, vertices[y * 130 + (x * 2) + 1]);
+			//printf("vertices[%d] = %lf, ", y * 130 + (x * 2), vertices[y * 130 + (x * 2)]);
+			vertices[y * 130 + (x * 2) + 1] = (1.0f - y * 4.0f / 64.0f);
+			//printf("vertices[%d] = %lf\n", y * 130 + (x * 2) + 1, vertices[y * 130 + (x * 2) + 1]);
 		}
 	}
 
@@ -301,39 +260,6 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 	if (show_demo_window)
 		ImGui::ShowDemoWindow(&show_demo_window);
 
-	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-	{
-		static float f = 0.0f;
-		static int counter = 0;
-
-		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-		ImGui::Checkbox("Another Window", &show_another_window);
-
-		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-			counter++;
-		ImGui::SameLine();
-		ImGui::Text("counter = %d", counter);
-
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::End();
-	}
-
-	// 3. Show another simple window.
-	if (show_another_window)
-	{
-		ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-		ImGui::Text("Hello from another window!");
-		if (ImGui::Button("Close Me"))
-			show_another_window = false;
-		ImGui::End();
-	}
-
 	// start rendering
 	ImGui::Render();
 	glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
@@ -358,24 +284,7 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 	
 	//sync
 	SDL_GL_SwapWindow(window);
-/*
-	int scan = 0;
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer); //clear to blackscreen
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	for (int y = 0; y < screenHeight; y++){
-		for (int x = 0; x < screenWidth; x++){
-			scan = screenWidth * y + x;
-			if (videoBuffer[scan] > 0) SDL_SetRenderDrawColor(renderer, x * 4, y * 4, x * y * 16, 255);
-			else SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-			SDL_RenderFillRect(renderer, &pixelRect[scan]);
-		}
-
-	}
-
-	SDL_RenderPresent(renderer); //update
-*/
 }
 
 inline void defaults::inputInit() const{
