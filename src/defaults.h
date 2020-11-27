@@ -89,7 +89,7 @@ public:
 	void playAudio() const;
 	void pauseAudio() const;
 
-	void videoInit(char* str, int w, int h, int scale) const;
+	void videoInit(const char* str, int w, int h, int scale) const;
 	void drawVideo(uint8_t* videoBuffer) const;
 
 	void inputInit() const;
@@ -99,7 +99,7 @@ public:
 	uint32_t checkTime() const;
 	void delayTime(uint32_t input) const; //sleep
 
-	void updateTitle(char* str, int cpuspeed, int fps, int frametime) const;
+	void updateTitle(const char* str, int cpuspeed, int fps, int frametime) const;
 
 	void* getExecBuffer() const;
 	void purgeExecBuffer(void* addr) const;
@@ -145,7 +145,7 @@ static int convertVideoToIndices(uint8_t* videoBuffer, unsigned int* indices, in
 	}
 
 
-inline void defaults::videoInit(char* str, int w, int h, int scale) const{
+inline void defaults::videoInit(const char* str, int w, int h, int scale) const{
 
 	screenWidth = w;
 	screenHeight = h;
@@ -328,7 +328,7 @@ inline void defaults::delayTime(uint32_t input) const{
 	SDL_Delay(input);
 }
 
-inline void defaults::updateTitle(char* str, int cpuspeed, int fps, int frametime) const{
+inline void defaults::updateTitle(const char* str, int cpuspeed, int fps, int frametime) const{
 	using namespace std;
 
 

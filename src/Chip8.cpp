@@ -1,6 +1,7 @@
 #include"Chip8.h"
 
-void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int flickerOffset){
+
+void Chip8::start(const char* title, bool ignore, int cpuspeed, int fps, int whichInterpreter, int flickerOffset){
 	//backup
 	this->title = title;
 	this->cpuspeed = cpuspeed;
@@ -42,7 +43,7 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 	isEndlessLoop = false;
 	delayRegister = 0x0;
 	cpu->init(memory, &delayRegister, &keyinput);
-	memory->init(title);
+	memory->init(title, ignore);
 	input->init();
 	keyinput = input->getKey();
 	video->init(title, mainwindow, flickerOffset);

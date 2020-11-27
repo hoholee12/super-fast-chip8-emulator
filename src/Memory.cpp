@@ -5,7 +5,7 @@ void MemoryInstance::write(uint16_t addr, uint8_t input){
 
 }
 
-void MemoryInstance::init(const char* str){
+void MemoryInstance::init(const char* str, bool ignore){
 	//init memory
 	for (int i = 0; i < FULL_MEM_SIZE; i++) mem[i] = 0;
 
@@ -14,10 +14,18 @@ void MemoryInstance::init(const char* str){
 
 	//load the goddamn rom
 	FILE *file = fopen(str, "rb");
+	//load a simple loop program
+	if(ignore){
+		mem[START_MEM_SIZE] = 0x12;
+		mem[START_MEM_SIZE + 1] = 0x00;
+
+		return;
+	}
 	if (file == NULL){
 		fprintf(stderr, "WHERES THE FILE?!");
 		exit(1);
 	}
+
 
 	//file size
 	fseek(file, 0l, SEEK_END);

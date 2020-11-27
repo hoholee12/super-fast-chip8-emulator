@@ -16,7 +16,7 @@
 
 class Chip8: public defaults{
 private:
-	char* title;
+	const char* title;
 	int cpuspeed;
 	int fps;
 	defaults* mainwindow;
@@ -69,7 +69,7 @@ public:
 	void update_controller();
 	void update_lowerhalf();
 
-	void start(char* title, int cpuspeed = CPU_SPEED, int fps = SCREEN_FPS, int whichInterpreter = 1, int flickerOffset = 0); //start of emulation
+	void start(const char* title, bool ignore = false, int cpuspeed = CPU_SPEED, int fps = SCREEN_FPS, int whichInterpreter = 1, int flickerOffset = 0); //start of emulation
 	void debugMe();
 	void optimizations(); //cycle optimizations
 };

@@ -131,7 +131,7 @@ public:
 
 	void draw(defaults* mainwindow); //updates screen
 	
-	void init(char* str, defaults* mainwindow, int queue_offset = QUEUE_OFFSET); //i do this only to display filename on window bar
+	void init(const char* str, defaults* mainwindow, int queue_offset = QUEUE_OFFSET); //i do this only to display filename on window bar
 
 	void pre_optimizations(QueueType* inputQueue);	//separate optimizations for video
 	void post_optimizations();

@@ -1,6 +1,6 @@
 #include"Video.h"
 
-void Video::init(char* str, defaults* mainwindow, int queue_offset){
+void Video::init(const char* str, defaults* mainwindow, int queue_offset){
 	this->offset_limit = queue_offset;
 
 	//clear videobuffer(also does fbuffer)
