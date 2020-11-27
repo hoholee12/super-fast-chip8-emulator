@@ -12,10 +12,11 @@
 #include"Frameskip.h"
 #include"Debug.h"
 
-
-
 class Chip8: public defaults{
 private:
+	Status imstat;
+	Status prev_imstat;
+
 	const char* title;
 	int cpuspeed;
 	int fps;
@@ -62,6 +63,28 @@ private:
 	bool drawFlag = false; //possible speed optimization
 
 public:
+
+	Chip8(){
+		mainwindow = NULL;
+		cpu = NULL;
+		memory = NULL;
+		input = NULL;
+		video = NULL;
+		audio = NULL;
+		fskip = NULL;
+
+		dynarec = NULL;
+
+		//init timers
+		videoTimerInstance = NULL;
+		fskipTimerInstance = NULL;
+		delayTimerInstance = NULL;
+		windowTimerInstance = NULL;
+		fsbInstance = NULL;
+
+		scheduler = NULL;
+
+	}
 	void run();	//looper
 	void updateInterpreter_switch(); //all logic in here
 	void updateInterpreter_LUT(); //all logic in here
@@ -69,9 +92,53 @@ public:
 	void update_controller();
 	void update_lowerhalf();
 
+	void init(Status* stat); //start of emulation
 	void start(const char* title, bool ignore = false, int cpuspeed = CPU_SPEED, int fps = SCREEN_FPS, int whichInterpreter = 1, int flickerOffset = 0); //start of emulation
+	void destroy(){
+		//create instances
+		delete mainwindow;
+		delete cpu;
+		delete memory;
+		delete input;
+		//delete video;
+		video->clearVBuffer();
+		delete audio;
+		delete fskip;
+
+		delete dynarec;
+
+		//init timers
+		delete videoTimerInstance;
+		delete fskipTimerInstance;
+		delete delayTimerInstance;
+		delete windowTimerInstance;
+		delete fsbInstance;
+
+		delete scheduler;
+
+		mainwindow = NULL;
+		cpu = NULL;
+		memory = NULL;
+		input = NULL;
+		//video = NULL;
+		audio = NULL;
+		fskip = NULL;
+
+		dynarec = NULL;
+
+		//init timers
+		videoTimerInstance = NULL;
+		fskipTimerInstance = NULL;
+		delayTimerInstance = NULL;
+		windowTimerInstance = NULL;
+		fsbInstance = NULL;
+
+		scheduler = NULL;
+	}
 	void debugMe();
 	void optimizations(); //cycle optimizations
+
+
 };
 
 
@@ -202,6 +269,5 @@ inline void Chip8::update_lowerhalf(){
 		running = false;
 	}// running = false;	//shutdown emulator
 
-
-
+	if(prev_imstat.get_reset()) running = false;
 }

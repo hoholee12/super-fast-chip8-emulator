@@ -8,10 +8,10 @@ int main(int argc, char** argv){
 	int method;
 	int flickerOffset;
 
-	const char hello[] = "Hello, World!";
+	const char blank[] = "blank";
 
 	if(argc < 2){
-		chip->start(hello, true);
+		chip->start(blank, true);
 		//fprintf(stderr, "feed me with a chip8 program.\n");
 		//exit(1);
 	}

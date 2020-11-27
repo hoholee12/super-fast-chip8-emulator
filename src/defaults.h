@@ -47,9 +47,12 @@ extern "C"
 //#define DEBUG_CACHE
 #define DEBUG_TIME 0
 
+#include"Status.h"
 
 class defaults{
 public:
+
+	mutable Status* imstat;
 
 	mutable SDL_AudioDeviceID audio_device;
 	mutable SDL_AudioSpec want, have;
@@ -89,7 +92,7 @@ public:
 	void playAudio() const;
 	void pauseAudio() const;
 
-	void videoInit(const char* str, int w, int h, int scale) const;
+	void videoInit(const char* str, int w, int h, int scale, Status* imstat) const;
 	void drawVideo(uint8_t* videoBuffer) const;
 
 	void inputInit() const;
@@ -145,7 +148,11 @@ static int convertVideoToIndices(uint8_t* videoBuffer, unsigned int* indices, in
 	}
 
 
-inline void defaults::videoInit(const char* str, int w, int h, int scale) const{
+inline void defaults::videoInit(const char* str, int w, int h, int scale, Status* imstat) const{
+	//load state
+	this->imstat = imstat;
+	if(imstat->get_reset()) return;	//skip the init on reset
+
 
 	screenWidth = w;
 	screenHeight = h;
@@ -267,7 +274,7 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 
 			}
 			if(ImGui::MenuItem("reset", "")){
-
+				imstat->set_reset(true);
 
 
 			}

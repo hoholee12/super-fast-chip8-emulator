@@ -1,12 +1,12 @@
 #include"Video.h"
 
-void Video::init(const char* str, defaults* mainwindow, int queue_offset){
+void Video::init(const char* str, defaults* mainwindow, Status* imstat, int queue_offset){
 	this->offset_limit = queue_offset;
 
 	//clear videobuffer(also does fbuffer)
 	clearVBuffer();
 
-	mainwindow->videoInit(str, SCREEN_WIDTH, SCREEN_HEIGHT, SCALE);
+	mainwindow->videoInit(str, SCREEN_WIDTH, SCREEN_HEIGHT, SCALE, imstat);
 
 	draw(mainwindow);
 
