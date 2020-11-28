@@ -14,6 +14,7 @@
 #define _GNU_SOURCE
 #endif
 #include <sys/mman.h>
+#include<dirent.h>
 #endif
 
 #ifdef _WIN32
@@ -66,9 +67,17 @@ public:
 	//imgui stuff
 	mutable ImGuiIO io;
 	// Our state
-    mutable bool show_demo_window = true;
-    mutable bool show_another_window = false;
+    mutable bool imgui_load_window = false;
+	mutable bool imgui_stat_window = false;
+	mutable bool imgui_info_window = false;
     mutable ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
+
+	//romlist
+	mutable int romcount = 0;
+	mutable char* rombuf[256] = {0};
+	const char* romlocation = "../testroms/";
+	mutable int selected = -1;
+
 	//opengl stuff
 	mutable float vertices[4290];
 	mutable uint8_t tempBuffer[64 * 32] = {0};
@@ -151,6 +160,26 @@ static int convertVideoToIndices(uint8_t* videoBuffer, unsigned int* indices, in
 inline void defaults::videoInit(const char* str, int w, int h, int scale, Status* imstat) const{
 	//load state
 	this->imstat = imstat;
+
+	//get list of roms
+	DIR *d;
+	struct dirent *dir;
+	d = opendir(romlocation);
+	if (d) {
+		while ((dir = readdir(d)) != NULL) {
+			if(dir->d_name[0] != '.'){
+				rombuf[romcount] = (char*)malloc((strlen(dir->d_name) + strlen(romlocation) + 1) * sizeof(char));
+				strcpy(rombuf[romcount], romlocation);
+				strcat(rombuf[romcount], dir->d_name);
+				
+				printf("%s\n", rombuf[romcount]);
+				romcount++;
+			}
+		}
+		closedir(d);
+	}
+
+
 	if(imstat->get_reset()) return;	//skip the init on reset
 
 
@@ -265,20 +294,24 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 	ImGui_ImplSDL2_NewFrame(window);
 	ImGui::NewFrame();
 
-	// imgui frame
-	if (show_demo_window)
-		if (ImGui::BeginMainMenuBar())
+	ImGui::ShowDemoWindow();
+
+	// imgui frames
+	if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("Settings"))
         {
-            if(ImGui::MenuItem("load rom", "")){
-
-
+            if(ImGui::MenuItem("load rom/change settings", "")){
+				imgui_load_window = true;
 			}
 			if(ImGui::MenuItem("reset", "")){
 				imstat->set_reset(true);
-
-
+				//temp
+				if(selected >= 0){
+					imstat->set_post_ignore(false);
+					printf("load: %s\n", rombuf[selected]);
+					imstat->set_post_title(rombuf[selected]);
+				}
 			}
 			ImGui::Separator();
 			if(ImGui::MenuItem("quit", "")){
@@ -290,10 +323,10 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
         if (ImGui::BeginMenu("Info"))
         {
 			if(ImGui::MenuItem("vm status", "")){
-
+				imgui_stat_window = true;
 			}
 			if(ImGui::MenuItem("info", "")){
-				
+				imgui_info_window = true;
 
 			}
             ImGui::EndMenu();
@@ -301,6 +334,33 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
         ImGui::EndMainMenuBar();
     }
 
+	if(imgui_load_window){
+		ImGui::Begin("load rom/change settings", &imgui_load_window);
+        {
+            ImGui::BeginChild("list roms", ImVec2(300, 300), true);
+            for (int i = 0; i < romcount; i++)
+            {
+                if (ImGui::Selectable(rombuf[i], selected == i))
+                    selected = i;
+            }
+            ImGui::EndChild();
+        }
+        ImGui::SameLine();
+
+		ImGui::End();
+	}
+
+	if(imgui_stat_window){
+		ImGui::Begin("vmstat", &imgui_stat_window);
+		
+		ImGui::End();
+	}
+
+	if(imgui_info_window){
+		ImGui::Begin("info", &imgui_info_window);
+		
+		ImGui::End();
+	}
 	// start rendering
 	ImGui::Render();
 	glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
