@@ -7,8 +7,8 @@ GLAD_DIR = $(SRC_DIR)/glad
 BUILD_DIR = $(CURDIR)/build
 
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
-SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_demo.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_widgets.cpp
-SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
+SOURCES += $(wildcard $(IMGUI_DIR)/*.cpp)
+SOURCES += $(wildcard $(IMGUI_DIR)/backends/*.cpp)
 OBJS = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 
@@ -17,7 +17,7 @@ CXXFLAGS += -g -O1 -Wno-unused-result
 LIBS =
 
 ## Using OpenGL loader: glad
-SOURCES += $(GLAD_DIR)/src/glad.c
+SOURCES += $(wildcard $(GLAD_DIR)/src/*.c)
 CXXFLAGS += -I$(GLAD_DIR)/include -DIMGUI_IMPL_OPENGL_LOADER_GLAD
 
 LIBS += -lGL -ldl `sdl2-config --libs`
