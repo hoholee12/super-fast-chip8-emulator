@@ -258,6 +258,8 @@ inline void defaults::videoInit(const char* str, int w, int h, int scale, Status
 
 inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 
+	
+
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplSDL2_NewFrame(window);

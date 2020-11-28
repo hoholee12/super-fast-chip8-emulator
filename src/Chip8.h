@@ -14,8 +14,8 @@
 
 class Chip8: public defaults{
 private:
-	Status imstat;
-	Status prev_imstat;
+	Status imstat;	//temp
+	Status prev_imstat;	//current
 
 	const char* title;
 	int cpuspeed;
@@ -96,12 +96,11 @@ public:
 	void start(const char* title, bool ignore = false, int cpuspeed = CPU_SPEED, int fps = SCREEN_FPS, int whichInterpreter = 1, int flickerOffset = 0); //start of emulation
 	void destroy(){
 		//create instances
-		delete mainwindow;
+		//delete mainwindow;
 		delete cpu;
 		delete memory;
 		delete input;
 		//delete video;
-		video->clearVBuffer();
 		delete audio;
 		delete fskip;
 
@@ -116,7 +115,7 @@ public:
 
 		delete scheduler;
 
-		mainwindow = NULL;
+		//mainwindow = NULL;
 		cpu = NULL;
 		memory = NULL;
 		input = NULL;

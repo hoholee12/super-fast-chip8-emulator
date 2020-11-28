@@ -10,7 +10,7 @@ private:
 	bool reset;
 
 	char* post_title;
-	bool post_ignore;
+	bool post_ignore;   //load loop program
 	int post_cpuspeed;
 	int post_fps;
 	int post_whichInterpreter;

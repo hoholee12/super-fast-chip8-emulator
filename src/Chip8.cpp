@@ -12,11 +12,11 @@ void Chip8::init(Status* stat){
 	this->whichInterpreter = prev_imstat.get_post_whichInterpreter();
 
 	//create instances
-	if(!mainwindow) mainwindow = new defaults();
+	if(!mainwindow && !prev_imstat.get_reset()) mainwindow = new defaults();
 	if(!cpu) cpu = new CPU();
 	if(!memory) memory = new Memory();
 	if(!input) input = new Input();
-	if(!video) video = new Video();
+	if(!video && !prev_imstat.get_reset()) video = new Video();
 	if(!audio) audio = new Audio();
 	if(!fskip) fskip = new Frameskip();
 
@@ -50,7 +50,7 @@ void Chip8::init(Status* stat){
 	memory->init(title, prev_imstat.get_post_ignore());
 	input->init();
 	keyinput = input->getKey();
-	video->init(title, mainwindow, &prev_imstat, prev_imstat.get_post_flickerOffset());
+	if(!prev_imstat.get_reset()) video->init(title, mainwindow, &prev_imstat, prev_imstat.get_post_flickerOffset());
 	audio->init();
 	//test
 	audio->playAudio();
