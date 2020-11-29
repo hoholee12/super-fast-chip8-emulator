@@ -50,7 +50,7 @@ void Chip8::init(Status* stat){
 	memory->init(title, prev_imstat.get_post_ignore());
 	input->init();
 	keyinput = input->getKey();
-	if(!prev_imstat.get_reset()) video->init(title, mainwindow, &prev_imstat, prev_imstat.get_post_flickerOffset());
+	if(!prev_imstat.get_reset()) video->init(title, mainwindow, &imstat, prev_imstat.get_post_flickerOffset());
 	audio->init();
 	//test
 	audio->playAudio();
@@ -108,13 +108,14 @@ void Chip8::run(){
 	do{
 		running = true;
 		
-		if(prev_imstat.get_reset()){
+		if(imstat.get_reset()){
+			printf("asd\n");
 			destroy();
 			//configure imstat in defaults.h first!
-			imstat.set_reset(true);
 			init(&imstat);
+			printf("asd done\n");
 		}
-		prev_imstat.set_reset(false);
+		imstat.set_reset(false);
 		switch (whichInterpreter){
 		case 1:
 			while (running){
@@ -126,6 +127,7 @@ void Chip8::run(){
 	#endif
 				}
 				update_lowerhalf();
+				if(imstat.get_reset()) running = false;
 			}
 			break;
 		case 2:
@@ -138,6 +140,7 @@ void Chip8::run(){
 	#endif
 				}
 				update_lowerhalf();
+				if(imstat.get_reset()) running = false;
 			}
 			break;
 		case 3:
@@ -150,6 +153,7 @@ void Chip8::run(){
 	#endif
 				}
 				update_lowerhalf();
+				if(imstat.get_reset()) running = false;
 			}
 			break;
 		case 4:
@@ -167,13 +171,14 @@ void Chip8::run(){
 				debugMe();
 	#endif
 				update_lowerhalf();
+				if(imstat.get_reset()) running = false;
 			}
 			break;
 		default:
 			fprintf(stderr, "configuration error!\n");
 		}
 
-	}while(prev_imstat.get_reset());
+	}while(imstat.get_reset());
 	exit(0);
 }
 

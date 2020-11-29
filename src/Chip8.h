@@ -268,5 +268,4 @@ inline void Chip8::update_lowerhalf(){
 		running = false;
 	}// running = false;	//shutdown emulator
 
-	if(prev_imstat.get_reset()) running = false;
 }
