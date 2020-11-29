@@ -85,7 +85,7 @@ public:
 		}
 		
 		imstat->set_post_fps(fpsslider);
-		imstat->set_post_cpuspeed(cpuslider);
+		imstat->set_post_cpuspeed(cpuslidertotal);
 		imstat->set_post_flickerOffset(flickeroffset);
 		imstat->set_post_whichInterpreter(interpreter + 1);
 	}
@@ -101,6 +101,9 @@ public:
 	//extra configs
 	mutable int fpsslider = 60;
 	mutable int cpuslider = 1000;
+	mutable int cpusliderk = 0;
+	mutable int cpusliderm = 0;
+	mutable int cpuslidertotal = 1000;
 	mutable int flickeroffset = 0;
 	mutable int interpreter = 3;	//+1~4
 
@@ -361,7 +364,7 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 			if(ImGui::MenuItem("vm status", "")){
 				imgui_stat_window = true;
 			}
-			if(ImGui::MenuItem("info", "")){
+			if(ImGui::MenuItem("about", "")){
 				imgui_info_window = true;
 
 			}
@@ -392,7 +395,11 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
             ImGui::Separator();
             ImGui::Text("change settings:");
 			ImGui::SliderInt("fps", &fpsslider, 1, 60);
-			ImGui::DragInt("clockspeed(hz)", &cpuslider, 200.0f, 200, 100000000);
+			ImGui::DragInt("clockspeed(hz)", &cpuslider, 1.0f, 120, 1000000000);
+			ImGui::DragInt("clockspeed(Khz)", &cpusliderk, 1.0f, 0, 1000000);
+			ImGui::DragInt("clockspeed(Mhz)", &cpusliderm, 1.0f, 0, 1000);
+			cpuslidertotal = cpuslider + cpusliderk * 1000 + cpusliderm * 1000000;
+			ImGui::Text("clockspeed: %dhz", cpuslidertotal);
 			ImGui::SliderInt("flicker offset", &flickeroffset, -1, 10);
 			if (ImGui::BeginCombo("emulation mode", interpretermode[interpreter]))
 			{
@@ -426,8 +433,13 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 	}
 
 	if(imgui_info_window){
-		ImGui::Begin("info", &imgui_info_window);
-		
+		ImGui::Begin("about", &imgui_info_window);
+		ImGui::Text("super fast chip8 emulator core written by J.H.Lee");
+		ImGui::Separator();
+		ImGui::Text("uses orconut's Dear Imgui for user interface");
+		ImGui::Text("uses SDL2 for everything else interface related");
+		ImGui::Separator();
+		ImGui::Text("all rights go to their respective owners.");
 		ImGui::End();
 	}
 	// start rendering
