@@ -51,6 +51,9 @@ void Chip8::init(Status* stat){
 	input->init();
 	keyinput = input->getKey();
 	if(!prev_imstat.get_reset()) video->init(title, mainwindow, &imstat, prev_imstat.get_post_flickerOffset());
+	else{
+		video->clearVBuffer();
+	}
 	audio->init();
 	//test
 	audio->playAudio();
