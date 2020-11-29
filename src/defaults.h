@@ -77,6 +77,7 @@ public:
 	mutable char* rombuf[256] = {0};
 	const char* romlocation = "../testroms/";
 	mutable int selected = -1;
+	const char* blankrom = "blank";
 
 	//opengl stuff
 	mutable float vertices[4290];
@@ -165,6 +166,11 @@ inline void defaults::videoInit(const char* str, int w, int h, int scale, Status
 	DIR *d;
 	struct dirent *dir;
 	d = opendir(romlocation);
+
+	rombuf[romcount] = (char*)malloc((strlen(blankrom)+ 1) * sizeof(char));
+	strcpy(rombuf[romcount], blankrom);	//index 0
+	romcount++;
+	
 	if (d) {
 		while ((dir = readdir(d)) != NULL) {
 			if(dir->d_name[0] != '.'){
@@ -307,10 +313,14 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 			if(ImGui::MenuItem("reset", "")){
 				imstat->set_reset(true);
 				//temp
-				if(selected >= 0){
+				if(selected > 0){
 					imstat->set_post_ignore(false);
 					printf("load: %s\n", rombuf[selected]);
 					imstat->set_post_title(rombuf[selected]);
+				}
+				else{
+					imstat->set_post_ignore(true);
+					imstat->set_post_title(blankrom);
 				}
 			}
 			ImGui::Separator();

@@ -109,11 +109,9 @@ void Chip8::run(){
 		running = true;
 		
 		if(imstat.get_reset()){
-			printf("asd\n");
 			destroy();
 			//configure imstat in defaults.h first!
 			init(&imstat);
-			printf("asd done\n");
 		}
 		imstat.set_reset(false);
 		switch (whichInterpreter){
