@@ -71,13 +71,38 @@ public:
 	mutable bool imgui_stat_window = false;
 	mutable bool imgui_info_window = false;
     mutable ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
+	void reload()const{
+		imstat->set_reset(true);
+		//temp
+		if(selected > 0){
+			imstat->set_post_ignore(false);
+			printf("load: %s\n", rombuf[selected]);
+			imstat->set_post_title(rombuf[selected]);
+		}
+		else{
+			imstat->set_post_ignore(true);
+			imstat->set_post_title(blankrom);
+		}
+		
+		imstat->set_post_fps(fpsslider);
+		imstat->set_post_cpuspeed(cpuslider);
+		imstat->set_post_flickerOffset(flickeroffset);
+		imstat->set_post_whichInterpreter(interpreter + 1);
+	}
 
 	//romlist
 	mutable int romcount = 0;
 	mutable char* rombuf[256] = {0};
 	const char* romlocation = "../testroms/";
-	mutable int selected = -1;
+	mutable int selected = 0;
 	const char* blankrom = "blank";
+	mutable char* interpretermode[4] = {0};	//generate on videoinit
+
+	//extra configs
+	mutable int fpsslider = 60;
+	mutable int cpuslider = 1000;
+	mutable int flickeroffset = 0;
+	mutable int interpreter = 3;	//+1~4
 
 	//opengl stuff
 	mutable float vertices[4290];
@@ -162,6 +187,17 @@ inline void defaults::videoInit(const char* str, int w, int h, int scale, Status
 	//load state
 	this->imstat = imstat;
 
+	//
+	interpretermode[0] = (char*)malloc((strlen("interpreter")+ 1) * sizeof(char));
+	strcpy(interpretermode[0], "interpreter");
+	interpretermode[1] = (char*)malloc((strlen("multilayer lookup")+ 1) * sizeof(char));
+	strcpy(interpretermode[1], "multilayer lookup");
+	interpretermode[2] = (char*)malloc((strlen("hash lookup")+ 1) * sizeof(char));
+	strcpy(interpretermode[2], "hash lookup");
+	interpretermode[3] = (char*)malloc((strlen("recompiler")+ 1) * sizeof(char));
+	strcpy(interpretermode[3], "recompiler");
+	
+	
 	//get list of roms
 	DIR *d;
 	struct dirent *dir;
@@ -311,17 +347,7 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 				imgui_load_window = true;
 			}
 			if(ImGui::MenuItem("reset", "")){
-				imstat->set_reset(true);
-				//temp
-				if(selected > 0){
-					imstat->set_post_ignore(false);
-					printf("load: %s\n", rombuf[selected]);
-					imstat->set_post_title(rombuf[selected]);
-				}
-				else{
-					imstat->set_post_ignore(true);
-					imstat->set_post_title(blankrom);
-				}
+				reload();
 			}
 			ImGui::Separator();
 			if(ImGui::MenuItem("quit", "")){
@@ -346,6 +372,7 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 
 	if(imgui_load_window){
 		ImGui::Begin("load rom/change settings", &imgui_load_window);
+
         {
             ImGui::BeginChild("list roms", ImVec2(300, 300), true);
             for (int i = 0; i < romcount; i++)
@@ -357,6 +384,38 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
         }
         ImGui::SameLine();
 
+		// Right
+        {
+            ImGui::BeginGroup();
+            ImGui::BeginChild("item view", ImVec2(300, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+            ImGui::Text("selected: %s", rombuf[selected]);
+            ImGui::Separator();
+            ImGui::Text("change settings:");
+			ImGui::SliderInt("fps", &fpsslider, 1, 60);
+			ImGui::DragInt("clockspeed(hz)", &cpuslider, 200.0f, 200, 100000000);
+			ImGui::SliderInt("flicker offset", &flickeroffset, -1, 10);
+			if (ImGui::BeginCombo("emulation mode", interpretermode[interpreter]))
+			{
+				for (int n = 0; n < 4; n++)
+				{
+					const bool is_selected = (interpreter == n);
+					if (ImGui::Selectable(interpretermode[n], is_selected))
+						interpreter = n;
+
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
+            ImGui::EndChild();
+            if (ImGui::Button("reload")) {
+				reload();
+				imgui_load_window = false;
+			}
+            ImGui::EndGroup();
+        }
 		ImGui::End();
 	}
 
