@@ -70,7 +70,7 @@ you can change these options when loading the game.
 
 ### Demonstration:
 
-[![](http://img.youtube.com/vi/dMV2lnNoxGg/0.jpg)](http://www.youtube.com/watch?v=dMV2lnNoxGg "https://i9.ytimg.com/vi/dMV2lnNoxGg/mq2.jpg?sqp=CKX-hfUF&rs=AOn4CLByAtLQyftORU5wL503Yl857I1f5A")
+[![](http://img.youtube.com/vi/FHiyOLqcQbg/0.jpg)](https://youtu.be/FHiyOLqcQbg)
 
 #### Have fun!
 
