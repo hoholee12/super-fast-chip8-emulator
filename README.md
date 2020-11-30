@@ -44,9 +44,7 @@ if dbus fails, run with:
 
 ## How to play
 
-pass your rom location to program parameter.
-
-type 'y' if you wish to custom setup interpreter method, clockspeed, fps, and flicker offset!
+GUI will look in: ../testroms folder to list available rom files.
 
 keyinput goes like this:
 
