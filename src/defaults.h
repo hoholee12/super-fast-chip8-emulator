@@ -339,7 +339,7 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 	ImGui_ImplSDL2_NewFrame(window);
 	ImGui::NewFrame();
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 
 	// imgui frames
 	if (ImGui::BeginMainMenuBar())
@@ -428,7 +428,7 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 
 	if(imgui_stat_window){
 		ImGui::Begin("vmstat", &imgui_stat_window);
-		
+		ImGui::Text("TODO: Debug stuff goes in here");
 		ImGui::End();
 	}
 
@@ -436,6 +436,7 @@ inline void defaults::drawVideo(uint8_t* videoBuffer) const{
 		ImGui::Begin("about", &imgui_info_window);
 		ImGui::Text("super fast chip8 emulator core written by J.H.Lee");
 		ImGui::Separator();
+		ImGui::Text("uses GLAD for OpenGL implementation");
 		ImGui::Text("uses orconut's Dear Imgui for user interface");
 		ImGui::Text("uses SDL2 for everything else interface related");
 		ImGui::Separator();
