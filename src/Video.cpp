@@ -27,6 +27,12 @@ void Video::draw(defaults* mainwindow){
 void Video::clearVBuffer(){
 	for(int i = 0; i < (SCREEN_WIDTH * SCREEN_HEIGHT); i++) videoBuffer[i] = 0;
 	copyToFbuffer();
+	overwriteHint = false;
+	offset_count = 0;
+	offset_limit = QUEUE_OFFSET; //how much loops to ignore before flush, disable deflicker if -1
+	copyFlag = false; //signal to copy to fbuffer
+	queuePointer = 0;	//first
+	prevOp = 0;
 }
 
 void Video::copySprite(CPU* cpu, Memory* memory, Video* video){
