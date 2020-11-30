@@ -6,43 +6,41 @@ your average emulator using c++ and sdl2.0
 
 tried to make it as simple as possible.
 
-interpreter is done. recompiler is in the works
+-auto frameskip
 
--auto frameskip, auto reduce cycles(because why not)
+-video deflicker
 
--video deflicker! - new method to parse opcode patterns. all games ive tested have *zero* flickering now.
-
--upto 4mhz(4000000hz) in 60fps for intel 5th gen 3.1ghz cpu(msvc2013-debug)
-
--upto 250mhz(250000000hz) in 60fps on ubuntu linux
-
-(performance improved alot after implementing time scheduling)
+-recompiler(slower than interpreter atm)
 
 ## How to compile
 
+### what does it use?
+
+```
+uses GLAD for OpenGL implementation
+uses orconut's Dear Imgui for user interface
+uses SDL2 for everything else interface related
+
+all rights go to their respective owners.
+```
 ### before compiling:
 
-install/reinstall 32bit libs
+install/reinstall SDL2 32bit libs
 
 ```
 sudo apt install libsdl2-dev:i386 libsdl2-2.0-0:i386 -y;
-
-sudo apt install libjpeg-dev:i386 libwebp-dev:i386 libtiff5-dev:i386 libsdl2-image-dev:i386 libsdl2-image-2.0-0:i386 -y;
-
-sudo apt install libmikmod-dev:i386 libfishsound1-dev:i386 libsmpeg-dev:i386 liboggz2-dev:i386 libflac-dev:i386 libfluidsynth-dev:i386 libsdl2-mixer-dev:i386 libsdl2-mixer-2.0-0:i386 -y;
-
-sudo apt install libfreetype6-dev:i386 libsdl2-ttf-dev:i386 libsdl2-ttf-2.0-0:i386 -y;
-
-sudo apt install g++-multilib -y;
 
 sudo apt install pkg-config:i386 -y;
 ```
 
 ### to compile:
 
-simply run ./build.sh
+simply run: ./build.sh
 
-and do as it says to run it.
+generated executable will be in: /build folder.
+
+if dbus fails, run with: 
+```DBUS_FATAL_WARNINGS=0 ./chip8-emu```
 
 ## How to play
 
@@ -66,7 +64,7 @@ http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
 
 ## Options
 
-ive implemented three different interpreter methods (switchcase/partitionizedLUT/bigLUT)
+ive implemented three different interpreter methods (switchcase/partitionizedLUT/bigLUT), and a recompiler(WIP)
 
 theres also an option to change clockspeed and fps.
 
