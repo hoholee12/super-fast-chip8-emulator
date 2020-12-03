@@ -1,30 +1,35 @@
 #include"Chip8.h"
 
-void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int flickerOffset){
+void Chip8::init(Status* stat){
+
+	//invoke copy
+	prev_imstat = *stat;
+
 	//backup
-	this->title = title;
-	this->cpuspeed = cpuspeed;
-	this->fps = fps;
+	this->title = prev_imstat.get_post_title();
+	this->cpuspeed = prev_imstat.get_post_cpuspeed();
+	this->fps = prev_imstat.get_post_fps();
+	this->whichInterpreter = prev_imstat.get_post_whichInterpreter();
 
 	//create instances
-	mainwindow = new defaults();
-	cpu = new CPU();
-	memory = new Memory();
-	input = new Input();
-	video = new Video();
-	audio = new Audio();
-	fskip = new Frameskip();
+	if(!mainwindow && !prev_imstat.get_reset()) mainwindow = new defaults();
+	if(!cpu) cpu = new CPU();
+	if(!memory) memory = new Memory();
+	if(!input) input = new Input();
+	if(!video && !prev_imstat.get_reset()) video = new Video();
+	if(!audio) audio = new Audio();
+	if(!fskip) fskip = new Frameskip();
 
-	dynarec = new Dynarec();
+	if(!dynarec) dynarec = new Dynarec();
 
 	//init timers
-	videoTimerInstance = new Timer();
-	fskipTimerInstance = new Timer();
-	delayTimerInstance = new Timer();
-	windowTimerInstance = new Timer();
-	fsbInstance = new Timer();
+	if(!videoTimerInstance) videoTimerInstance = new Timer();
+	if(!fskipTimerInstance) fskipTimerInstance = new Timer();
+	if(!delayTimerInstance) delayTimerInstance = new Timer();
+	if(!windowTimerInstance) windowTimerInstance = new Timer();
+	if(!fsbInstance) fsbInstance = new Timer();
 
-	scheduler = new TimeSched();
+	if(!scheduler) scheduler = new TimeSched();
 
 	initSpeed(cpuspeed, fps);
 	//must be added in order!!
@@ -42,21 +47,36 @@ void Chip8::start(char* title, int cpuspeed, int fps, int whichInterpreter, int 
 	isEndlessLoop = false;
 	delayRegister = 0x0;
 	cpu->init(memory, &delayRegister, &keyinput);
-	memory->init(title);
+	memory->init(title, prev_imstat.get_post_ignore());
 	input->init();
 	keyinput = input->getKey();
-	video->init(title, mainwindow, flickerOffset);
+	if(!prev_imstat.get_reset()) video->init(title, mainwindow, &imstat, prev_imstat.get_post_flickerOffset());
+	else{
+		video->clearVBuffer();
+	}
 	audio->init();
-	audio->playAudio(); //test
+	//test
+	audio->playAudio();
+	audio->pauseAudio();
 
 	dynarec->init(cpu, video, memory, audio, scheduler->getBaseClock());
-
-	this->whichInterpreter = whichInterpreter;
 
 
 	//READY.
 	printf("\nREADY.\n");
 
+}
+
+void Chip8::start(const char* title, bool ignore, int cpuspeed, int fps, int whichInterpreter, int flickerOffset){
+	imstat.set_reset(false);
+	imstat.set_post_title(title);
+	imstat.set_post_ignore(ignore);
+	imstat.set_post_cpuspeed(cpuspeed);
+	imstat.set_post_fps(fps);
+	imstat.set_post_whichInterpreter(whichInterpreter);
+	imstat.set_post_flickerOffset(flickerOffset);
+	
+	init(&imstat);
 	run();	//start looping!!!
 
 }
@@ -88,64 +108,78 @@ void Chip8::initSpeed(int cpuspeed, int fps){
 }
 
 void Chip8::run(){
-	running = true;
-	switch (whichInterpreter){
-	case 1:
-		while (running){
-			while (scheduler->baseLoop()){
-				updateInterpreter_switch();
-				update_controller();
-#ifdef DEBUG_ME
-				debugMe();
-#endif
-			}
-			update_lowerhalf();
+	do{
+		running = true;
+		
+		if(imstat.get_reset()){
+			destroy();
+			//configure imstat in defaults.h first!
+			init(&imstat);
 		}
-		break;
-	case 2:
-		while (running){
-			while (scheduler->baseLoop()){
-				updateInterpreter_LUT();
-				update_controller();
-#ifdef DEBUG_ME
-				debugMe();
-#endif
+		imstat.set_reset(false);
+		switch (whichInterpreter){
+		case 1:
+			while (running){
+				while (scheduler->baseLoop()){
+					updateInterpreter_switch();
+					update_controller();
+	#ifdef DEBUG_ME
+					debugMe();
+	#endif
+				}
+				update_lowerhalf();
+				if(imstat.get_reset()) running = false;
 			}
-			update_lowerhalf();
-		}
-		break;
-	case 3:
-		while (running){
-			while (scheduler->baseLoop()){
-				updateInterpreter_jumboLUT();
-				update_controller();
-#ifdef DEBUG_ME
-				debugMe();
-#endif
+			break;
+		case 2:
+			while (running){
+				while (scheduler->baseLoop()){
+					updateInterpreter_LUT();
+					update_controller();
+	#ifdef DEBUG_ME
+					debugMe();
+	#endif
+				}
+				update_lowerhalf();
+				if(imstat.get_reset()) running = false;
 			}
-			update_lowerhalf();
-		}
-		break;
-	case 4:
-		while (running){
-			
-			dynarec->updateRecompiler();
-			do{
+			break;
+		case 3:
+			while (running){
+				while (scheduler->baseLoop()){
+					updateInterpreter_jumboLUT();
+					update_controller();
+	#ifdef DEBUG_ME
+					debugMe();
+	#endif
+				}
+				update_lowerhalf();
+				if(imstat.get_reset()) running = false;
+			}
+			break;
+		case 4:
+			while (running){
+				
+				dynarec->updateRecompiler();
+				do{
+					dynarec->executeBlock();	//cpu & controller
+	#ifdef DEBUG_ME
+					debugMe();
+	#endif
+				} while (dynarec->updateRecompiler());
 				dynarec->executeBlock();	//cpu & controller
-#ifdef DEBUG_ME
+	#ifdef DEBUG_ME
 				debugMe();
-#endif
-			} while (dynarec->updateRecompiler());
-			dynarec->executeBlock();	//cpu & controller
-#ifdef DEBUG_ME
-			debugMe();
-#endif
-			update_lowerhalf();
+	#endif
+				update_lowerhalf();
+				if(imstat.get_reset()) running = false;
+			}
+			break;
+		default:
+			fprintf(stderr, "configuration error!\n");
 		}
-		break;
-	default:
-		fprintf(stderr, "configuration error!\n");
-	}
+
+	}while(imstat.get_reset());
 	exit(0);
 }
 

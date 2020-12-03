@@ -8,9 +8,12 @@ int main(int argc, char** argv){
 	int method;
 	int flickerOffset;
 
+	const char blank[] = "blank";
+
 	if(argc < 2){
-		fprintf(stderr, "feed me with a chip8 program.\n");
-		exit(1);
+		chip->start(blank, true);
+		//fprintf(stderr, "feed me with a chip8 program.\n");
+		//exit(1);
 	}
 	printf("would you like to change emulation settings? (y/n):");
 	switch (getchar()){
@@ -26,7 +29,7 @@ int main(int argc, char** argv){
 		printf("\nLOAD.\n");
 
 
-		chip->start(argv[1], clockspeed, fps, method, flickerOffset);
+		chip->start(argv[1], false, clockspeed, fps, method, flickerOffset);
 		break;
 	default:
 

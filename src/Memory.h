@@ -38,7 +38,7 @@ public:
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t input);
 
-	void init(const char* str);	//file load included
+	void init(const char* str, bool ignore = false);	//file load included
 
 	//copy initializer
 	MemoryInstance(){}
@@ -69,8 +69,8 @@ public:
 		delete(a);
 		delete(b);
 	}
-	void init(const char* str){
-		a->init(str);
+	void init(const char* str, bool ignore = false){
+		a->init(str, ignore);
 		for (int i = 0; i < FULL_MEM_SIZE; i++){
 			b->write(i, a->read(i));
 		}

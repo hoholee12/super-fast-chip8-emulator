@@ -202,7 +202,7 @@ public:
 				printf("appending:\n", whichCache(pc, flag)->oplist[i].opsize);
 #endif
 				whichCache(localpc, flag)->execBlock = (void*)appendtemp;
-				whichCache(localpc, flag)->linkedPC = pc;
+				whichCache(localpc, flag)->linkedPC = localpc - 2;
 #ifdef DEBUG_CACHE
 				printf("link op:%08X, pc:%3x\n", whichCache(localpc, flag)->execBlock, localpc);
 #endif
