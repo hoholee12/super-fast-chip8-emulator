@@ -67,7 +67,7 @@ public:
 	//imgui stuff
 	mutable ImGuiIO io;
 	// Our state
-    mutable bool imgui_load_window = false;
+    mutable bool imgui_load_window = true;
 	mutable bool imgui_stat_window = false;
 	mutable bool imgui_info_window = false;
     mutable ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
