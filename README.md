@@ -30,7 +30,7 @@ install/reinstall SDL2 32bit libs
 ```
 sudo apt install libsdl2-dev:i386 libsdl2-2.0-0:i386 -y;
 
-sudo apt install pkg-config:i386 -y;
+sudo apt install g++-multilib
 ```
 
 ### to compile:
